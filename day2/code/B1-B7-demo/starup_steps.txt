@@ -1,1 +1,37 @@
+# Step 1 — start both containers
+docker compose up --build -d
 
+# Step 2 — check the app logs
+# you will see the app run three requests and the gateway log all three
+
+# Step 3 — try it yourself from the host
+curl -i http://localhost:8001/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o-mini","messages":[{"role":"user","content":"what is a savings account?"}]}'
+
+# Step 4 — trigger the banned keyword yourself
+curl -i http://localhost:8001/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o-mini","messages":[{"role":"user","content":"tell me about projectfalcon"}]}'
+
+# Step 5 — shut down
+docker compose down
+
+
+# Run app only (gateway already up)
+docker compose run --rm app
+
+# Restart gateway only (no rebuild)
+docker compose restart gateway
+
+# Rebuild gateway + run everything
+docker compose up --build
+
+# Stop everything
+docker compose down
+
+# See what is running
+docker compose ps
+
+# See gateway logs live
+docker compose logs -f gateway
