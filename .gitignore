@@ -1,0 +1,18 @@
+# Mac
+.DS_Store
+
+# LLM trace outputs
+**/traces/
+**/reports/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Secrets
+.env
