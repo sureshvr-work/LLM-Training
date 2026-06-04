@@ -127,6 +127,18 @@ def extract_text(resp: httpx.Response) -> str:
     except Exception:
         return ""
 
+def extract_tokens(resp: httpx.Response) -> dict:
+    """Pull prompt/completion/total token counts from the LLM response."""
+    try:
+        usage = resp.json().get("usage", {})
+        return {
+            "prompt_tokens":     usage.get("prompt_tokens", 0),
+            "completion_tokens": usage.get("completion_tokens", 0),
+            "total_tokens":      usage.get("total_tokens", 0),
+        }
+    except Exception:
+        return {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+
 
 # ---------------------------------------------------------------------------
 # Report helper — writes one JSON line per request
@@ -234,10 +246,15 @@ async def chat(request: Request):
     # Inconsistent answers across identical prompts = hallucination risk.
     # ------------------------------------------------------------------
     if check_consistency:
-        texts = []
+        texts  = []
+        tokens = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
         for _ in range(CONSISTENCY_CALLS):
             r = await call_llm(body, system_prompt)
             texts.append(extract_text(r))
+            t = extract_tokens(r)
+            tokens["prompt_tokens"]     += t["prompt_tokens"]
+            tokens["completion_tokens"] += t["completion_tokens"]
+            tokens["total_tokens"]      += t["total_tokens"]
 
         pairs    = [(i, j) for i in range(len(texts)) for j in range(i + 1, len(texts))]
         sims     = [cosine_similarity(texts[i], texts[j]) for i, j in pairs]
@@ -252,6 +269,7 @@ async def chat(request: Request):
             "pairwise_sims": [round(s, 3) for s in sims],
             "avg_similarity": avg_sim,
             "consistent": is_consistent,
+            "tokens": tokens,
         })
 
         llm_text   = texts[0]   # use first response as the answer
@@ -272,6 +290,7 @@ async def chat(request: Request):
         r          = await call_llm(body, system_prompt)
         llm_text   = extract_text(r)
         llm_status = r.status_code
+        tokens     = extract_tokens(r)
         warning    = None
 
     # ------------------------------------------------------------------
@@ -291,11 +310,26 @@ async def chat(request: Request):
 
     elapsed = round(time.time() - started, 2)
 
+    # Build the messages actually sent to the LLM (with injected system prompt).
+    sent_messages = (
+        [{"role": "system", "content": system_prompt}] if system_prompt else []
+    ) + body.get("messages", [])
+
     report({
         "time":               datetime.now(timezone.utc).isoformat(),
         "type":               "request",
         "q_hash":             q_hash,
         "call_number":        len(history),
+        # ---- what was sent to the LLM ------------------------------------
+        "llm_request": {
+            "model":    body.get("model"),
+            "messages": sent_messages,
+        },
+        # ---- what the LLM returned ---------------------------------------
+        "llm_response": llm_text,
+        # ---- token usage -------------------------------------------------
+        "tokens":             tokens,
+        # ---- guardrail results -------------------------------------------
         "drift_score":        round(drift_score, 3),
         "drift_flagged":      drift_flagged,
         "confidence":         confidence,
