@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Vectorless RAG Lab — BM25 keyword retrieval</title>
+  <style>
+    :root{
+      --navy:#1d3a5f; --navy2:#185FA5;
+      --teal:#0F6E56; --teal2:#1D9E75; --teal-bg:#E1F5EE;
+      --amber:#854F0B; --amber2:#EF9F27; --amber-bg:#FAEEDA;
+      --purple:#7B3FA0; --purple-bg:#F0E8F8;
+      --red:#C0392B;
+      --gray:#5F5E5A; --line:#e3e0d9; --paper:#ffffff; --bg:#f5f6f8;
+    }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:var(--bg);color:#222;}
+    .wrap{max-width:900px;margin:0 auto;padding:26px 20px 80px;}
+
+    /* header */
+    header h1{color:var(--navy);font-size:22px;margin:0 0 3px;}
+    header p{color:var(--gray);font-size:13px;margin:0 0 6px;}
+
+    /* comparison banner */
+    .compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 6px;}
+    .cbox{border-radius:10px;padding:11px 14px;font-size:12.5px;line-height:1.55;}
+    .cbox.this{background:var(--amber-bg);border:1.5px solid var(--amber2);}
+    .cbox.that{background:#f0f4fa;border:1.5px solid #c5d3e8;color:var(--gray);}
+    .cbox strong{display:block;font-size:13px;margin-bottom:4px;}
+    .cbox.this strong{color:var(--amber);}
+    .cbox.that strong{color:var(--navy);}
+    .cbox ul{margin:0;padding-left:16px;}
+    .cbox li{margin-bottom:2px;}
+
+    /* breadcrumbs */
+    .crumbs{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 8px;font-size:11px;}
+    .crumb{padding:3px 9px;border-radius:12px;background:#fff;border:1px solid var(--line);color:var(--gray);}
+    .crumb.done{background:var(--teal-bg);border-color:var(--teal2);color:var(--teal);}
+    .crumb.active{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600;}
+
+    /* cards */
+    .card{background:var(--paper);border:1px solid var(--line);border-radius:13px;padding:18px 20px;margin-top:16px;
+          transition:opacity .25s;}
+    .card.locked{opacity:.5;pointer-events:none;}
+    .card.done .num{background:var(--teal);}
+    .card-head{display:flex;align-items:center;gap:11px;margin-bottom:4px;}
+    .num{flex:none;width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;font-size:13px;
+         font-weight:700;display:flex;align-items:center;justify-content:center;}
+    .card h2{font-size:15px;color:var(--navy);margin:0;}
+    .card .desc{color:var(--gray);font-size:12.5px;margin:2px 0 0;}
+    .body{margin-top:13px;}
+
+    /* form elements */
+    label{font-size:12.5px;font-weight:600;color:#333;display:block;margin-bottom:5px;}
+    select,input[type=text]{padding:9px 11px;border:1.5px solid var(--line);border-radius:8px;font-size:13.5px;background:#fff;}
+    select:focus,input[type=text]:focus{outline:none;border-color:var(--navy);}
+    .row{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end;}
+    input[type=range]{width:230px;vertical-align:middle;accent-color:var(--navy);}
+
+    /* buttons */
+    button.go{background:var(--navy);color:#fff;border:0;border-radius:9px;padding:10px 18px;font-size:13.5px;font-weight:600;cursor:pointer;}
+    button.go.amber{background:var(--amber2);color:#3a2606;}
+    button.go.teal{background:var(--teal);}
+    button.go.purple{background:var(--purple);}
+    button.go:disabled{opacity:.45;cursor:default;}
+    button.ghost{background:#fff;border:1.5px solid var(--line);color:var(--navy);border-radius:9px;padding:9px 14px;font-size:13px;cursor:pointer;}
+
+    /* pills */
+    .pill{display:inline-block;border-radius:9px;padding:1px 8px;font-size:11px;font-weight:700;}
+    .pill.amber{background:var(--amber-bg);color:var(--amber);}
+    .pill.teal{background:var(--teal-bg);color:var(--teal);}
+    .pill.navy{background:#e6eef7;color:var(--navy);}
+    .pill.gray{background:#f0f0ee;color:var(--gray);}
+    .pill.red{background:#fdecea;color:var(--red);}
+
+    /* misc */
+    .muted{color:var(--gray);font-size:12px;}
+    .err{color:var(--red);font-size:12.5px;margin-top:8px;}
+    .spin{font-size:12.5px;color:var(--navy);}
+    .mono{font-family:ui-monospace,Menlo,Consolas,monospace;}
+
+    /* upload */
+    .drop{border:1.6px dashed #c7c3b8;border-radius:10px;padding:18px;text-align:center;background:#fafaf7;}
+    .ppbars{display:flex;align-items:flex-end;gap:5px;height:60px;margin-top:12px;}
+    .ppbar{flex:1;background:var(--navy2);border-radius:3px 3px 0 0;min-height:4px;}
+    .ppbar span{display:block;text-align:center;font-size:9px;color:var(--gray);margin-top:3px;}
+
+    /* chunk explorer */
+    .chunk-summary{margin-bottom:10px;}
+    .chunk-pane{display:flex;gap:14px;align-items:flex-start;}
+    .chunk-list{flex:none;width:206px;}
+    .cbtns{display:flex;flex-wrap:wrap;gap:6px;max-height:316px;overflow:auto;padding:2px;}
+    .cbtn{display:flex;flex-direction:column;align-items:center;gap:1px;border:1.5px solid var(--line);
+          background:#fff;border-radius:8px;padding:6px 8px;font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;min-width:44px;}
+    .cbtn:hover{border-color:var(--navy);}
+    .cbtn .cp{font-size:9px;font-weight:600;color:var(--gray);}
+    .cbtn.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+    .cbtn.on .cp{color:#cdd9e8;}
+    .chunk-view{flex:1;border:1px solid var(--line);border-radius:9px;padding:10px 12px;min-height:130px;}
+    .cv-head{display:flex;gap:7px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+    .cv-body{font-size:12px;line-height:1.55;white-space:pre-wrap;
+             font-family:ui-monospace,Menlo,Consolas,monospace;max-height:300px;overflow:auto;}
+    .ov{background:#FFF3B0;border-radius:2px;box-shadow:0 0 0 1px #E4C200 inset;}
+
+    /* term frequency heatmap */
+    .heat-wrap{overflow:auto;border:1px solid var(--line);border-radius:9px;padding:10px;max-height:340px;}
+    .heat-header{display:flex;gap:4px;margin-bottom:4px;padding-left:80px;}
+    .heat-col-label{width:52px;font-size:9px;color:var(--gray);text-align:center;overflow:hidden;
+                    white-space:nowrap;text-overflow:ellipsis;flex:none;}
+    .heat-row{display:flex;align-items:center;gap:4px;margin:2px 0;}
+    .heat-row-label{flex:none;width:76px;font-size:10px;color:var(--gray);text-align:right;padding-right:4px;}
+    .cells{display:flex;gap:4px;}
+    .hcell{width:52px;height:20px;border-radius:3px;display:flex;align-items:center;justify-content:center;
+           font-size:9px;color:#fff;font-weight:700;flex:none;}
+    .legend{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gray);margin-top:8px;}
+    .lg{width:13px;height:13px;border-radius:2px;display:inline-block;}
+
+    /* search results */
+    .res{border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin-top:8px;}
+    .res-h{display:flex;align-items:center;gap:9px;font-size:11.5px;color:var(--gray);margin-bottom:6px;flex-wrap:wrap;}
+    .bar{flex:1;height:6px;background:#eee;border-radius:4px;overflow:hidden;max-width:200px;}
+    .bar>i{display:block;height:100%;background:var(--amber2);}
+    .score{font-weight:700;color:var(--amber);font-variant-numeric:tabular-nums;}
+    .res-terms{margin-bottom:6px;display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
+    .res-t{font-size:11.5px;line-height:1.5;color:#333;white-space:pre-wrap;}
+    mark{background:#FFF3B0;border-radius:2px;padding:0 1px;}
+
+    /* answer */
+    .answer{border-left:4px solid var(--teal);background:#fbfdfc;}
+    .a-text{font-size:14px;line-height:1.55;white-space:pre-wrap;}
+    .cite{background:#e6eef7;color:#1d3a5f;border-radius:4px;padding:0 4px;font-weight:700;
+          font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;white-space:nowrap;}
+
+    /* query term pills row */
+    .qtag{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;align-items:center;font-size:12px;}
+
+    /* zero results warning */
+    .warn-box{background:var(--amber-bg);border:1.5px solid var(--amber2);border-radius:8px;
+              padding:9px 12px;font-size:12.5px;color:var(--amber);margin-top:8px;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Vectorless RAG Lab — BM25 keyword retrieval</h1>
+    <p>Same pipeline as vector RAG, but retrieval uses keyword scoring instead of embeddings. Watch every stage.</p>
+  </header>
+
+  <!-- Comparison banner -->
+  <div class="compare">
+    <div class="cbox this">
+      <strong>This demo — Vectorless RAG (BM25)</strong>
+      <ul>
+        <li>No embedding model — zero API cost for indexing</li>
+        <li>Index builds in milliseconds</li>
+        <li>Finds chunks that share <em>exact keywords</em> with your query</li>
+        <li>Misses synonyms: "heart attack" ≠ "myocardial infarction"</li>
+        <li>Great for exact terminology (legal, medical, code)</li>
+      </ul>
+    </div>
+    <div class="cbox that">
+      <strong>Vector RAG (rag_demo1)</strong>
+      <ul>
+        <li>Embedding API call for every chunk + every query</li>
+        <li>Index takes seconds to minutes depending on size</li>
+        <li>Finds semantically similar text even without shared words</li>
+        <li>"forgot credentials" finds "password reset" content</li>
+        <li>Better for conversational / paraphrase-heavy queries</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="crumbs" id="crumbs"></div>
+
+  <!-- STEP 1 — LLM model -->
+  <section class="card" id="s1">
+    <div class="card-head"><div class="num">1</div><h2>Choose the LLM model</h2></div>
+    <p class="desc">BM25 handles retrieval — no embedding model needed. The LLM is only used in the final answer step.</p>
+    <div class="body row">
+      <div>
+        <label>Chat model (for the answer)</label>
+        <select id="llmModel">
+          <option value="gpt-4o-mini">OpenAI · gpt-4o-mini</option>
+          <option value="gpt-4o">OpenAI · gpt-4o</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 2 — Upload PDF -->
+  <section class="card" id="s2">
+    <div class="card-head"><div class="num">2</div><h2>Upload a PDF</h2></div>
+    <p class="desc">Text is extracted page by page so each chunk carries a real page number for citation.</p>
+    <div class="body">
+      <div class="drop">
+        <input type="file" id="file" accept="application/pdf"/>
+        <div class="muted" style="margin-top:8px">or
+          <button class="ghost" id="loadSample" style="padding:5px 10px">Load the sample drug reference (10 pages)</button>
+        </div>
+      </div>
+      <div id="uploadOut"></div>
+    </div>
+  </section>
+
+  <!-- STEP 3 — Chunk -->
+  <section class="card locked" id="s3">
+    <div class="card-head"><div class="num">3</div><h2>Chunk the document</h2></div>
+    <p class="desc">Fixed-size character windows with overlap. Overlap highlighted in yellow — it prevents answers from being cut at chunk boundaries.</p>
+    <div class="body">
+      <div class="row">
+        <div>
+          <label>Chunk size: <span id="sizeV" class="pill navy">800</span> chars</label>
+          <input type="range" id="size" min="200" max="1500" step="50" value="800"/>
+        </div>
+        <div>
+          <label>Overlap: <span id="ovV" class="pill navy">150</span> chars</label>
+          <input type="range" id="ov" min="0" max="400" step="10" value="150"/>
+        </div>
+        <button class="go" id="chunkBtn">Chunk</button>
+      </div>
+      <div id="chunkOut" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <!-- STEP 4 — Build keyword index -->
+  <section class="card locked" id="s4">
+    <div class="card-head"><div class="num">4</div><h2>Build keyword index (BM25)</h2></div>
+    <p class="desc">
+      Tokenise every chunk, remove stop words, count term frequencies, compute IDF weights.
+      No API call. Runs in milliseconds on your machine.
+    </p>
+    <div class="body">
+      <button class="go amber" id="indexBtn">Build Index</button>
+      <div id="indexOut" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <!-- STEP 5 — Search -->
+  <section class="card locked" id="s5">
+    <div class="card-head"><div class="num">5</div><h2>Search with BM25</h2></div>
+    <p class="desc">
+      Your query is tokenised (stop words removed). Each chunk gets a BM25 score based on
+      how many query terms it contains and how rare those terms are. <strong>Yellow highlight = matched keyword.</strong>
+    </p>
+    <div class="body">
+      <label>Your query</label>
+      <input type="text" id="query" style="width:100%"
+             placeholder="e.g. When do you reduce the apixaban dose?"/>
+      <div class="qtag" id="qtag"></div>
+
+      <div style="margin-top:12px">
+        <label>top_k: <span id="kV" class="pill teal">4</span></label>
+        <input type="range" id="topk" min="1" max="10" step="1" value="4"/>
+        <div class="muted" id="kdesc" style="margin-top:4px"></div>
+      </div>
+
+      <button class="go amber" id="searchBtn" style="margin-top:12px">Search (BM25)</button>
+      <div id="searchOut" style="margin-top:8px"></div>
+    </div>
+  </section>
+
+  <!-- STEP 6 — Answer -->
+  <section class="card locked" id="s6">
+    <div class="card-head"><div class="num">6</div><h2>Send to the LLM</h2></div>
+    <p class="desc">The top-K BM25 chunks become the context. The LLM answers from those chunks only and cites each passage.</p>
+    <div class="body">
+      <button class="go purple" id="answerBtn">Ask the LLM</button>
+      <div id="answerOut" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+</div><!-- /wrap -->
+
+<script>
+  // ---- state ---------------------------------------------------------------
+  const S = {
+    llmModel: 'gpt-4o-mini',
+    uploaded: false, chunked: false, indexed: false, searched: false,
+    topk: 4, chunkData: null, indexData: null,
+  };
+
+  const $ = id => document.getElementById(id);
+  const esc = s => (s||'').replace(/[&<>"']/g,
+    c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  async function post(url, body){
+    const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }
+
+  // ---- breadcrumbs + lock/unlock -------------------------------------------
+  const STEPS = ['Model','Upload','Chunk','Index','Search','Answer'];
+  function refresh(){
+    const states = [true, S.uploaded, S.chunked, S.indexed, S.indexed, S.searched];
+    $('crumbs').innerHTML = STEPS.map((n,i)=>{
+      const cls = states[i] ? 'done' : (i>0 && states[i-1] ? 'active':'');
+      return `<span class="crumb ${cls}">${i+1}. ${n}</span>`;
+    }).join('');
+    ['s3','s4','s5','s6'].forEach((id,i)=>{
+      const unlocked = [S.uploaded, S.chunked, S.indexed, S.searched][i];
+      $(id).classList.toggle('locked', !unlocked);
+    });
+    ['s2','s3','s4'].forEach((id,i)=>{
+      $(id).classList.toggle('done', [S.uploaded, S.chunked, S.indexed][i]);
+    });
+  }
+
+  // ---- step 1 --------------------------------------------------------------
+  $('llmModel').addEventListener('change', e=> S.llmModel = e.target.value);
+
+  // ---- step 2: upload ------------------------------------------------------
+  $('file').addEventListener('change', e=>{ if(e.target.files[0]) uploadFile(e.target.files[0]); });
+  $('loadSample').addEventListener('click', async ()=>{
+    const r = await fetch('/sample_drug_reference.pdf');
+    const b = await r.blob();
+    uploadFile(new File([b], 'sample_drug_reference.pdf', {type:'application/pdf'}));
+  });
+  async function uploadFile(file){
+    $('uploadOut').innerHTML = '<div class="spin">Parsing PDF…</div>';
+    try{
+      const fd = new FormData(); fd.append('file', file, file.name);
+      const r  = await fetch('/api/upload', {method:'POST', body:fd});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const d  = await r.json();
+      const max = Math.max(...d.per_page.map(p=>p.chars), 1);
+      const bars = d.per_page.map(p=>
+        `<div style="flex:1"><div class="ppbar" style="height:${Math.round(p.chars/max*52)+4}px"></div><span>${p.page}</span></div>`
+      ).join('');
+      $('uploadOut').innerHTML =
+        `<div style="margin-top:12px"><span class="pill navy">${esc(d.filename)}</span>
+         <span class="muted">· ${d.pages} pages · ${d.total_chars.toLocaleString()} chars</span></div>
+         <div class="muted" style="margin-top:8px">characters per page</div>
+         <div class="ppbars">${bars}</div>`;
+      S.uploaded=true; S.chunked=false; S.indexed=false; S.searched=false; refresh();
+    }catch(err){ $('uploadOut').innerHTML=`<div class="err">Upload failed: ${err.message}. Is the backend running?</div>`; }
+  }
+
+  // ---- step 3: chunk -------------------------------------------------------
+  $('size').addEventListener('input', e=>$('sizeV').textContent=e.target.value);
+  $('ov').addEventListener('input',   e=>$('ovV').textContent=e.target.value);
+  $('chunkBtn').addEventListener('click', async ()=>{
+    $('chunkOut').innerHTML='<div class="spin">Chunking…</div>';
+    try{
+      const d = await post('/api/chunk', {size:+$('size').value, overlap:+$('ov').value});
+      S.chunkData = d;
+      renderChunkUI(d);
+      S.chunked=true; S.indexed=false; S.searched=false; refresh();
+    }catch(err){ $('chunkOut').innerHTML=`<div class="err">Chunk failed: ${err.message}</div>`; }
+  });
+
+  function pspan(c){ return c.page_start===c.page_end ? `p${c.page_start}` : `p${c.page_start}–${c.page_end}`; }
+
+  function renderChunkUI(d){
+    const btns = d.chunks.map((c,i)=>
+      `<button class="cbtn" data-i="${i}">${c.id}<span class="cp">${pspan(c)}</span></button>`).join('');
+    $('chunkOut').innerHTML = `
+      <div class="chunk-summary"><b>${d.count} chunks</b>
+        <span class="muted">· size ${d.size}, overlap ${d.overlap} chars (step ${d.step}) · click a chunk to inspect →</span></div>
+      <div class="chunk-pane">
+        <div class="chunk-list"><div class="cbtns">${btns}</div></div>
+        <div class="chunk-view">
+          <div class="cv-head" id="cvHead"></div>
+          <div class="cv-body" id="cvBody"></div>
+          <div class="legend" style="margin-top:10px">
+            <span class="lg" style="background:#FFF3B0;box-shadow:0 0 0 1px #E4C200 inset"></span>
+            highlighted = overlap — text shared with a neighbouring chunk
+          </div>
+        </div>
+      </div>`;
+    $('chunkOut').querySelectorAll('.cbtn').forEach(b=>
+      b.addEventListener('click', ()=> selectChunk(+b.dataset.i)));
+    selectChunk(0);
+  }
+
+  function selectChunk(i){
+    const c = S.chunkData.chunks[i];
+    $('chunkOut').querySelectorAll('.cbtn').forEach(b=> b.classList.toggle('on', +b.dataset.i===i));
+    const t    = c.text;
+    const head = Math.min(c.overlap_head||0, t.length);
+    const tail = Math.min(c.overlap_tail||0, Math.max(0, t.length-head));
+    $('cvHead').innerHTML =
+      `<span class="pill amber">${c.id}</span><span class="pill teal">${pspan(c)}</span>`
+      +(c.source?`<span class="pill navy">${esc(c.source)}</span>`:'')
+      +`<span class="muted">${c.chars} chars`
+      +(head?` · <span style="color:#9a7b00">${head} shared with prev ↑</span>`:'')
+      +(tail?` · <span style="color:#9a7b00">${tail} shared with next ↓</span>`:'')
+      +`</span>`;
+    $('cvBody').innerHTML =
+       (head ? `<span class="ov" title="overlap with previous chunk">${esc(t.slice(0,head))}</span>` : '')
+      + esc(t.slice(head, t.length-tail))
+      + (tail ? `<span class="ov" title="overlap with next chunk">${esc(t.slice(t.length-tail))}</span>` : '');
+  }
+
+  // ---- step 4: build keyword index ----------------------------------------
+  $('indexBtn').addEventListener('click', async ()=>{
+    $('indexOut').innerHTML='<div class="spin">Building BM25 index…</div>';
+    try{
+      const d = await post('/api/index', {});
+      S.indexData = d;
+      renderIndexUI(d);
+      S.indexed=true; S.searched=false; refresh();
+    }catch(err){ $('indexOut').innerHTML=`<div class="err">Index failed: ${err.message}</div>`; }
+  });
+
+  function cellColor(freq, maxFreq){
+    if(freq===0) return '#f5f5f2';
+    const t = freq / maxFreq;
+    // white → amber → dark amber
+    if(t < 0.5){
+      const r = Math.round(255 + (239-255)*t*2);
+      const g = Math.round(255 + (159-255)*t*2);
+      const b = Math.round(255 + ( 39-255)*t*2);
+      return `rgb(${r},${g},${b})`;
+    } else {
+      const s = (t-0.5)*2;
+      const r = Math.round(239 + (133-239)*s);
+      const g = Math.round(159 + ( 79-159)*s);
+      const b = Math.round( 39 + ( 11- 39)*s);
+      return `rgb(${r},${g},${b})`;
+    }
+  }
+
+  function renderIndexUI(d){
+    const maxFreq = Math.max(...d.rows.flatMap(r=>r.cells), 1);
+    const colHdrs = d.top_terms.map(t=>
+      `<div class="heat-col-label" title="${t}">${t}</div>`).join('');
+    const rows = d.rows.map(row=>{
+      const cells = row.cells.map((v,ci)=>{
+        const bg  = cellColor(v, maxFreq);
+        const txt = v > 0 ? v : '';
+        const tip = `${d.top_terms[ci]}: ${v} in ${row.id}`;
+        return `<div class="hcell" style="background:${bg};color:${v>maxFreq*0.4?'#fff':'#888'}"
+                     title="${tip}">${txt}</div>`;
+      }).join('');
+      const top5 = row.top_terms.map(t=>`${t.term}(${t.freq})`).join(', ');
+      return `<div class="heat-row">
+        <div class="heat-row-label" title="top terms: ${top5}">${row.id} · p${row.page}</div>
+        <div class="cells">${cells}</div>
+      </div>`;
+    }).join('');
+
+    $('indexOut').innerHTML = `
+      <div style="margin-bottom:10px">
+        <b>${d.n_chunks} chunks indexed</b>
+        <span class="muted">· ${d.vocab_size.toLocaleString()} unique terms · avg ${d.avg_chunk_length} terms/chunk</span>
+        <span class="pill amber" style="margin-left:8px">0 API calls</span>
+        <span class="pill teal" style="margin-left:4px">built in milliseconds</span>
+      </div>
+      <div class="muted" style="margin-bottom:8px">
+        Heatmap of top ${d.top_terms.length} most frequent terms across all chunks.
+        Darker = more occurrences in that chunk. Hover a cell for the exact count.
+      </div>
+      <div class="heat-wrap">
+        <div class="heat-header">${colHdrs}</div>
+        ${rows}
+      </div>
+      <div class="legend">
+        <span class="lg" style="background:#f5f5f2;border:1px solid #ddd"></span> 0 (absent)
+        <span class="lg" style="background:rgb(239,159,39)"></span> medium
+        <span class="lg" style="background:rgb(133,79,11)"></span> high frequency
+      </div>`;
+  }
+
+  // ---- step 5: search ------------------------------------------------------
+  $('query').addEventListener('input', e=>{
+    const v = e.target.value.trim();
+    $('qtag').innerHTML = v
+      ? `<span class="muted">After stop-word removal → search terms will appear here after you click Search</span>`
+      : '';
+  });
+  $('topk').addEventListener('input', e=>{
+    S.topk=+e.target.value;
+    $('kV').textContent=e.target.value;
+    updateKdesc();
+  });
+  function updateKdesc(){
+    $('kdesc').textContent=`Return the ${S.topk} highest-scoring chunk${S.topk>1?'s':''} by BM25 score.`;
+  }
+  updateKdesc();
+
+  $('searchBtn').addEventListener('click', async ()=>{
+    const q = $('query').value.trim();
+    if(!q){ $('searchOut').innerHTML='<div class="err">Type a query first.</div>'; return; }
+    $('searchOut').innerHTML='<div class="spin">Scoring all chunks with BM25…</div>';
+    try{
+      const d = await post('/api/search', {query:q, top_k:S.topk});
+      renderSearchUI(d);
+      S.searched=true; refresh();
+    }catch(err){ $('searchOut').innerHTML=`<div class="err">Search failed: ${err.message}</div>`; }
+  });
+
+  function highlightTerms(text, terms){
+    if(!terms||!terms.length) return esc(text);
+    const escaped = esc(text);
+    // terms are plain alphabetic; safe to match after HTML-escaping
+    const pat = new RegExp(
+      `\\b(${terms.map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')})\\b`, 'gi'
+    );
+    return escaped.replace(pat, '<mark>$1</mark>');
+  }
+
+  function highlightCites(s){
+    return esc(s).replace(/\[c\d+,\s*p\d+\]/g, m=>`<span class="cite">${m}</span>`);
+  }
+
+  function renderSearchUI(d){
+    // Show query terms
+    if(d.query_terms.length){
+      $('qtag').innerHTML =
+        `<span class="muted">BM25 searches for:</span> `
+        + d.query_terms.map(t=>`<span class="pill amber">${esc(t)}</span>`).join(' ');
+    } else {
+      $('qtag').innerHTML = `<span class="pill red">All words removed as stop words — try more specific terms</span>`;
+    }
+
+    let html = `<div style="margin-top:4px"><b>Top-${d.top_k} results</b>
+      <span class="muted"> — BM25 score (higher = more keyword overlap)</span></div>`;
+
+    if(d.zero_results){
+      html += `<div class="warn-box">
+        ⚠️ All scores are 0 — none of the query keywords appear in any chunk.
+        Try different words, or note this is the <strong>semantic gap</strong>:
+        vector search would still find relevant chunks via meaning.
+      </div>`;
+    }
+
+    html += d.results.map(r=>{
+      const matchedPills = r.matched_terms.map(t=>
+        `<span class="pill teal">${esc(t)}</span>`).join(' ');
+      const unmatchedPills = r.unmatched_terms.map(t=>
+        `<span class="pill gray">${esc(t)}</span>`).join(' ');
+      return `
+        <div class="res">
+          <div class="res-h">
+            <span class="pill amber">${r.id}</span>
+            <span class="pill teal">p${r.page}</span>
+            ${r.source?`<span class="pill navy">${esc(r.source)}</span>`:''}
+            <div class="bar"><i style="width:${r.score_pct}%"></i></div>
+            <span class="score">${r.score.toFixed(3)}</span>
+          </div>
+          <div class="res-terms">
+            ${matchedPills
+              ? `<span class="muted">matched:</span> ${matchedPills}`
+              : `<span class="pill gray">no query terms matched</span>`}
+            ${unmatchedPills
+              ? `&nbsp;&nbsp;<span class="muted">not found:</span> ${unmatchedPills}`
+              : ''}
+          </div>
+          <div class="res-t">${highlightTerms(r.text, r.matched_terms)}</div>
+        </div>`;
+    }).join('');
+
+    $('searchOut').innerHTML = html;
+  }
+
+  // ---- step 6: answer ------------------------------------------------------
+  $('answerBtn').addEventListener('click', async ()=>{
+    const q = $('query').value.trim();
+    if(!q){ $('answerOut').innerHTML='<div class="err">Type a query in step 5 first.</div>'; return; }
+    $('answerOut').innerHTML='<div class="spin">Retrieving top-K chunks by BM25 and asking the LLM…</div>';
+    try{
+      const d = await post('/api/answer', {question:q, top_k:S.topk, model:S.llmModel, sdk:'openai'});
+      const matchHtml = d.matches.map(r=>`
+        <div class="res"><div class="res-h">
+          <span class="pill amber">${r.id}</span>
+          <span class="pill teal">p${r.page}</span>
+          ${r.source?`<span class="pill navy">${esc(r.source)}</span>`:''}
+          <span class="score">${r.score.toFixed(3)}</span></div>
+          <div class="res-t">${esc(r.text)}</div></div>`).join('');
+      $('answerOut').innerHTML =
+        `<div class="card answer" style="margin-top:0;padding:14px 16px">
+           <div class="card-head">
+             <div class="num" style="background:var(--teal)">A</div>
+             <h2>Answer <span class="muted" style="font-weight:400;font-size:12px">· ${esc(d.model)}</span></h2>
+           </div>
+           <div class="a-text" style="margin-top:8px">${highlightCites(d.answer)}</div>
+         </div>
+         <div style="margin-top:8px"><b>Chunks the LLM was given (BM25 retrieved)</b></div>
+         ${matchHtml}`;
+    }catch(err){ $('answerOut').innerHTML=`<div class="err">LLM call failed: ${err.message}</div>`; }
+  });
+
+  refresh();
+</script>
+</body>
+</html>
