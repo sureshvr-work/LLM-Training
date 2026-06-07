@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NLP Strategy Guide — Production Use Cases</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      line-height: 1.6;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 0.4rem;
+      background: linear-gradient(90deg, #60a5fa, #a78bfa, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      text-align: center;
+      color: #94a3b8;
+      margin-bottom: 2.5rem;
+      font-size: 0.95rem;
+    }
+    h2 {
+      font-size: 1.2rem;
+      color: #60a5fa;
+      margin: 2rem 0 1rem;
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 0.4rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 1.2rem;
+      margin-bottom: 2rem;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 1.2rem 1.4rem;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.8rem;
+    }
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-blue   { background: #1d4ed8; color: #bfdbfe; }
+    .badge-purple { background: #6d28d9; color: #ddd6fe; }
+    .badge-green  { background: #065f46; color: #6ee7b7; }
+    .badge-orange { background: #92400e; color: #fde68a; }
+    .badge-red    { background: #7f1d1d; color: #fca5a5; }
+    .badge-teal   { background: #134e4a; color: #99f6e4; }
+
+    .card h3 {
+      font-size: 1rem;
+      color: #f1f5f9;
+    }
+    .card .industry {
+      font-size: 0.78rem;
+      color: #94a3b8;
+      margin-bottom: 0.6rem;
+    }
+    .card p {
+      font-size: 0.88rem;
+      color: #cbd5e1;
+      margin-bottom: 0.7rem;
+    }
+    .pipeline {
+      background: #0f172a;
+      border-radius: 8px;
+      padding: 0.6rem 0.9rem;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 0.78rem;
+      color: #7dd3fc;
+      margin-bottom: 0.7rem;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .tag {
+      font-size: 0.72rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    /* Decision table */
+    .table-wrap { overflow-x: auto; margin-bottom: 2rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    thead th {
+      background: #1e293b;
+      color: #60a5fa;
+      padding: 0.7rem 1rem;
+      text-align: left;
+      border-bottom: 2px solid #334155;
+    }
+    tbody tr:nth-child(even) { background: #111827; }
+    tbody tr:hover { background: #1e293b; }
+    tbody td {
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid #1e293b;
+      color: #cbd5e1;
+      vertical-align: top;
+    }
+    .yes { color: #34d399; font-weight: 600; }
+    .no  { color: #f87171; }
+    .maybe { color: #fbbf24; }
+
+    .section-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #64748b;
+      margin: 2.5rem 0 0.8rem;
+    }
+
+    .pipeline-banner {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      margin: 0 auto 2.5rem;
+      max-width: 720px;
+      flex-wrap: wrap;
+    }
+    .pipe-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+    .pipe-box {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 0.5rem 1.1rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      white-space: nowrap;
+      position: relative;
+    }
+    .pipe-box.highlight {
+      border-color: #60a5fa;
+      color: #60a5fa;
+    }
+    .pipe-box.highlight-green {
+      border-color: #34d399;
+      color: #34d399;
+    }
+    .pipe-box.highlight-purple {
+      border-color: #a78bfa;
+      color: #a78bfa;
+    }
+    .pipe-note {
+      font-size: 0.72rem;
+      color: #64748b;
+      margin-left: 0.3rem;
+      font-style: italic;
+    }
+    .pipe-arrow {
+      font-size: 1rem;
+      color: #475569;
+      line-height: 1.4;
+      text-align: center;
+    }
+    .pipe-label {
+      font-size: 0.7rem;
+      color: #64748b;
+      text-align: center;
+      margin-top: -2px;
+      margin-bottom: 2px;
+    }
+
+    footer {
+      text-align: center;
+      color: #475569;
+      font-size: 0.8rem;
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid #1e293b;
+    }
+  </style>
+</head>
+<body>
+
+<h1>NLP Strategy Guide</h1>
+<p class="subtitle">Production use cases — when to use which chunking and NLP model strategy</p>
+
+<!-- RAG Pipeline Banner -->
+<div class="pipeline-banner">
+  <div class="pipe-step">
+    <div class="pipe-box highlight">Document</div>
+    <div class="pipe-arrow">↓ chunk</div>
+    <div class="pipe-box">Chunks <span style="color:#64748b;font-weight:400">(text)</span></div>
+    <div class="pipe-arrow">↓ embed</div>
+    <div class="pipe-box highlight-green">Vectors</div>
+    <div class="pipe-arrow">↓ store</div>
+    <div class="pipe-box highlight-green">Vector DB</div>
+    <div class="pipe-arrow">↓ query</div>
+    <div class="pipe-box" style="display:flex;align-items:center;gap:0.5rem">
+      Top-K chunks <span style="color:#64748b;font-weight:400;font-size:0.72rem">(text, not tokens)</span>
+    </div>
+    <div class="pipe-arrow">↓ send to LLM</div>
+    <div class="pipe-box highlight-purple">LLM context window</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<p class="section-label">Part 1 — Chunking Strategy by Use Case</p>
+<h2>Chunking Strategies</h2>
+<div class="grid">
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-blue">Fixed-size + overlap</span>
+    </div>
+    <p class="industry">E-commerce / Customer Support</p>
+    <h3>Product FAQ Chatbot</h3>
+    <p>Thousands of short product descriptions and FAQ entries. No consistent structure — just flat text.</p>
+    <div class="pipeline">chunk_size = 256 tokens
+overlap    = 30 tokens
+→ embed → vector DB
+→ user asks "does it fit 13 inch laptop?"
+→ retrieve top-3 → send to LLM</div>
+    <div class="tags">
+      <span class="tag">simple setup</span>
+      <span class="tag">high volume</span>
+      <span class="tag">short queries</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-purple">Paragraph-based</span>
+    </div>
+    <p class="industry">Legal / Finance</p>
+    <h3>Contract Review Assistant</h3>
+    <p>Legal contracts have clear paragraph structure. Each paragraph covers one clause — splitting mid-paragraph loses meaning.</p>
+    <div class="pipeline">split at blank lines / paragraph breaks
+→ token-cap each paragraph at 512
+→ embed → store with metadata:
+   {clause_type, page, contract_id}
+→ query: "termination clause conditions?"</div>
+    <div class="tags">
+      <span class="tag">structure-aware</span>
+      <span class="tag">metadata filtering</span>
+      <span class="tag">clause search</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-green">Document-structure</span>
+    </div>
+    <p class="industry">Healthcare</p>
+    <h3>Clinical Guidelines RAG</h3>
+    <p>Medical PDFs have sections: Diagnosis, Treatment, Dosage, Contraindications. Split by heading — each section is one chunk.</p>
+    <div class="pipeline">parse headings → split by H1/H2/H3
+→ embed each section
+→ metadata: {section, condition, version}
+→ query: "dosage for pediatric patients?"
+→ filter: section="Dosage"</div>
+    <div class="tags">
+      <span class="tag">heading-aware</span>
+      <span class="tag">filterable</span>
+      <span class="tag">high accuracy</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-orange">Semantic chunking</span>
+    </div>
+    <p class="industry">Research / Knowledge Base</p>
+    <h3>Scientific Paper Q&A</h3>
+    <p>Research papers shift topics mid-paragraph. Semantic chunking detects topic boundaries using embeddings — chunks align with ideas, not lines.</p>
+    <div class="pipeline">embed each sentence
+→ compute similarity between adjacent sentences
+→ start new chunk when similarity drops below 0.6
+→ result: chunks = coherent topics</div>
+    <div class="tags">
+      <span class="tag">most accurate</span>
+      <span class="tag">slow to build</span>
+      <span class="tag">best retrieval</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-red">Recursive split</span>
+    </div>
+    <p class="industry">General SaaS</p>
+    <h3>Internal Knowledge Base</h3>
+    <p>Mixed content — Confluence pages, Notion docs, Markdown READMEs. No consistent format. Recursive split handles all gracefully.</p>
+    <div class="pipeline">try split by: \n\n → \n → . → " "
+→ stop when chunk ≤ 512 tokens
+→ good default for unknown formats</div>
+    <div class="tags">
+      <span class="tag">mixed formats</span>
+      <span class="tag">safe default</span>
+      <span class="tag">LangChain default</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-teal">Page-level</span>
+    </div>
+    <p class="industry">Insurance / Banking</p>
+    <h3>Policy Document Search</h3>
+    <p>Users ask "what does page 12 say about flood coverage?" One page = one chunk. Simple, auditable, maps directly to physical document.</p>
+    <div class="pipeline">split by PDF page boundary
+→ token-cap: if page > 1024 tokens,
+   split into top/bottom halves
+→ metadata: {page_number, doc_id}
+→ cite source: "See page 12"</div>
+    <div class="tags">
+      <span class="tag">auditable</span>
+      <span class="tag">citable</span>
+      <span class="tag">compliance-friendly</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<p class="section-label">Part 2 — NLP Model Strategy by Use Case</p>
+<h2>NLP Model Types in Production</h2>
+<div class="grid">
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-blue">NER</span>
+    </div>
+    <p class="industry">HR / Recruiting</p>
+    <h3>Resume Parser</h3>
+    <p>Extract structured data from unstructured resumes at scale — names, companies, dates, skills — without sending to LLM.</p>
+    <div class="pipeline">spaCy NER → extract:
+  PERSON  → candidate name
+  ORG     → employer names
+  DATE    → employment dates
+  GPE     → locations
+→ store in DB with filters
+→ recruiter searches: "Java dev, 5yr exp, Bangalore"</div>
+    <div class="tags">
+      <span class="tag">spaCy</span>
+      <span class="tag">local</span>
+      <span class="tag">structured output</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-purple">Sentiment Analysis</span>
+    </div>
+    <p class="industry">Retail / E-commerce</p>
+    <h3>Product Review Dashboard</h3>
+    <p>Classify 100k product reviews per day as positive/negative/neutral. Flag negative spikes for immediate ops alert.</p>
+    <div class="pipeline">review text
+→ sentiment model (BERT fine-tuned)
+→ score: Negative 0.91
+→ if score > 0.85 AND volume spike:
+   → alert ops team via Slack
+→ dashboard: sentiment trend by SKU</div>
+    <div class="tags">
+      <span class="tag">real-time</span>
+      <span class="tag">high volume</span>
+      <span class="tag">alerting</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-green">Text Classification</span>
+    </div>
+    <p class="industry">Customer Support SaaS</p>
+    <h3>Support Ticket Router</h3>
+    <p>Automatically route incoming support tickets to the right team — Billing, Technical, Account, General — without human triage.</p>
+    <div class="pipeline">ticket text
+→ fine-tuned classifier
+→ category: "Billing" (0.94 confidence)
+→ route to billing queue
+→ if confidence < 0.6: route to human triage</div>
+    <div class="tags">
+      <span class="tag">zero human triage</span>
+      <span class="tag">fast</span>
+      <span class="tag">fallback to human</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-orange">Text Similarity</span>
+    </div>
+    <p class="industry">Legal Tech</p>
+    <h3>Duplicate Case Detector</h3>
+    <p>Law firms file thousands of cases. Detect near-duplicate cases to avoid rework — "this case is 91% similar to case #4521."</p>
+    <div class="pipeline">new case filing
+→ embed with text-embedding-3-small
+→ cosine similarity vs all past cases
+→ if similarity > 0.90:
+   → flag as potential duplicate
+   → show top-3 similar cases to lawyer</div>
+    <div class="tags">
+      <span class="tag">embeddings</span>
+      <span class="tag">cosine similarity</span>
+      <span class="tag">deduplication</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-red">Summarization</span>
+    </div>
+    <p class="industry">Finance / Banking</p>
+    <h3>Earnings Call Digest</h3>
+    <p>Analysts read 50-page earnings call transcripts. Auto-summarize into 5 bullet points — revenue, guidance, risks, highlights.</p>
+    <div class="pipeline">earnings transcript (50 pages)
+→ chunk by paragraph
+→ extractive summary per section
+→ LLM abstractive summary of summaries
+→ output: 5-bullet digest email
+→ sent to analysts before market open</div>
+    <div class="tags">
+      <span class="tag">two-stage</span>
+      <span class="tag">batch job</span>
+      <span class="tag">cost-efficient</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-teal">PII Redaction (Presidio)</span>
+    </div>
+    <p class="industry">Healthcare / Finance</p>
+    <h3>HIPAA-Compliant LLM Queries</h3>
+    <p>Hospital wants to use LLM to summarize patient notes. PII must never leave the org. Presidio redacts locally before sending.</p>
+    <div class="pipeline">patient note (raw)
+→ Presidio (local, no internet)
+→ "John Doe, SSN 123-45"
+   → "[PERSON], SSN [US_SSN]"
+→ redacted text → LLM API
+→ LLM response → return to doctor
+(PII never left the hospital network)</div>
+    <div class="tags">
+      <span class="tag">local only</span>
+      <span class="tag">HIPAA</span>
+      <span class="tag">compliance</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-blue">Relation Extraction</span>
+    </div>
+    <p class="industry">Supply Chain / Enterprise</p>
+    <h3>Knowledge Graph Builder</h3>
+    <p>Build a graph of supplier relationships from 10 years of procurement documents automatically.</p>
+    <div class="pipeline">"Acme Corp supplies steel to Ford"
+→ relation extraction model
+→ (Acme Corp) --SUPPLIES--> (Ford)
+→ entity: steel, category: raw_material
+→ store in graph DB (Neo4j)
+→ query: "who are Tier-2 suppliers for Ford?"</div>
+    <div class="tags">
+      <span class="tag">graph DB</span>
+      <span class="tag">supply chain</span>
+      <span class="tag">structured data</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-purple">Topic Modeling</span>
+    </div>
+    <p class="industry">Media / Publishing</p>
+    <h3>News Article Organizer</h3>
+    <p>Auto-tag 10,000 articles per day into topics without manual labelling. Feed into recommendation engine.</p>
+    <div class="pipeline">article text
+→ LDA / BERTopic model
+→ Topic 1: {economy, inflation, RBI} → Finance
+→ Topic 2: {match, wicket, IPL}      → Cricket
+→ tag stored with article
+→ recommendation: show Finance articles
+  to users who read Finance</div>
+    <div class="tags">
+      <span class="tag">unsupervised</span>
+      <span class="tag">auto-tagging</span>
+      <span class="tag">recommendation</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<p class="section-label">Part 3 — Quick Decision Tables</p>
+<h2>Chunking — When to Use What</h2>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Strategy</th>
+        <th>Document has structure?</th>
+        <th>Queries are short/factual?</th>
+        <th>Need citations?</th>
+        <th>Build speed</th>
+        <th>Retrieval accuracy</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Fixed-size + overlap</td>
+        <td class="no">No</td>
+        <td class="yes">Yes</td>
+        <td class="no">No</td>
+        <td class="yes">Fast</td>
+        <td class="maybe">Medium</td>
+      </tr>
+      <tr>
+        <td>Paragraph-based</td>
+        <td class="yes">Yes</td>
+        <td class="maybe">Either</td>
+        <td class="maybe">Partial</td>
+        <td class="yes">Fast</td>
+        <td class="maybe">Medium-High</td>
+      </tr>
+      <tr>
+        <td>Document-structure</td>
+        <td class="yes">Yes (headings)</td>
+        <td class="maybe">Either</td>
+        <td class="yes">Yes</td>
+        <td class="maybe">Medium</td>
+        <td class="yes">High</td>
+      </tr>
+      <tr>
+        <td>Page-level</td>
+        <td class="yes">Yes (PDF)</td>
+        <td class="no">No</td>
+        <td class="yes">Yes (page #)</td>
+        <td class="yes">Fast</td>
+        <td class="maybe">Medium</td>
+      </tr>
+      <tr>
+        <td>Recursive split</td>
+        <td class="no">Mixed</td>
+        <td class="maybe">Either</td>
+        <td class="no">No</td>
+        <td class="yes">Fast</td>
+        <td class="maybe">Medium</td>
+      </tr>
+      <tr>
+        <td>Semantic chunking</td>
+        <td class="no">No</td>
+        <td class="no">No (complex)</td>
+        <td class="no">No</td>
+        <td class="no">Slow</td>
+        <td class="yes">Highest</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>NLP Model — When to Use What</h2>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Model Type</th>
+        <th>Use when...</th>
+        <th>Local / Cloud</th>
+        <th>Cost</th>
+        <th>Best library</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>NER</td>
+        <td>Extract structured fields from text</td>
+        <td class="yes">Local</td>
+        <td class="yes">Free</td>
+        <td>spaCy</td>
+      </tr>
+      <tr>
+        <td>PII Redaction</td>
+        <td>Must not expose PII to LLM / cloud</td>
+        <td class="yes">Local</td>
+        <td class="yes">Free</td>
+        <td>Presidio</td>
+      </tr>
+      <tr>
+        <td>Sentiment</td>
+        <td>Classify opinion / emotion at scale</td>
+        <td class="yes">Local</td>
+        <td class="yes">Free</td>
+        <td>HuggingFace / VADER</td>
+      </tr>
+      <tr>
+        <td>Text Classification</td>
+        <td>Route, tag, or categorize documents</td>
+        <td class="yes">Local</td>
+        <td class="yes">Free</td>
+        <td>HuggingFace / scikit-learn</td>
+      </tr>
+      <tr>
+        <td>Text Similarity</td>
+        <td>Deduplicate, semantic search, RAG retrieval</td>
+        <td class="maybe">Local or Cloud</td>
+        <td class="maybe">Low</td>
+        <td>sentence-transformers / OpenAI embed</td>
+      </tr>
+      <tr>
+        <td>Summarization</td>
+        <td>Condense long documents to digest</td>
+        <td class="maybe">Cloud preferred</td>
+        <td class="maybe">Medium</td>
+        <td>LLM API / BART</td>
+      </tr>
+      <tr>
+        <td>Topic Modeling</td>
+        <td>Auto-tag large corpus, unsupervised</td>
+        <td class="yes">Local</td>
+        <td class="yes">Free</td>
+        <td>BERTopic / LDA</td>
+      </tr>
+      <tr>
+        <td>Relation Extraction</td>
+        <td>Build knowledge graphs from text</td>
+        <td class="maybe">Local or LLM</td>
+        <td class="maybe">Medium</td>
+        <td>spaCy / LLM prompt</td>
+      </tr>
+      <tr>
+        <td>LLM-based NER</td>
+        <td>Custom entities, high flexibility needed</td>
+        <td class="no">Cloud</td>
+        <td class="no">High</td>
+        <td>OpenAI / Anthropic API</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<footer>
+  LLM Training Reference — NLP Strategy Guide &nbsp;|&nbsp; Generated 2026
+</footer>
+
+</body>
+</html>
