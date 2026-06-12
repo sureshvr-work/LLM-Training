@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Provider Capability Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1d3a5f;--body:#2b3441;--muted:#6b7785;--line:#e3e8ee;--wash:#f6f8fa;--card:#fff;
+    --openai:#10a37f;--anthropic:#d97757;--google:#4285f4;--lc:#5f3dc4;
+    --err:#c92a2a;--hi:#2f9e44;--amber:#b06a00;--red:#e03131;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(900px 460px at 88% -8%,rgba(95,61,196,.06),transparent 60%),var(--wash);
+       color:var(--body);font-family:"IBM Plex Sans",sans-serif;line-height:1.5}
+  .wrap{max-width:1300px;margin:0 auto;padding:28px 20px 80px}
+  header h1{font-family:"Fraunces",serif;font-weight:600;color:var(--ink);font-size:27px;margin:0 0 4px}
+  header p{margin:0 0 20px;color:var(--muted);font-size:14px}
+  .lab{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start}
+  @media(max-width:900px){.lab{grid-template-columns:1fr}}
+  .side{position:sticky;top:16px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 2px rgba(16,30,54,.04)}
+  .panel h2{font-family:"Fraunces",serif;font-size:12px;color:var(--ink);margin:0 0 12px;text-transform:uppercase;letter-spacing:.08em}
+  .tabs{display:flex;flex-wrap:wrap;gap:6px}
+  .tabs button{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:7px 12px;font-family:"IBM Plex Sans";font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+  .tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .capdesc{font-size:12.5px;color:var(--body);margin-top:10px;line-height:1.5}
+  .capdesc .diff{font-family:"IBM Plex Mono";font-size:11px;color:var(--muted);margin-top:5px}
+  label{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;display:block;margin:13px 0 6px}
+  textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-family:"IBM Plex Sans";font-size:13px;color:var(--body);background:#fff;resize:vertical}
+  textarea:focus,input:focus{outline:none;border-color:var(--ink)}
+  .drop{border:2px dashed var(--line);border-radius:11px;padding:18px;text-align:center;cursor:pointer;background:var(--wash)}
+  .drop.over{border-color:var(--lc);background:#f3effc}
+  .drop .big{font-weight:600;color:var(--ink);font-size:14px} .drop .small{color:var(--muted);font-size:11.5px;margin-top:4px;font-family:"IBM Plex Mono"}
+  .chip{display:flex;align-items:center;gap:9px;margin-top:11px;border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-size:12.5px}
+  .chip .fn{font-weight:600;color:var(--ink);word-break:break-all} .chip .rm{margin-left:auto;border:0;background:var(--wash);border-radius:7px;padding:4px 9px;cursor:pointer;color:var(--muted)}
+  .infonote{background:#e6f3f6;border:1px solid #b6dde4;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#0b5563;line-height:1.5;margin-top:11px}
+  .infonote b{color:#083d49}
+  .ceiling{background:#fdecec;border:1px solid var(--red);border-left:4px solid var(--red);border-radius:9px;padding:10px 12px;font-size:12.5px;color:#a01818;line-height:1.5;margin-top:11px}
+  .ceiling b{color:#7a1010} .ceiling code{font-family:"IBM Plex Mono";font-size:11px;background:#fff;border:1px solid #f3b6b6;border-radius:4px;padding:0 4px;color:#a01818}
+  .sizemeter{font-family:"IBM Plex Mono";font-size:11px;color:#6b3e00;margin-top:8px;background:#fff8ee;border:1px dashed #ffd8a8;border-radius:8px;padding:7px 10px}
+  .lcrow{display:flex;align-items:center;gap:7px;margin-top:6px;font-size:12px;color:var(--muted)}
+  .lcrow select{border:1px solid var(--line);border-radius:8px;padding:4px 7px;font-family:"IBM Plex Sans";font-size:12.5px}
+  .runs{display:flex;flex-direction:column;gap:7px;margin-top:6px}
+  .runp{display:flex;align-items:center;gap:9px;border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:8px 11px;cursor:pointer;font-family:"IBM Plex Sans";font-size:13px;font-weight:600;color:var(--ink)}
+  .runp:disabled{opacity:.45;cursor:default} .runp .dot{width:9px;height:9px;border-radius:50%}
+  .runp .st{margin-left:auto;font-family:"IBM Plex Mono";font-size:10px;color:var(--muted)}
+  .runall{width:100%;margin-top:9px;background:var(--lc);color:#fff;border:0;border-radius:9px;padding:10px;font-family:"IBM Plex Sans";font-weight:600;font-size:13.5px;cursor:pointer}
+  .runall:disabled{opacity:.45;cursor:default} .runall .n{opacity:.7;font-family:"IBM Plex Mono";font-size:11px}
+  /* envelope visual */
+  .ev .t{font-family:"Fraunces",serif;font-size:13px;color:var(--ink);font-weight:600;margin-bottom:11px}
+  .evrow{display:flex;align-items:stretch;gap:9px}
+  .bytes{flex:0 0 78px;background:#eef0f3;border:1px dashed #b9c2cc;border-radius:9px;display:flex;align-items:center;justify-content:center;text-align:center;font-family:"IBM Plex Mono";font-size:10px;color:#46505d;padding:6px}
+  .arrow{display:flex;align-items:center;color:#b9c2cc;font-size:18px}
+  .envs{flex:1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  @media(max-width:620px){.envs{grid-template-columns:1fr}}
+  .env{border:1px solid var(--line);border-top-width:3px;border-radius:8px;padding:8px 9px}
+  .env.oa{border-top-color:var(--openai)} .env.an{border-top-color:var(--anthropic)} .env.go{border-top-color:var(--google)}
+  .env .p{font-family:"IBM Plex Mono";font-size:10px;font-weight:600;margin-bottom:4px}
+  .env.oa .p{color:#0b6b50} .env.an .p{color:#9a4a30} .env.go .p{color:#2c5fb3}
+  .env code{font-family:"IBM Plex Mono";font-size:10.5px;color:#3a4452;display:block;line-height:1.4;word-break:break-all}
+  .hlk{background:#f0c44a;color:#1b1300;border-radius:3px;padding:0 3px}
+  .lcwrap{margin-top:9px;background:#f4f1fc;border:1px solid #ded3f5;border-radius:8px;padding:8px 11px;font-size:11.5px;color:#3c3489;line-height:1.45}
+  .lcwrap code{font-family:"IBM Plex Mono";font-size:10.5px;background:#fff;border:1px solid #ded3f5;border-radius:4px;padding:0 4px}
+  /* comparison grid */
+  .gl{font-family:"IBM Plex Mono";font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:2px 0 10px}
+  .cgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  @media(max-width:1180px){.cgrid{grid-template-columns:1fr 1fr}}
+  @media(max-width:620px){.cgrid{grid-template-columns:1fr}}
+  .pc{border:1px solid var(--line);border-top-width:3px;border-radius:11px;padding:11px 12px;background:#fff;min-height:120px}
+  .pc.oa{border-top-color:var(--openai)} .pc.an{border-top-color:var(--anthropic)} .pc.go{border-top-color:var(--google)} .pc.lc{border-top-color:var(--lc)}
+  .pc .h{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+  .pc .nm{font-family:"IBM Plex Mono";font-size:11px;font-weight:600;color:var(--ink)}
+  .pc .badge{margin-left:auto;font-family:"IBM Plex Mono";font-size:9px;border-radius:5px;padding:1px 6px;text-transform:uppercase;letter-spacing:.04em}
+  .badge.none{background:#eef0f3;color:#9aa4ae} .badge.run{background:#fff3e0;color:var(--amber)} .badge.ok{background:#e7f6ec;color:var(--hi)} .badge.no{background:#fdf0e3;color:var(--amber)} .badge.er{background:#fdecec;color:var(--err)}
+  .pc .out{font-size:12.5px;color:#28323d;line-height:1.45;margin-bottom:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+  .pc .out.empty{color:#aab2bb;font-style:italic}
+  .pc .note{font-size:11px;color:#8a5300;background:#fff7ec;border:1px solid #ffe0b3;border-radius:7px;padding:6px 8px;margin-bottom:8px;line-height:1.4}
+  .pc .er{font-size:11.5px;color:var(--err);font-family:"IBM Plex Mono";white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:8px}
+  .pc .envtag{font-family:"IBM Plex Mono";font-size:10px;color:#5b6573;border-top:1px solid #eef0f3;padding-top:7px}
+  .pc details{margin-top:7px}
+  .pc summary{font-family:"IBM Plex Mono";font-size:10.5px;color:var(--lc);cursor:pointer}
+  pre.code{font-family:"IBM Plex Mono";font-size:10.5px;background:#0f1b2d;color:#cfe3f5;border-radius:8px;padding:10px;margin:7px 0 0;overflow:auto;max-height:240px;white-space:pre;line-height:1.5}
+  pre.code .hl{background:#f0c44a;color:#1b1300;border-radius:3px;padding:0 2px}
+  .steplab{font-family:"IBM Plex Mono";font-size:10px;color:var(--muted);margin-top:8px}
+  .placeholder{color:var(--muted);font-size:13px;font-family:"IBM Plex Mono";text-align:center;padding:36px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Provider Capability Lab</h1>
+    <p>Run the same task on all four — results stay side by side so you can compare. Each cell shows the model output and the exact request that ran.</p>
+  </header>
+
+  <div class="lab">
+    <!-- LEFT: controls -->
+    <div class="side">
+      <div class="panel">
+        <h2>1 · Capability</h2>
+        <div class="tabs" id="caps"></div>
+        <div class="capdesc" id="capdesc"></div>
+      </div>
+      <div class="panel">
+        <h2>2 · Input</h2>
+        <div id="inputarea"></div>
+        <label>Prompt</label>
+        <input type="text" id="prompt">
+      </div>
+      <div class="panel">
+        <h2>3 · Run</h2>
+        <div class="runs" id="runs"></div>
+        <div class="lcrow" id="lcrow" style="display:none">LangChain target:
+          <select id="lctarget"><option value="openai">openai</option><option value="anthropic">anthropic</option><option value="google">google_genai</option></select>
+        </div>
+        <button class="runall" id="runall" disabled>Run all <span class="n">· 4 calls ▶</span></button>
+      </div>
+    </div>
+
+    <!-- RIGHT: comparison -->
+    <div class="main">
+      <div class="panel" id="envpanel" style="display:none">
+        <h2>Envelope · same bytes, different wrapper</h2>
+        <div class="ev" id="ev"></div>
+      </div>
+      <div class="panel">
+        <h2>4 · Output comparison</h2>
+        <div class="gl">Each provider keeps its cell — run them in any order and compare.</div>
+        <div class="cgrid" id="cgrid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CAPS = [
+  {id:"text",  label:"Text",  kind:"txt", accept:".txt,.md,.csv", input:"text", base64:false,
+   desc:"Send plain text in the message body.", diff:"All three just put text in the message."},
+  {id:"pdf",   label:"PDF",   kind:"pdf", accept:".pdf", input:"file", base64:true,
+   desc:"Send a PDF inline (base64). Read natively as page-images + text.", diff:"OpenAI input_file · Anthropic document · Google inlineData."},
+  {id:"image", label:"Image", kind:"img", accept:"image/*", input:"file", base64:true,
+   desc:"Send an image to the model's vision.", diff:"OpenAI input_image · Anthropic image · Google inlineData."},
+  {id:"audio", label:"Audio", kind:"aud", accept:"audio/*", input:"file", base64:true,
+   desc:"Audio in. Gemini native · OpenAI transcription · Anthropic none.", diff:"Different endpoints entirely."},
+  {id:"files", label:"Files API", kind:"pdf", accept:".pdf", input:"file", base64:true,
+   desc:"Upload once, reference by id — two steps.", diff:"OpenAI/Anthropic /v1/files · Google File API."},
+];
+const PROVS = [
+  {id:"openai", label:"OpenAI", cls:"oa", color:"#10a37f"},
+  {id:"anthropic", label:"Anthropic", cls:"an", color:"#d97757"},
+  {id:"google", label:"Google", cls:"go", color:"#4285f4"},
+  {id:"langchain", label:"LangChain", cls:"lc", color:"#5f3dc4"},
+];
+const ENVELOPE = {
+  pdf:   {oa:["input_file.","file_data"], an:["document.source.","data"], go:["inlineData.","data"], lc:'{type:"file", source_type:"base64", …}'},
+  image: {oa:["input_image.","image_url"], an:["image.source.","data"], go:["inlineData.","data"], lc:'{type:"image", source_type:"base64", …}'},
+  files: {oa:["input_file.","file_id"], an:["document.source.","file_id"], go:["File API ","uri"], lc:'loader → Document'},
+};
+const HLT = {openai:['"input_file"','"file_data"','"image_url"','"file_id"'],anthropic:['"document"','"media_type"','"image"','"file_id"'],google:['"inlineData"','"mimeType"'],langchain:['"file"','"image"','"source_type"','"mime_type"']};
+const PROMPTS = {text:"Summarize this document in one sentence.",pdf:"What is this document about? One sentence.",image:"Describe this image in one sentence.",audio:"Transcribe this audio.",files:"What is this document about? One sentence."};
+const SAMPLE_TEXT = "RAMALINGAM NAIR — Senior Integration Architect. 18 years in banking and healthcare IT. Skills: Java, Spring Boot, Kafka, GCP, RAG. Email: rv@example.com";
+
+let cap="text", file=null, lcTarget="openai", results={};
+const $ = s => document.querySelector(s);
+function esc(s){ return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+function curcap(){ return CAPS.find(c=>c.id===cap); }
+function isB64(){ return curcap().base64; }
+function showEnv(){ return ["pdf","image","files"].includes(cap); }
+
+// capability tabs
+const capsEl=$("#caps");
+CAPS.forEach(c=>{ const b=document.createElement("button"); b.textContent=c.label; b.dataset.c=c.id; b.className=c.id===cap?"on":"";
+  b.onclick=()=>{ cap=c.id; results={}; renderCaps(); renderInput(); renderCompare(); }; capsEl.appendChild(b); });
+function renderCaps(){
+  [...capsEl.children].forEach(b=>b.classList.toggle("on",b.dataset.c===cap));
+  const c=curcap(); $("#capdesc").innerHTML=c.desc+'<div class="diff">'+c.diff+'</div>';
+  $("#prompt").value=PROMPTS[cap];
+}
+
+// run buttons
+const runsEl=$("#runs");
+PROVS.forEach(p=>{ const b=document.createElement("button"); b.className="runp"; b.dataset.p=p.id;
+  b.innerHTML='<span class="dot" style="background:'+p.color+'"></span>'+p.label+'<span class="st" id="st-'+p.id+'">run</span>';
+  b.onclick=()=>runProvider(p.id); runsEl.appendChild(b); });
+$("#runall").onclick=runAll;
+$("#lctarget").onchange=e=>{ lcTarget=e.target.value; };
+
+// input
+function renderInput(){
+  const c=curcap(), host=$("#inputarea");
+  if(c.input==="text"){
+    host.innerHTML='<label>Text</label><textarea id="textbox" rows="4"></textarea>';
+    $("#textbox").value=SAMPLE_TEXT; file=null;
+  } else {
+    let extra="";
+    if(isB64()) extra='<div class="infonote"><b>What “PDF/image support” means:</b> the model turns each page into an image <b>and</b> reads the text — it is seeing the page, not parsing a text layer.</div>'+
+      '<div class="ceiling"><b>Important — the inline ceiling:</b> base64 is ~33% larger than the file, and every provider caps it (tens of MB + page limits). For big or repeated documents, use the <b>Files API</b> instead — upload once, reference by <code>file_id</code>.</div>';
+    host.innerHTML='<div class="drop" id="drop"><div class="big">Drop a file or click</div><div class="small">'+c.accept+'</div></div>'+
+      '<input type="file" id="fileinput" accept="'+c.accept+'" style="display:none"><div id="chip"></div>'+extra;
+    wireDrop(); file=null;
+  }
+  renderCaps(); updateRun();
+}
+function wireDrop(){
+  const drop=$("#drop"), fi=$("#fileinput");
+  drop.onclick=()=>fi.click();
+  ["dragenter","dragover"].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add("over");}));
+  ["dragleave","drop"].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove("over");}));
+  drop.addEventListener("drop",ev=>handleFile(ev.dataTransfer.files[0]));
+  fi.onchange=()=>handleFile(fi.files[0]);
+}
+function handleFile(f){
+  if(!f) return; const r=new FileReader();
+  r.onload=()=>{ file={b64:(r.result.split(",")[1]||""),media:f.type||"application/octet-stream",name:f.name,size:f.size};
+    results={};
+    let meter="";
+    if(isB64()){ const fk=(f.size/1024).toFixed(1), bk=(file.b64.length/1024).toFixed(1);
+      meter='<div class="sizemeter">file '+fk+' KB → base64 '+bk+' KB (+~33%), sent inline on <b>every</b> call.</div>'; }
+    $("#chip").innerHTML='<div class="chip"><span class="fn">'+f.name+'</span><span style="color:var(--muted);font-family:IBM Plex Mono;font-size:10.5px">'+(f.type||"")+'</span><button class="rm" id="rmf">remove</button></div>'+meter;
+    $("#rmf").onclick=()=>{file=null;results={};$("#chip").innerHTML="";updateRun();renderCompare();};
+    updateRun(); renderCompare();
+  };
+  r.readAsDataURL(f);
+}
+function inputReady(){ return curcap().input==="text" ? ($("#textbox")&&$("#textbox").value.trim().length>0) : !!file; }
+function updateRun(){
+  const ready=inputReady();
+  document.querySelectorAll(".runp").forEach(b=>b.disabled=!ready);
+  $("#runall").disabled=!ready;
+}
+document.addEventListener("input",e=>{ if(e.target.id==="textbox") updateRun(); });
+
+function buildPayload(p){
+  const c=curcap(), pay={capability:cap, provider:p, kind:c.kind, prompt:$("#prompt").value, lc_target:lcTarget};
+  if(c.input==="text") pay.text=$("#textbox").value; else { pay.data_b64=file.b64; pay.media_type=file.media; pay.filename=file.name; }
+  return pay;
+}
+async function runProvider(p){
+  if(!inputReady()) return;
+  results[p]={status:"running"}; setStatus(p,"running"); renderCompare();
+  try{
+    const r=await fetch("/api/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(buildPayload(p))});
+    const t=await r.text(); let d;
+    try{ d=JSON.parse(t); }catch(_){ results[p]={status:"error",error:"non-JSON (HTTP "+r.status+")"}; }
+    if(d){ if(!r.ok) results[p]={status:"error",error:d.detail||"failed"}; else results[p]={status:"ran",data:d}; }
+  }catch(e){ results[p]={status:"error",error:e.message}; }
+  setStatus(p, results[p].status); renderCompare();
+}
+async function runAll(){ for(const p of PROVS){ await runProvider(p.id); } }
+function setStatus(p,s){ const el=$("#st-"+p); if(el) el.textContent = s==="running"?"…":s==="ran"?"✓":s==="error"?"✕":"run"; }
+
+// envelope visual
+function hk(arr){ return arr ? esc(arr[0])+'<span class="hlk">'+esc(arr[1])+'</span>' : ""; }
+function renderEnv(){
+  const panel=$("#envpanel");
+  if(!showEnv()){ panel.style.display="none"; return; }
+  panel.style.display="block";
+  const e=ENVELOPE[cap];
+  $("#ev").innerHTML =
+    '<div class="t">Same bytes → different envelopes</div>'+
+    '<div class="evrow"><div class="bytes">'+(cap==="image"?"image":"PDF")+'<br>identical<br>base64</div><div class="arrow">→</div>'+
+    '<div class="envs">'+
+      '<div class="env oa"><div class="p">OpenAI</div><code>'+hk(e.oa)+'</code></div>'+
+      '<div class="env an"><div class="p">Anthropic</div><code>'+hk(e.an)+'</code></div>'+
+      '<div class="env go"><div class="p">Google</div><code>'+hk(e.go)+'</code></div>'+
+    '</div></div>'+
+    '<div class="lcwrap"><b>LangChain</b> folds all three into one shape → <code>'+esc(e.lc)+'</code>. Three keys, three media-type fields, one identical payload — that gap is the whole reason the abstraction exists.</div>';
+}
+
+// comparison grid
+function codeHtml(code, tokens){
+  let safe=esc(code);
+  if(tokens) tokens.forEach(t=>{ const x=esc(t); if(x&&safe.indexOf(x)>=0) safe=safe.split(x).join('<span class="hl">'+x+'</span>'); });
+  return safe;
+}
+function envtagFor(p){
+  if(!showEnv()) return "";
+  const map={openai:"oa",anthropic:"an",google:"go",langchain:null};
+  const e=ENVELOPE[cap];
+  if(p==="langchain") return '<div class="envtag">envelope: '+esc(e.lc)+'</div>';
+  const arr=e[map[p]]; return '<div class="envtag">envelope: '+hk(arr)+'</div>';
+}
+function card(p){
+  const res=results[p.id], tokens=HLT[p.id];
+  let badge='<span class="badge none">not run</span>', inner='<div class="out empty">click '+p.label+' to fill this cell…</div>';
+  if(res){
+    if(res.status==="running"){ badge='<span class="badge run">running…</span>'; inner='<div class="out empty">calling '+p.label+'…</div>'; }
+    else if(res.status==="error"){ badge='<span class="badge er">error</span>'; inner='<div class="er">'+esc(res.error)+'</div>'; }
+    else {
+      const d=res.data;
+      badge = d.supported ? '<span class="badge ok">ran</span>' : '<span class="badge no">not native</span>';
+      inner="";
+      if(d.note) inner+='<div class="note">'+esc(d.note)+'</div>';
+      inner+= d.output ? '<div class="out">'+esc(d.output)+'</div>' : '<div class="out empty">(no text output)</div>';
+      let code="";
+      (d.steps||[]).forEach(s=>{ code+='<div class="steplab">'+esc(s.label)+'</div><pre class="code">'+codeHtml(s.curl,tokens)+'</pre>'; });
+      if(d.lc_code) code+='<pre class="code">'+codeHtml(d.lc_code,tokens)+'</pre>';
+      if(code) inner+='<details><summary>show request</summary>'+code+'</details>';
+      inner+=envtagFor(p.id);
+    }
+  } else { inner+=envtagFor(p.id); }
+  const model = res&&res.data ? esc(res.data.model||"") : "";
+  return '<div class="pc '+p.cls+'"><div class="h"><span class="nm">'+p.label+(model?' · '+model:'')+'</span>'+badge+'</div>'+inner+'</div>';
+}
+function renderCompare(){
+  renderEnv();
+  $("#cgrid").innerHTML = PROVS.map(card).join("");
+}
+
+renderCaps(); renderInput(); renderCompare();
+</script>
+</body>
+</html>

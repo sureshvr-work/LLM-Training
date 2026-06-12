@@ -1,0 +1,4 @@
+cd no_rag_demo
+chmod -R a+r .            # everyone can read all files
+chmod a+x backend frontend litellm   # dirs need execute(traverse) too
+docker compose up --build -d

@@ -1,0 +1,23 @@
+# Two containers:
+#   frontend  — nginx, serves the page + proxies /api/* to the backend
+#   backend   — FastAPI, imports the shared llm/ package
+#
+# Setup:
+#   1. Copy .env.example to .env and fill in the keys you'll demo.
+#   2. docker compose up --build
+#   3. Open http://localhost:8080
+services:
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+  backend:
+    # Build context is the repo root (".") so the image can copy BOTH
+    # backend/ and the shared llm/ package. Dockerfile lives in backend/.
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: .env          # OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY

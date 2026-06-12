@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+httpx
+
+# LangChain interface (second way to call the models).
+# Tip: pin exact versions for classroom reproducibility once you've tested,
+# e.g. langchain==0.3.x — LangChain moves fast.
+langchain
+langchain-openai
+langchain-anthropic
+langchain-google-genai        # 4.0.0+ uses the consolidated google-genai SDK

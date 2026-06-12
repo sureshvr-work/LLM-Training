@@ -1,0 +1,284 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Three Providers · request in / response out</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#1d3a5f; --body:#2b3441; --muted:#6b7785; --line:#e3e8ee;
+      --wash:#f6f8fa; --card:#fff;
+      --openai:#10a37f; --anthropic:#d97757; --google:#4285f4;
+      --in:#0b7285; --out:#5f3dc4; --err:#c92a2a;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:
+          radial-gradient(900px 460px at 88% -8%,rgba(16,163,127,.06),transparent 60%),
+          var(--wash);
+         color:var(--body);font-family:"IBM Plex Sans",sans-serif;line-height:1.5}
+    .wrap{max-width:1080px;margin:0 auto;padding:32px 20px 80px}
+    header h1{font-family:"Fraunces",serif;font-weight:600;color:var(--ink);
+              font-size:30px;margin:0 0 4px;letter-spacing:-.01em}
+    header p{margin:0 0 26px;color:var(--muted);font-size:14.5px}
+    header b{color:var(--body)}
+
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;
+           padding:18px 20px;margin-bottom:18px;box-shadow:0 1px 2px rgba(16,30,54,.04)}
+    .panel h2{font-family:"Fraunces",serif;font-size:13px;color:var(--ink);
+              margin:0 0 14px;text-transform:uppercase;letter-spacing:.08em}
+
+    /* model picker */
+    .models{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .m{border:1.5px solid var(--line);border-radius:11px;padding:14px;cursor:pointer;
+       transition:.14s;background:#fff;position:relative}
+    .m:hover{border-color:var(--accent)}
+    .m.on{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+    .m .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:7px}
+    .m .pn{font-weight:600;color:var(--ink);font-size:15px}
+    .m .mdl{font-family:"IBM Plex Mono";font-size:11.5px;color:var(--muted);margin-top:4px}
+
+    label{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;
+          letter-spacing:.05em;display:block;margin:0 0 6px}
+    textarea,input{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+          font-family:"IBM Plex Sans";font-size:14px;color:var(--body);background:#fff;resize:vertical}
+    textarea:focus,input:focus{outline:none;border-color:var(--ink)}
+    .row{display:grid;grid-template-columns:1fr 120px 120px 120px;gap:14px;margin-top:14px}
+    .field{margin-top:14px}
+
+    .send{margin-top:16px;background:var(--ink);color:#fff;border:0;border-radius:10px;
+          padding:12px 22px;font-family:"IBM Plex Sans";font-weight:600;font-size:14.5px;cursor:pointer}
+    .send:disabled{opacity:.5;cursor:default}
+
+    /* in/out columns */
+    .io{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    @media(max-width:760px){.io{grid-template-columns:1fr}.models{grid-template-columns:1fr}.row{grid-template-columns:1fr}}
+    .io .panel{margin:0}
+    .tag{font-family:"IBM Plex Mono";font-size:10.5px;font-weight:500;padding:2px 8px;border-radius:5px;
+         text-transform:uppercase;letter-spacing:.06em}
+    .tag.in{background:#e3f3f6;color:var(--in)}
+    .tag.out{background:#efe9fb;color:var(--out)}
+    .meta{font-family:"IBM Plex Mono";font-size:11.5px;color:var(--muted);
+          margin:12px 0;word-break:break-all;line-height:1.7}
+    .meta b{color:var(--body)}
+    pre{font-family:"IBM Plex Mono";font-size:12px;background:var(--wash);border:1px solid var(--line);
+        border-radius:9px;padding:12px;overflow:auto;max-height:340px;margin:0;color:#28323d}
+    .answer{font-size:15px;white-space:pre-wrap;color:var(--body)}
+    .err{color:var(--err);font-family:"IBM Plex Mono";font-size:12.5px;white-space:pre-wrap}
+    .hint{color:var(--muted);font-size:13px}
+
+    /* interface segmented toggle */
+    .seg{display:inline-flex;border:1.5px solid var(--line);border-radius:11px;padding:4px;gap:4px;background:#fff}
+    .seg button{border:0;background:transparent;cursor:pointer;padding:9px 18px;border-radius:8px;
+         font-family:"IBM Plex Sans";font-size:14px;font-weight:600;color:var(--muted);transition:.14s}
+    .seg button.on{background:var(--ink);color:#fff}
+    .segsub{font-family:"IBM Plex Mono";font-size:11.5px;color:var(--muted);margin-top:10px}
+
+    /* Anthropic-only: choose temperature OR top_p (it rejects both) */
+    .anthtune{display:none;margin-top:14px;padding:11px 13px;border:1px dashed var(--anthropic);
+         border-radius:10px;background:#fdf3ee}
+    .anthtune.on{display:block}
+    .anthtune .lbl{font-family:"IBM Plex Mono";font-size:11px;color:var(--anthropic);
+         text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+    .anthtune label{display:inline-flex;align-items:center;gap:6px;margin-right:18px;
+         font-size:14px;font-weight:500;color:var(--body);text-transform:none;letter-spacing:0;cursor:pointer}
+    .anthtune input{width:auto}
+    input:disabled{background:#eef1f4;color:#aab2bd;cursor:not-allowed}
+
+    /* Gemini-only: thinking-token caveat on Max tokens */
+    .tokhint{display:none;margin-top:10px;font-family:"IBM Plex Mono";font-size:11.5px;
+         line-height:1.6;color:var(--google);background:#eef3fe;border:1px solid #d4e2fc;
+         border-radius:9px;padding:9px 12px}
+    .tokhint.on{display:block}
+    .tokhint b{color:var(--body)}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Request in · Response out</h1>
+    <p>Pick an <b>interface</b> and a <b>model</b>. The backend makes the call and shows you
+      exactly what was sent and what came back — so you can see how <b>raw REST</b> exposes
+      each provider's quirks while <b>LangChain</b> hides them behind one shape.</p>
+  </header>
+
+  <div class="panel">
+    <h2>1 · Pick an interface</h2>
+    <div class="seg" id="seg">
+      <button data-iface="raw" class="on">Raw REST</button>
+      <button data-iface="langchain">LangChain</button>
+    </div>
+    <div class="segsub" id="segsub">Raw REST — httpx straight to each provider's native API.</div>
+  </div>
+
+  <div class="panel">
+    <h2>2 · Pick a model</h2>
+    <div class="models" id="models"></div>
+  </div>
+
+  <div class="panel">
+    <h2>3 · Ask something</h2>
+    <div class="field">
+      <label>System prompt (optional)</label>
+      <textarea id="system" rows="2" placeholder="You are a concise assistant.">You are a concise assistant.</textarea>
+    </div>
+    <div class="field">
+      <label>User message</label>
+      <textarea id="user" rows="3" placeholder="Explain a circuit breaker in one sentence.">Explain a circuit breaker in one sentence.</textarea>
+    </div>
+    <div class="row">
+      <div></div>
+      <div><label>Temperature</label><input id="temp" type="number" step="0.1" min="0" max="2" value="0.7"></div>
+      <div><label>Top-p</label><input id="topp" type="number" step="0.05" min="0" max="1" value="1"></div>
+      <div><label>Max tokens</label><input id="max" type="number" min="1" value="300"></div>
+    </div>
+    <div class="tokhint" id="tokhint">
+      ⚠ Gemini counts its hidden <b>thinking</b> tokens against Max tokens — a low cap can be eaten by thinking and truncate the answer. Use ~1024+ for full replies.
+    </div>
+    <div class="anthtune" id="anthtune">
+      <div class="lbl">Anthropic accepts only one sampler — pick which to send</div>
+      <label><input type="radio" name="anthtune" value="temperature" checked> Temperature</label>
+      <label><input type="radio" name="anthtune" value="top_p"> Top-p</label>
+    </div>
+    <button class="send" id="send">Send to model →</button>
+  </div>
+
+  <div class="panel" id="result" style="display:none">
+    <h2>4 · What happened</h2>
+    <div class="field">
+      <label>Answer</label>
+      <div class="answer" id="answer"></div>
+    </div>
+    <div class="io" style="margin-top:18px">
+      <div class="panel">
+        <span class="tag in">Request — what we sent</span>
+        <div class="meta" id="metaIn"></div>
+        <pre id="reqOut"></pre>
+      </div>
+      <div class="panel">
+        <span class="tag out">Response — what came back</span>
+        <div class="meta" id="metaOut"></div>
+        <pre id="resOut"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const MODELS = [
+    {id:"openai",    name:"OpenAI",    model:"gpt-4o-mini",      color:"var(--openai)"},
+    {id:"anthropic", name:"Anthropic", model:"claude-haiku-4-5", color:"var(--anthropic)"},
+    {id:"google",    name:"Google",    model:"gemini-2.5-flash", color:"var(--google)"},
+  ];
+  let chosen = "openai";
+  let iface = "raw";
+
+  const $ = s => document.querySelector(s);
+
+  // interface toggle
+  const SEGSUB = {
+    raw: "Raw REST — httpx straight to each provider's native API.",
+    langchain: "LangChain — init_chat_model('provider:model') · one call for all three.",
+  };
+  $("#seg").addEventListener("click", e => {
+    const btn = e.target.closest("button[data-iface]");
+    if (!btn) return;
+    iface = btn.dataset.iface;
+    [...$("#seg").children].forEach(b => b.classList.toggle("on", b === btn));
+    $("#segsub").textContent = SEGSUB[iface];
+  });
+
+  const box = $("#models");
+  MODELS.forEach(m => {
+    const el = document.createElement("div");
+    el.className = "m" + (m.id === chosen ? " on" : "");
+    el.style.setProperty("--accent", m.color);
+    el.innerHTML = `<div class="pn"><span class="dot"></span>${m.name}</div><div class="mdl">${m.model}</div>`;
+    el.onclick = () => {
+      chosen = m.id;
+      [...box.children].forEach(c => c.classList.remove("on"));
+      el.classList.add("on");
+      refreshSampler();
+    };
+    box.appendChild(el);
+  });
+
+  // Anthropic rejects temperature+top_p together. Show a radio only for it,
+  // and grey out whichever sampler isn't selected so it's clear what's sent.
+  function anthSampler() {
+    const r = document.querySelector('input[name="anthtune"]:checked');
+    return r ? r.value : "temperature";
+  }
+  function refreshSampler() {
+    const isAnth = chosen === "anthropic";
+    $("#anthtune").classList.toggle("on", isAnth);
+    $("#tokhint").classList.toggle("on", chosen === "google");
+    if (isAnth) {
+      const use = anthSampler();
+      $("#temp").disabled = use !== "temperature";
+      $("#topp").disabled = use !== "top_p";
+    } else {
+      $("#temp").disabled = false;
+      $("#topp").disabled = false;
+    }
+  }
+  document.querySelectorAll('input[name="anthtune"]').forEach(r =>
+    r.addEventListener("change", refreshSampler));
+  refreshSampler();
+
+  $("#send").onclick = async () => {
+    const btn = $("#send");
+    const user = $("#user").value.trim();
+    if (!user) return;
+    btn.disabled = true; btn.textContent = "Calling " + chosen + " via " + iface + "…";
+
+    const payload = {
+      interface: iface,
+      provider: chosen,
+      system: $("#system").value.trim() || null,
+      user,
+      max_tokens: parseInt($("#max").value, 10),
+    };
+    if (chosen === "anthropic") {
+      // send exactly ONE sampler
+      if (anthSampler() === "top_p") payload.top_p = parseFloat($("#topp").value);
+      else payload.temperature = parseFloat($("#temp").value);
+    } else {
+      payload.temperature = parseFloat($("#temp").value);
+      payload.top_p = parseFloat($("#topp").value);
+    }
+
+    try {
+      const r = await fetch("/api/chat", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload),
+      });
+      const d = await r.json();
+      $("#result").style.display = "block";
+
+      if (!r.ok) {
+        $("#answer").innerHTML = `<span class="err">${(d.detail || "request failed")}</span>`;
+        $("#metaIn").textContent = ""; $("#reqOut").textContent = "";
+        $("#metaOut").textContent = ""; $("#resOut").textContent = "";
+      } else {
+        $("#answer").textContent = d.answer;
+        const verb = d.interface === "LangChain" ? "" : "<b>POST</b> ";
+        $("#metaIn").innerHTML  = `${verb}${d.endpoint}<br>${d.auth || ""}`;
+        $("#metaOut").innerHTML = `<b>${d.interface}</b> · ${d.provider} · ${d.model}`;
+        $("#reqOut").textContent = JSON.stringify(d.request, null, 2);
+        $("#resOut").textContent = JSON.stringify(d.response, null, 2);
+      }
+    } catch (e) {
+      $("#result").style.display = "block";
+      $("#answer").innerHTML = `<span class="err">${e.message}</span>`;
+    } finally {
+      btn.disabled = false; btn.textContent = "Send to model →";
+    }
+  };
+</script>
+</body>
+</html>

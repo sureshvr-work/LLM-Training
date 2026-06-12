@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LiteLLM Demo · Full-Context Ingestion (OpenAI)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/gpt-tokenizer@2.9.0/dist/o200k_base.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <style>
+    :root{
+      --bg:#fff;--wash:#f7f9fb;--card:#fff;
+      --ink:#1b2533;--ink-soft:#3d4a5c;--muted:#7a8696;--faint:#9aa6b4;
+      --line:#e7ecf2;--line-soft:#eef2f6;
+      --primary:#127c68;--primary-soft:#e7f4f0;--primary-d:#0d5f4f;
+      --sys:#3b82c4;--sys-bg:#eef4fc;--sys-ln:#d8e6f6;
+      --tools:#c0871a;--tools-bg:#fcf6e9;--tools-ln:#efe2c5;
+      --hist:#6b6f8c;--hist-bg:#f1f1f7;--hist-ln:#e2e2ee;
+      --udata:#127c68;--udata-bg:#e9f6f1;--udata-ln:#cfeae1;
+      --adata:#d2546a;--adata-bg:#fdeef1;--adata-ln:#f6d4db;
+      --cfg:#7b5cd6;--cfg-bg:#f1edfb;--cfg-ln:#e0d6f5;
+      --over:#cf3d4f;
+      --oai:#0e9f81;--oai-bg:#e7f5f0;--goog:#4f7fd6;--goog-bg:#edf2fb;--anth:#d2774f;--anth-bg:#fbefe8;
+    }
+    *{box-sizing:border-box} html,body{margin:0;padding:0}
+    body{background:radial-gradient(900px 420px at 88% -8%,rgba(18,124,104,.05),transparent 60%),radial-gradient(800px 400px at -6% 4%,rgba(79,127,214,.045),transparent 55%),var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+    code,.mono{font-family:"IBM Plex Mono",monospace}
+
+    #login{position:fixed;inset:0;display:grid;place-items:center;padding:24px;z-index:50;background:radial-gradient(900px 460px at 80% -5%,rgba(18,124,104,.07),transparent 60%),var(--wash)}
+    .lcard{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:40px 36px;box-shadow:0 1px 2px rgba(20,40,70,.04),0 30px 60px -30px rgba(20,40,70,.35)}
+    .lbrand{display:flex;align-items:center;gap:10px;margin-bottom:26px}
+    .lbrand .lo{width:34px;height:34px;border-radius:9px;background:var(--primary);color:#fff;display:grid;place-items:center;font-family:"Fraunces";font-weight:700;font-size:17px}
+    .lbrand .lt{font-family:"Fraunces";font-weight:600;font-size:17px} .lbrand .lt span{display:block;font-family:"IBM Plex Mono";font-size:10.5px;color:var(--muted);font-weight:400}
+    .lcard h2{font-family:"Fraunces";font-weight:600;font-size:23px;margin:0 0 6px}
+    .lcard p.lsub{color:var(--muted);font-size:13.5px;margin:0 0 22px}
+    .field label{display:block;font-family:"IBM Plex Mono";font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+    .field input{width:100%;background:var(--wash);border:1px solid var(--line);border-radius:11px;padding:13px 14px;font-size:15px;color:var(--ink);font-family:"IBM Plex Sans"}
+    .field input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);background:#fff}
+    .lbtn{width:100%;margin-top:18px;background:var(--primary);color:#fff;border:none;border-radius:11px;padding:14px;font-family:"Fraunces";font-weight:600;font-size:15px;cursor:pointer;box-shadow:0 8px 20px -10px rgba(18,124,104,.6)}
+    .lbtn:hover{filter:brightness(1.06)} .lbtn:disabled{opacity:.5;cursor:not-allowed}
+    .lnote{margin-top:18px;font-size:11.5px;color:var(--faint);font-family:"IBM Plex Mono";line-height:1.6} .lnote b{color:var(--muted)}
+    .keyreveal{margin-top:18px;background:var(--primary-soft);border:1px solid #cfeae1;border-radius:12px;padding:14px;display:none} .keyreveal.on{display:block}
+    .keyreveal .kl{font-family:"IBM Plex Mono";font-size:10.5px;color:var(--primary-d);text-transform:uppercase;margin-bottom:6px} .keyreveal .kv{font-family:"IBM Plex Mono";font-size:13px;word-break:break-all}
+
+    #app{display:none}
+    #topbar{position:sticky;top:0;z-index:20;backdrop-filter:saturate(1.2) blur(8px);background:rgba(255,255,255,.82);border-bottom:1px solid var(--line)}
+    .tbin{max-width:1000px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+    .tbrand{display:flex;align-items:center;gap:9px;font-family:"Fraunces";font-weight:600;font-size:14.5px}
+    .tbrand .lo{width:26px;height:26px;border-radius:7px;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
+    .tbin .sp{flex:1}
+    .chip{display:inline-flex;align-items:center;gap:7px;font-family:"IBM Plex Mono";font-size:11.5px;background:var(--wash);border:1px solid var(--line);border-radius:9px;padding:6px 10px;color:var(--ink-soft)} .chip b{color:var(--muted);font-weight:400}
+    .chip .cpy{cursor:pointer;color:var(--primary);border:none;background:none;font-size:11.5px;font-family:"IBM Plex Mono";padding:0}
+    .chip.user{color:var(--primary-d);background:var(--primary-soft);border-color:#cfeae1}
+    .logout{border:1px solid var(--line);background:none;color:var(--muted);font-size:12px;border-radius:9px;padding:6px 11px;cursor:pointer;font-family:"IBM Plex Sans"} .logout:hover{color:var(--adata);border-color:var(--adata)}
+
+    .wrap{max-width:1000px;margin:0 auto;padding:40px 24px 110px}
+    header.intro{margin-bottom:34px}
+    .kicker{font-family:"IBM Plex Mono";font-size:11.5px;letter-spacing:.24em;color:var(--primary);text-transform:uppercase;margin-bottom:14px}
+    h1{font-family:"Fraunces";font-weight:600;font-size:clamp(28px,4.4vw,44px);line-height:1.07;margin:0 0 14px;letter-spacing:-.01em} h1 em{font-style:italic;color:var(--primary)}
+    .lede{max-width:640px;color:var(--ink-soft);font-size:15px} .lede b{color:var(--ink);font-weight:600}
+
+    .step{position:relative;margin:22px 0;padding:28px 30px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 1px 2px rgba(20,40,70,.03),0 10px 30px -22px rgba(20,40,70,.18)}
+    .step-h{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+    .step-n{font-family:"IBM Plex Mono";font-size:12px;color:var(--primary);background:var(--primary-soft);border-radius:7px;padding:3px 9px;font-weight:500}
+    .step h2{font-family:"Fraunces";font-weight:600;font-size:20px;margin:0;letter-spacing:-.01em}
+    .step .sub{color:var(--muted);font-size:13.5px;margin:0 0 20px}
+    .tag-hot{color:var(--adata);font-weight:500} .tag-cool{color:var(--udata);font-weight:500}
+
+    .drop{border:1.5px dashed var(--line);border-radius:13px;padding:26px;text-align:center;cursor:pointer;transition:.18s;background:var(--wash)}
+    .drop:hover,.drop.over{border-color:var(--primary);background:var(--primary-soft)}
+    .drop .big{font-size:15px;color:var(--ink);margin-bottom:4px;font-weight:500} .drop .small{font-size:12.5px;color:var(--muted)}
+    .drop .types{margin-top:12px;font-family:"IBM Plex Mono";font-size:10.5px;color:var(--primary);letter-spacing:.1em}
+    input[type=file]{display:none}
+    .files{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+    .filecard{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:11px 14px}
+    .fileicon{width:42px;height:42px;border-radius:9px;display:grid;place-items:center;font-family:"IBM Plex Mono";font-size:10.5px;font-weight:500;flex-shrink:0;overflow:hidden}
+    .fileicon.img{color:var(--adata);background:var(--adata-bg)} .fileicon.pdf{color:var(--tools);background:var(--tools-bg)} .fileicon.txt{color:var(--udata);background:var(--udata-bg)} .fileicon img{width:100%;height:100%;object-fit:cover}
+    .filemeta{flex:1;min-width:0} .filemeta .nm{font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .filemeta .dt{font-family:"IBM Plex Mono";font-size:11px;color:var(--muted);margin-top:2px}
+    .tok{font-family:"IBM Plex Mono";font-size:11px;margin-top:5px} .tok.done{color:var(--primary-d)} .tok.done b{color:var(--primary)} .tok .tm{color:var(--muted);font-weight:400} .tok.calc{color:var(--muted)}
+    .tknote{font-family:"IBM Plex Mono";font-size:11px;color:var(--faint);margin-top:14px;line-height:1.65} .tknote b{color:var(--muted)} .tknote .ok{color:var(--primary)}
+    .rm{background:none;border:1px solid var(--line);color:var(--faint);border-radius:8px;width:28px;height:28px;cursor:pointer;flex-shrink:0;font-size:13px} .rm:hover{color:var(--adata);border-color:var(--adata)}
+
+    .providers{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .pcard{position:relative;border:1.5px solid var(--line);border-radius:13px;padding:18px 16px;cursor:pointer;transition:.16s;background:var(--card)}
+    .pcard.disabled{opacity:.55;cursor:not-allowed}
+    .pcard .mark{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-family:"Fraunces";font-weight:700;font-size:16px;color:#fff;margin-bottom:11px}
+    .pcard .pn{font-family:"Fraunces";font-weight:600;font-size:15.5px} .pcard .mdl{font-family:"IBM Plex Mono";font-size:11px;color:var(--ink-soft);margin-top:3px} .pcard .mtu{font-family:"IBM Plex Mono";font-size:10.5px;color:var(--muted);margin-top:2px} .pcard .mtu b{color:var(--primary)}
+    .pcard .soon{position:absolute;top:14px;right:14px;font-family:"IBM Plex Mono";font-size:9px;color:var(--muted);background:var(--wash);border:1px solid var(--line);border-radius:5px;padding:2px 6px}
+    .pcard .radio{position:absolute;top:15px;right:15px;width:20px;height:20px;border-radius:50%;border:2px solid var(--line)}
+    .pcard[data-on="1"]{border-color:var(--accent);background:linear-gradient(180deg,#fff,var(--accent-bg))}
+    .pcard[data-on="1"] .radio{border-color:var(--accent)} .pcard[data-on="1"] .radio::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--accent)}
+
+    .modes{display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+    .modebtn{flex:1;min-width:200px;text-align:left;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:13px 15px;cursor:pointer;font-family:"IBM Plex Sans";transition:.15s}
+    .modebtn .mt{font-weight:600;font-size:14px;color:var(--ink)} .modebtn .md{font-size:11.5px;color:var(--muted);margin-top:2px;font-family:"IBM Plex Mono"}
+    .modebtn.on[data-mode="document"]{border-color:var(--adata);background:var(--adata-bg)} .modebtn.on[data-mode="document"] .mt{color:var(--adata)}
+    .modebtn.on[data-mode="conversation"]{border-color:var(--hist);background:var(--hist-bg)} .modebtn.on[data-mode="conversation"] .mt{color:var(--hist)}
+    .modebtn:disabled{opacity:.5;cursor:not-allowed}
+    .modeexplain{font-family:"IBM Plex Mono";font-size:11.5px;color:var(--ink-soft);background:var(--wash);border:1px dashed var(--line);border-radius:9px;padding:9px 12px;margin-bottom:16px}
+    .modeexplain b{color:var(--ink)}
+
+    .envelope{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);box-shadow:0 1px 2px rgba(20,40,70,.04),0 14px 40px -28px rgba(20,40,70,.4)}
+    .env-head{padding:12px 18px;border-bottom:1px solid var(--line);font-family:"IBM Plex Mono";font-size:11.5px;background:var(--accent-bg)}
+    .env-head .l1{color:var(--accent);font-weight:500} .env-head .l2{color:var(--muted);margin-top:3px} .env-head .l2 b{color:var(--ink-soft);font-weight:400}
+    .env-body{padding:18px;display:flex;flex-direction:column;gap:12px}
+    .translate{font-family:"IBM Plex Mono";font-size:11px;color:var(--muted);background:var(--wash);border:1px dashed var(--line);border-radius:9px;padding:8px 12px} .translate b{color:var(--accent)}
+    .container-box{border:1px solid var(--cline);border-radius:11px;overflow:hidden;background:#fff;transition:opacity .2s,filter .2s}
+    .container-box.muted{opacity:.4;filter:grayscale(.5)}
+    .cb-head{display:flex;align-items:center;gap:9px;padding:9px 13px;font-family:"IBM Plex Mono";font-size:11.5px;background:var(--ctint)}
+    .cb-dot{width:8px;height:8px;border-radius:50%;background:var(--cdot);flex-shrink:0}
+    .cb-name{color:var(--ink);font-weight:500;text-transform:uppercase;letter-spacing:.03em}
+    .actv{font-family:"IBM Plex Mono";font-size:8.5px;letter-spacing:.08em;color:#fff;background:var(--cdot);padding:2px 6px;border-radius:4px;margin-left:7px}
+    .cb-field{margin-left:auto;color:var(--muted);font-size:10.5px}
+    .cb-body{padding:11px 13px;font-family:"IBM Plex Mono";font-size:12px;color:var(--muted);word-break:break-word}
+    .cb-body .v{color:var(--ink-soft)} .cb-body .cmt{color:var(--faint)} .cb-body .turn{padding:3px 0;border-top:1px dashed var(--hist-ln)} .cb-body .turn:first-child{border-top:none}
+    .container-box.sys{--cline:var(--sys-ln);--cdot:var(--sys);--ctint:var(--sys-bg)}
+    .container-box.tools{--cline:var(--tools-ln);--cdot:var(--tools);--ctint:var(--tools-bg)}
+    .container-box.hist{--cline:var(--hist-ln);--cdot:var(--hist);--ctint:var(--hist-bg)}
+    .container-box.user{--cline:var(--line);--cdot:var(--muted);--ctint:var(--wash)}
+    .container-box.udata{--cline:var(--udata-ln);--cdot:var(--udata);--ctint:var(--udata-bg)}
+    .container-box.adata{--cline:var(--adata-ln);--cdot:var(--adata);--ctint:var(--adata-bg)}
+    .container-box.cfg{--cline:var(--cfg-ln);--cdot:var(--cfg);--ctint:var(--cfg-bg)}
+    .user-nest{padding:13px;display:flex;flex-direction:column;gap:11px}
+    .badge{display:inline-block;font-family:"IBM Plex Mono";font-size:9px;letter-spacing:.1em;color:#fff;background:var(--adata);padding:3px 7px;border-radius:5px;margin-left:8px}
+    .ed{font-family:"IBM Plex Mono";font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;background:#fff;color:var(--ink)}
+    .ed:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+    textarea.ed{min-height:50px;resize:vertical;line-height:1.5}
+    .cfg-grid{padding:13px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .cfgf{display:flex;flex-direction:column;gap:6px}
+    .cfgf .clab{font-family:"IBM Plex Mono";font-size:11px;color:var(--ink-soft)} .cfgf .clab b{color:var(--cfg)} .cfgf .cnat{color:var(--faint)}
+    .rangerow{display:flex;align-items:center;gap:10px} input[type=range]{flex:1;accent-color:var(--cfg)}
+    .rval{font-family:"IBM Plex Mono";font-size:12px;color:var(--ink);min-width:34px;text-align:right}
+    .numed{font-family:"IBM Plex Mono";font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:140px;background:#fff;color:var(--ink)} .numed:focus{outline:none;border-color:var(--cfg);box-shadow:0 0 0 3px var(--cfg-bg)}
+    .att{display:flex;gap:10px;align-items:center;border-top:1px dashed var(--adata-ln);padding:9px 0} .att:first-of-type{border-top:none;padding-top:0}
+    .att .pi{font-family:"IBM Plex Mono";font-size:10px;padding:2px 7px;border-radius:5px;background:var(--adata-bg);color:var(--adata);flex-shrink:0;white-space:nowrap}
+    .att .pf{color:var(--ink);font-size:12px;font-weight:500} .att .ptok{font-family:"IBM Plex Mono";font-size:10.5px;color:var(--muted)}
+    .empty-note{color:var(--faint);font-style:italic;font-size:11.5px;font-family:"IBM Plex Sans"}
+    .rawwrap{margin-top:16px} .rawhead{display:flex;align-items:center;gap:8px;font-family:"IBM Plex Mono";font-size:11.5px;color:var(--primary);margin-bottom:8px} .rawhead .live{font-size:9px;background:var(--primary);color:#fff;border-radius:4px;padding:2px 6px;letter-spacing:.05em}
+    pre.raw{background:#0f1622;border:1px solid #1f2c3a;border-radius:11px;padding:14px;font-family:"IBM Plex Mono";font-size:11.5px;color:#a9c7d6;overflow:auto;max-height:380px;white-space:pre;margin:0}
+
+    .simrow{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+    .simrow .lbl{font-family:"IBM Plex Mono";font-size:11.5px;color:var(--muted)}
+    .seg{display:inline-flex;background:var(--wash);border:1px solid var(--line);border-radius:9px;padding:3px;gap:3px}
+    .seg button{font-family:"IBM Plex Mono";font-size:11.5px;border:none;background:none;color:var(--muted);padding:6px 12px;border-radius:6px;cursor:pointer} .seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(20,40,70,.12);font-weight:500}
+    .est{font-family:"IBM Plex Mono";font-size:11.5px;color:var(--ink-soft);margin-left:auto} .est b{color:var(--primary)}
+    .fitrow{display:grid;grid-template-columns:140px 1fr 150px;gap:14px;align-items:center;padding:13px 0}
+    .fitrow .fp{font-family:"Fraunces";font-weight:600;font-size:14px} .fitrow .fm{font-family:"IBM Plex Mono";font-size:10.5px;color:var(--muted);margin-top:2px}
+    .bar{height:11px;background:var(--line-soft);border-radius:7px;overflow:hidden} .bar i{display:block;height:100%;border-radius:7px;background:var(--primary);transition:width .4s,background .3s} .bar.over i{background:var(--over)}
+    .barmeta{font-family:"IBM Plex Mono";font-size:10px;color:var(--muted);margin-top:5px}
+    .verdict{font-family:"IBM Plex Mono";font-size:11px;text-align:right} .verdict.fit{color:var(--primary)} .verdict.over{color:var(--over);font-weight:500} .verdict .mtuv{color:var(--muted);display:block;font-weight:400}
+    @media(max-width:620px){.fitrow{grid-template-columns:1fr;gap:6px}.verdict{text-align:left}.cfg-grid{grid-template-columns:1fr}}
+
+    .sendrow{display:flex;gap:10px;align-items:center}
+    .sendbtn{flex:1;margin-top:6px;background:var(--primary);color:#fff;border:none;border-radius:12px;padding:15px;font-family:"Fraunces";font-weight:600;font-size:15.5px;cursor:pointer;transition:.16s;box-shadow:0 8px 20px -10px rgba(18,124,104,.6)} .sendbtn:hover{filter:brightness(1.05)} .sendbtn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+    .clearbtn{margin-top:6px;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:12px;padding:15px 16px;cursor:pointer;font-family:"IBM Plex Sans";font-size:13px} .clearbtn:hover{color:var(--adata);border-color:var(--adata)}
+    .lane{position:relative;display:flex;align-items:center;margin:12px 0;height:60px}
+    .node{flex-shrink:0;z-index:2;width:120px;text-align:center;font-family:"IBM Plex Mono";font-size:10px;color:var(--muted)} .node .box{height:42px;border-radius:10px;border:1px solid var(--line);display:grid;place-items:center;margin-bottom:4px;background:var(--card);font-size:16px}
+    .node.gw .box{border-color:var(--primary);background:var(--primary-soft);color:var(--primary-d);font-family:"Fraunces";font-weight:700;font-size:13px} .node.dst .box{border-color:var(--accent);color:#fff;background:var(--accent)}
+    .wire{flex:1;height:2px;background:repeating-linear-gradient(90deg,var(--line) 0 7px,transparent 7px 14px);position:relative;align-self:center;min-width:30px}
+    .packet{position:absolute;top:50%;left:0;transform:translate(-50%,-50%);opacity:0} .packet .core{width:13px;height:13px;border-radius:4px;background:var(--accent);box-shadow:0 0 0 5px var(--accent-bg)}
+    .lane.go .packet{animation:fly 1.6s cubic-bezier(.5,0,.6,1) forwards} @keyframes fly{0%{left:0;opacity:0}8%{opacity:1}92%{opacity:1}100%{left:100%;opacity:0}}
+
+    .resp{border:1px solid var(--line);border-radius:13px;overflow:hidden;margin-top:14px;background:var(--card)}
+    .resp .rh{display:flex;align-items:center;gap:10px;padding:12px 17px;border-bottom:1px solid var(--line);background:var(--accent-bg)} .resp .rh .dot{width:9px;height:9px;border-radius:50%;background:var(--accent)} .resp .rh .nm{font-family:"Fraunces";font-weight:600;font-size:14.5px} .resp .rh .tg{margin-left:auto;font-family:"IBM Plex Mono";font-size:10.5px;color:var(--muted)}
+    .resp .rb{padding:17px;font-size:14px;color:var(--ink-soft);white-space:pre-wrap}
+    .thinking{display:inline-flex;gap:5px;align-items:center;color:var(--muted);font-family:"IBM Plex Mono";font-size:12.5px} .thinking i{width:6px;height:6px;border-radius:50%;background:var(--faint);animation:pulse 1s infinite} .thinking i:nth-child(2){animation-delay:.2s}.thinking i:nth-child(3){animation-delay:.4s}
+    @keyframes pulse{0%,100%{opacity:.25}50%{opacity:1}}
+    .hint{font-size:12px;color:var(--faint);font-family:"IBM Plex Mono";margin:0}
+    @media(max-width:680px){.providers{grid-template-columns:1fr}.step{padding:22px}}
+  </style>
+</head>
+<body>
+
+<div id="login">
+  <div class="lcard">
+    <div class="lbrand"><div class="lo">L</div><div class="lt">LiteLLM Gateway<span>unified LLM access · virtual keys</span></div></div>
+    <h2>Developer access</h2>
+    <p class="lsub">Enter a username to get a virtual key. No password.</p>
+    <div class="field"><label for="uname">Username</label><input id="uname" type="text" placeholder="e.g. student01" /></div>
+    <button class="lbtn" id="loginBtn" disabled>Sign in &amp; get key</button>
+    <div class="keyreveal" id="keyreveal"><div class="kl">Your virtual key (via /key/generate)</div><div class="kv" id="keyval"></div></div>
+    <p class="lnote">The backend calls <b>/key/generate</b> with the master key and <b>metadata:{user}</b>, returning a scoped, budget-capped <b>sk-…</b> key.</p>
+  </div>
+</div>
+
+<div id="app">
+  <div id="topbar"><div class="tbin">
+    <div class="tbrand"><div class="lo">L</div>LiteLLM · Full-Context Demo</div>
+    <div class="sp"></div>
+    <span class="chip"><b>key</b> <span class="mono" id="keymask"></span><button class="cpy" id="copykey">copy</button></span>
+    <span class="chip user" id="userchip"></span>
+    <button class="logout" id="logout">sign out</button>
+  </div></div>
+
+  <div class="wrap">
+    <header class="intro">
+      <div class="kicker">Full-Context Ingestion · No RAG · OpenAI</div>
+      <h1>Build the packet, then watch it <em>grow</em>.</h1>
+      <p class="lede">Upload a file, then ask questions. Each turn you choose to ask <b>from the document</b> (full source, expensive) or <b>from the conversation</b> (history only, cheap). Watch the request frame, the growing history, and the <b>MTU</b> bar respond.</p>
+    </header>
+
+    <section class="step">
+      <div class="step-h"><span class="step-n">01</span><h2>Upload your data</h2></div>
+      <p class="sub">Image, PDF, or text — the <span class="tag-hot">document</span> you'll ask about.</p>
+      <div class="drop" id="drop"><div class="big">Drop a file or click to browse</div><div class="small">Full contents are encoded into the request body</div><div class="types">IMAGE · PDF · TXT / MD / CSV / JSON</div></div>
+      <input type="file" id="file" multiple accept="image/*,application/pdf,text/plain,.txt,.md,.csv,.json" />
+      <div class="files" id="files"></div>
+      <p class="tknote"><span class="ok">●</span> Token counts via <b>tiktoken</b> (<b>o200k_base</b>) for text &amp; extracted PDF text, and OpenAI's <b>vision-tiling</b> formula for images.</p>
+    </section>
+
+    <section class="step">
+      <div class="step-h"><span class="step-n">02</span><h2>Pick a model</h2></div>
+      <p class="sub">OpenAI for now — the others light up as we expand the demo.</p>
+      <div class="providers" id="providers"></div>
+    </section>
+
+    <section class="step">
+      <div class="step-h"><span class="step-n">03</span><h2>Choose your strategy &amp; build the request</h2></div>
+      <p class="sub">Two ways to answer each question. Pick one — the frame and MTU bar react.</p>
+      <div class="modes" id="modes">
+        <button class="modebtn on" data-mode="document"><div class="mt">📄 Ask from document</div><div class="md">sends the full source · complete but expensive</div></button>
+        <button class="modebtn" data-mode="conversation" disabled><div class="mt">💬 Ask from conversation</div><div class="md">history only · cheap but limited to what's been said</div></button>
+      </div>
+      <div class="modeexplain" id="modeexplain"></div>
+      <div id="framehost"></div>
+    </section>
+
+    <section class="step">
+      <div class="step-h"><span class="step-n">04</span><h2>Does it fit? — MTU check</h2></div>
+      <p class="sub">Payload vs. the model's context window. History grows every turn; the document only counts when you ask from it.</p>
+      <div class="simrow"><span class="lbl">Document size simulator:</span>
+        <div class="seg" id="sim"><button data-m="1" class="on">×1</button><button data-m="10">×10</button><button data-m="100">×100</button><button data-m="1000">×1000</button></div>
+        <span class="est" id="estline"></span></div>
+      <div id="fithost"><p class="hint">Add data to run the fit check.</p></div>
+    </section>
+
+    <section class="step">
+      <div class="step-h"><span class="step-n">05</span><h2>Ask</h2></div>
+      <p class="sub">Transmit through the gateway. History accumulates above with each answer.</p>
+      <div id="lanes"></div>
+      <div class="sendrow"><button class="sendbtn" id="send" disabled>Ask →</button><button class="clearbtn" id="clear">Clear history</button></div>
+    </section>
+
+    <section class="step">
+      <div class="step-h"><span class="step-n">06</span><h2>Latest answer</h2></div>
+      <p class="sub">The newest reply. The full thread lives in the Conversation History container above.</p>
+      <div id="responses"><p class="hint">Response appears here after you ask.</p></div>
+    </section>
+  </div>
+</div>
+
+<script>
+  const MODEL={name:"OpenAI",model:"gpt-4o",mtu:128000,color:"var(--oai)",bg:"var(--oai-bg)",mark:"AI",tempMax:2,maxName:"max_completion_tokens"};
+  const SOON=[{name:"Anthropic",model:"claude-3-5-sonnet",mtu:200000,color:"var(--anth)",bg:"var(--anth-bg)",mark:"A"},
+              {name:"Google",model:"gemini-2.5-pro",mtu:1000000,color:"var(--goog)",bg:"var(--goog-bg)",mark:"G"}];
+  const state={files:[],history:[],mode:"document",mult:1,user:"",key:"",
+    params:{system:"You are a helpful assistant. Answer using only the supplied document and prior conversation.",userMsg:"Summarize this in 3 bullet points.",temperature:1,max_tokens:1024,top_p:1}};
+
+  const $=s=>document.querySelector(s);
+  const nf=n=>Math.round(n).toLocaleString("en-US");
+  const fmtSize=b=>b<1024?b+" B":b<1048576?(b/1024).toFixed(1)+" KB":(b/1048576).toFixed(2)+" MB";
+  const kind=f=>f.type.startsWith("image/")?"img":f.type==="application/pdf"?"pdf":"txt";
+  const esc=s=>(s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+  const trunc=(s,n)=>{s=(s||"").replace(/\s+/g," ");return s.length>n?s.slice(0,n)+"…":s;};
+
+  /* tiktoken */
+  if(window.pdfjsLib){try{pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";}catch(e){}}
+  function tkLib(){return window.GPTTokenizer_o200k_base||window.GPTTokenizer_cl100k_base||null;}
+  function tk(s){const t=tkLib();if(t&&t.encode){try{return t.encode(s||"").length;}catch(e){}}return Math.ceil((s||"").length/4);}
+  function countTextTokens(s){const t=tkLib();return{n:tk(s),method:(t?(window.GPTTokenizer_o200k_base?"o200k_base":"cl100k_base"):"approx (offline)")};}
+  function imageTokens(d){return new Promise(res=>{const im=new Image();im.onload=()=>{let w=im.naturalWidth||1024,h=im.naturalHeight||1024;const f=2048/Math.max(w,h);if(f<1){w*=f;h*=f;}const s=768/Math.min(w,h);if(s<1){w*=s;h*=s;}const t=Math.ceil(w/512)*Math.ceil(h/512);res({n:85+170*t,dims:(im.naturalWidth||"?")+"×"+(im.naturalHeight||"?")});};im.onerror=()=>res({n:1300,dims:"?"});im.src=d;});}
+  async function pdfText(b64){if(!window.pdfjsLib)return null;try{const bin=atob(b64);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);const pdf=await pdfjsLib.getDocument({data:a}).promise;let t="";const mx=Math.min(pdf.numPages,80);for(let p=1;p<=mx;p++){const pg=await pdf.getPage(p);const c=await pg.getTextContent();t+=c.items.map(i=>i.str).join(" ")+"\n";}return{text:t,pages:pdf.numPages};}catch(e){return null;}}
+  async function computeTokens(f){f.tokState="calc";
+    if(f.k==="txt"){const c=countTextTokens(f.text);f.tokens=c.n;f.tokVerb="tiktoken calculated";f.tokMethod=c.method;}
+    else if(f.k==="img"){const r=await imageTokens(f.dataUrl);f.tokens=Math.round(r.n);f.tokVerb="image tokens calculated";f.tokMethod="vision tiling · "+r.dims;}
+    else if(f.k==="pdf"){const r=await pdfText(f.b64);if(r&&r.text.trim().length>4){f.text=r.text;f.sendAsText=true;const c=countTextTokens(r.text);f.tokens=c.n;f.tokVerb="tiktoken calculated";f.tokMethod=c.method+" · "+r.pages+"pg text";}else{const pg=Math.max(1,Math.round(f.size/51200));f.tokens=pg*1800;f.tokVerb="estimated (scanned PDF)";f.tokMethod="≈ "+pg+"pg × 1.8k";}}
+    f.tokState="done";}
+
+  /* login */
+  const uname=$("#uname"),loginBtn=$("#loginBtn");
+  uname.addEventListener("input",()=>loginBtn.disabled=!uname.value.trim());
+  uname.addEventListener("keydown",e=>{if(e.key==="Enter"&&uname.value.trim())doLogin();});
+  loginBtn.onclick=doLogin;
+  async function doLogin(){const u=uname.value.trim();if(!u)return;loginBtn.disabled=true;loginBtn.textContent="Issuing key…";
+    try{const r=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:u})});
+      const d=await r.json();if(!r.ok)throw new Error(d.detail||"login failed");
+      state.user=u;state.key=d.key;$("#keyval").textContent=d.key;$("#keyreveal").classList.add("on");
+      await new Promise(res=>setTimeout(res,700));
+      $("#keymask").textContent=d.key.slice(0,7)+"…"+d.key.slice(-4);$("#userchip").textContent="👤 "+u;
+      $("#login").style.display="none";$("#app").style.display="block";
+      renderProviders();renderModes();renderFrame();renderFit();renderLanes();refreshSend();
+    }catch(e){alert(e.message);loginBtn.disabled=false;loginBtn.textContent="Sign in & get key";}}
+  $("#copykey").onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(state.key);$("#copykey").textContent="copied";setTimeout(()=>$("#copykey").textContent="copy",1200);};
+  $("#logout").onclick=()=>location.reload();
+
+  /* upload */
+  const drop=$("#drop"),fileInput=$("#file");
+  drop.onclick=()=>fileInput.click();
+  ["dragenter","dragover"].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add("over");}));
+  ["dragleave","drop"].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove("over");}));
+  drop.addEventListener("drop",ev=>handleFiles(ev.dataTransfer.files));
+  fileInput.onchange=()=>handleFiles(fileInput.files);
+  function readFile(file){return new Promise(res=>{const k=kind(file),r=new FileReader();if(k==="txt"){r.onload=()=>res({text:r.result,dataUrl:null,b64:null});r.readAsText(file);}else{r.onload=()=>{const d=r.result;res({text:null,dataUrl:d,b64:(d.split(",")[1]||"")});};r.readAsDataURL(file);}});}
+  async function handleFiles(list){for(const f of list){const data=await readFile(f);state.files.push({name:f.name,size:f.size,type:f.type||"text/plain",k:kind(f),tokState:"calc",tokens:0,tokVerb:"",tokMethod:"",...data});}
+    renderFiles();renderFrame();renderFit();refreshSend();
+    for(const f of state.files){if(f.tokState!=="done")await computeTokens(f);}
+    renderFiles();renderFrame();renderFit();refreshSend();}
+  function renderFiles(){const host=$("#files");host.innerHTML="";
+    state.files.forEach((f,i)=>{const div=document.createElement("div");div.className="filecard";const icon=f.k==="img"&&f.dataUrl?`<img src="${f.dataUrl}">`:(f.k==="pdf"?"PDF":"TXT");
+      div.innerHTML=`<div class="fileicon ${f.k}">${icon}</div><div class="filemeta"><div class="nm">${esc(f.name)}</div><div class="dt">${f.type} · ${fmtSize(f.size)} · ${f.k==="txt"?"UTF-8 text":"base64"}</div>
+        <div class="tok ${f.tokState}">${f.tokState==="done"?`✓ ${f.tokVerb} · <b>${nf(f.tokens)}</b> tokens <span class="tm">(${esc(f.tokMethod)})</span>`:`⟳ tokenizing… (tiktoken)`}</div></div><button class="rm" data-i="${i}">✕</button>`;
+      host.appendChild(div);});
+    host.querySelectorAll(".rm").forEach(b=>b.onclick=()=>{state.files.splice(+b.dataset.i,1);renderFiles();renderFrame();renderFit();refreshSend();});}
+
+  /* providers */
+  function renderProviders(){const phost=$("#providers");phost.innerHTML="";
+    const c=document.createElement("div");c.className="pcard";c.dataset.on="1";c.style.setProperty("--accent",MODEL.color);c.style.setProperty("--accent-bg",MODEL.bg);
+    c.innerHTML=`<div class="radio"></div><div class="mark" style="background:${MODEL.color}">${MODEL.mark}</div><div class="pn">${MODEL.name}</div><div class="mdl">${MODEL.model}</div><div class="mtu">MTU · <b>${nf(MODEL.mtu)}</b> tokens</div>`;
+    phost.appendChild(c);
+    SOON.forEach(m=>{const d=document.createElement("div");d.className="pcard disabled";d.style.setProperty("--accent",m.color);
+      d.innerHTML=`<div class="soon">expand next</div><div class="mark" style="background:${m.color}">${m.mark}</div><div class="pn">${m.name}</div><div class="mdl">${m.model}</div><div class="mtu">MTU · <b>${nf(m.mtu)}</b> tokens</div>`;
+      phost.appendChild(d);});}
+
+  /* strategy modes */
+  function renderModes(){const host=$("#modes");
+    host.querySelectorAll(".modebtn").forEach(b=>{b.classList.toggle("on",b.dataset.mode===state.mode);
+      if(b.dataset.mode==="conversation")b.disabled=state.history.length===0;
+      b.onclick=()=>{if(b.disabled)return;state.mode=b.dataset.mode;renderModes();renderFrame();renderFit();};});
+    const e=estimate();
+    $("#modeexplain").innerHTML = state.mode==="document"
+      ? `📄 <b>From document</b>: sends the full source (~<b>${nf(e.docT)}</b> tokens) — complete, but you pay for the whole document every turn.`
+      : `💬 <b>From conversation</b>: history only (~<b>${nf(e.histT)}</b> tokens), no document — cheap, but limited to what's already been said. ${state.history.length===0?"<span style='color:var(--over)'>(needs at least one prior turn)</span>":""}`;
+  }
+
+  /* frame */
+  function attachmentRows(){
+    if(!state.files.length)return `<div class="empty-note">No file uploaded — this is where the full document is embedded.</div>`;
+    return state.files.map(f=>{const field=f.k==="img"?'type:"image_url"':'type:"text"';
+      return `<div class="att"><span class="pi">${field}</span><div style="flex:1;min-width:0"><div class="pf">${esc(f.name)}</div><div class="ptok">${f.tokState==="done"?nf(f.tokens)+" tokens · "+fmtSize(f.size):"tokenizing…"}${f.sendAsText?" · sent as extracted text":""}</div></div></div>`;}).join("");
+  }
+  function historyRows(){
+    if(!state.history.length)return `<span class="cmt">// empty on first turn</span>`;
+    return state.history.map(h=>`<div class="turn"><span class="v">${h.role}:</span> "${esc(trunc(h.content,90))}"</div>`).join("");
+  }
+  function renderFrame(){
+    const host=$("#framehost"),p=MODEL,pa=state.params;
+    const docMuted=state.mode==="conversation"?"muted":"";
+    const histActive=state.mode==="conversation"?`<span class="actv">ACTIVE</span>`:"";
+    const docActive=state.mode==="document"?`<span class="actv">ACTIVE</span>`:"";
+    const tempHint=pa.temperature>=p.tempMax?`<div class="fhint" style="font-family:'IBM Plex Mono';font-size:10.5px;color:var(--tools);margin-top:4px">⚠ OpenAI caps temperature at ${p.tempMax}.</div>`:"";
+    host.innerHTML=`<div class="envelope" style="--accent:${p.color};--accent-bg:${p.bg}">
+      <div class="env-head"><div class="l1">POST {gateway}/v1/chat/completions</div><div class="l2">Authorization: Bearer <b>${state.key?state.key.slice(0,7)+"…":"sk-…"}</b>  ·  model: <b>${p.model}</b>  ·  MTU <b>${nf(p.mtu)}</b></div></div>
+      <div class="env-body">
+        <div class="translate">Native OpenAI <b>chat.completions</b> body — also exactly what you POST to the LiteLLM gateway.</div>
+
+        <div class="container-box sys"><div class="cb-head"><span class="cb-dot"></span><span class="cb-name">System Prompt</span><span class="cb-field">messages[] role:"system"</span></div>
+          <div class="cb-body"><textarea class="ed" id="ed-system" rows="2">${esc(pa.system)}</textarea></div></div>
+
+        <div class="container-box tools"><div class="cb-head"><span class="cb-dot"></span><span class="cb-name">Tools</span><span class="cb-field">tools[]</span></div>
+          <div class="cb-body"><span class="v">[ { type:"function", function:{ name:"get_totals", … } } ]</span>  <span class="cmt">// optional</span></div></div>
+
+        <div class="container-box hist"><div class="cb-head"><span class="cb-dot"></span><span class="cb-name">Conversation History</span>${histActive}<span class="cb-field">${state.history.length} turn(s) · messages[]</span></div>
+          <div class="cb-body">${historyRows()}</div></div>
+
+        <div class="container-box user"><div class="cb-head"><span class="cb-dot"></span><span class="cb-name">User Message</span><span class="cb-field">messages[] role:"user"</span></div>
+          <div class="user-nest">
+            <div class="container-box udata"><div class="cb-head"><span class="cb-dot"></span><span class="cb-name">User Data</span><span class="cb-field">content[] type:"text"</span></div>
+              <div class="cb-body"><textarea class="ed" id="ed-user" rows="2">${esc(pa.userMsg)}</textarea></div></div>
+            <div class="container-box adata ${docMuted}"><div class="cb-head"><span class="cb-dot"></span><span class="cb-name">Additional Data</span>${docActive}<span class="badge">FULL DOC · NO CHUNKING</span><span class="cb-field">${state.mode==="conversation"?"not sent this turn":state.files.length+" file(s)"}</span></div>
+              <div class="cb-body">${state.mode==="conversation"?'<span class="empty-note">Document omitted — answering from history only.</span>':attachmentRows()}</div></div>
+          </div></div>
+
+        <div class="container-box cfg"><div class="cb-head"><span class="cb-dot"></span><span class="cb-name">Generation Config</span><span class="cb-field">top-level</span></div>
+          <div class="cfg-grid">
+            <div class="cfgf"><span class="clab"><b>temperature</b> <span class="cnat">· 0–${p.tempMax}</span></span>
+              <div class="rangerow"><input type="range" id="ed-temp" min="0" max="${p.tempMax}" step="0.1" value="${Math.min(pa.temperature,p.tempMax)}"><span class="rval" id="rv-temp">${Math.min(pa.temperature,p.tempMax).toFixed(1)}</span></div>${tempHint}</div>
+            <div class="cfgf"><span class="clab"><b>${p.maxName}</b></span><input type="number" class="numed" id="ed-maxtok" min="1" step="1" value="${pa.max_tokens}"></div>
+            <div class="cfgf"><span class="clab"><b>top_p</b> <span class="cnat">· 0–1</span></span>
+              <div class="rangerow"><input type="range" id="ed-topp" min="0" max="1" step="0.05" value="${pa.top_p}"><span class="rval" id="rv-topp">${pa.top_p.toFixed(2)}</span></div></div>
+          </div></div>
+      </div></div>
+      <div class="rawwrap"><div class="rawhead"><span class="live">LIVE</span> raw request body sent to /api/chat</div><pre class="raw" id="rawpre"></pre></div>`;
+    bindEditors();updateRaw();
+  }
+  function bindEditors(){
+    $("#ed-system").addEventListener("input",e=>{state.params.system=e.target.value;updateRaw();renderFit();});
+    $("#ed-user").addEventListener("input",e=>{state.params.userMsg=e.target.value;updateRaw();renderFit();refreshSend();});
+    $("#ed-temp").addEventListener("input",e=>{state.params.temperature=+e.target.value;$("#rv-temp").textContent=(+e.target.value).toFixed(1);updateRaw();});
+    $("#ed-topp").addEventListener("input",e=>{state.params.top_p=+e.target.value;$("#rv-topp").textContent=(+e.target.value).toFixed(2);updateRaw();});
+    $("#ed-maxtok").addEventListener("input",e=>{state.params.max_tokens=Math.max(1,+e.target.value||1);updateRaw();});
+  }
+  /* build the OpenAI messages array (forSend=true uses full data; false truncates for display) */
+  function buildMessages(forSend){
+    const pa=state.params,msgs=[{role:"system",content:pa.system}];
+    state.history.forEach(h=>msgs.push({role:h.role,content:h.content}));
+    if(state.mode==="document"&&state.files.length){
+      const parts=[{type:"text",text:pa.userMsg}];
+      state.files.forEach(f=>{
+        if(f.k==="img")parts.push({type:"image_url",image_url:{url:forSend?f.dataUrl:`data:${f.type};base64,<${fmtSize(f.size)}>`}});
+        else parts.push({type:"text",text:forSend?`\n\n=== FILE: ${f.name} ===\n${f.text}`:`=== FILE: ${f.name} === <${fmtSize(f.size)}>`});
+      });
+      msgs.push({role:"user",content:parts});
+    } else {
+      msgs.push({role:"user",content:pa.userMsg});
+    }
+    return msgs;
+  }
+  function bodyObj(forSend){const pa=state.params;return{model:MODEL.model,messages:buildMessages(forSend),temperature:pa.temperature,max_tokens:pa.max_tokens,top_p:pa.top_p};}
+  function updateRaw(){const pre=$("#rawpre");if(pre)pre.textContent=JSON.stringify(bodyObj(false),null,2);renderModes();}
+
+  /* fit */
+  function estimate(){const pa=state.params;
+    const sysT=tk(pa.system),qT=tk(pa.userMsg),histT=state.history.reduce((s,h)=>s+tk(h.content),0);
+    const docOne=state.files.reduce((s,f)=>s+(f.tokens||0),0),docT=(state.mode==="document"?docOne*state.mult:0);
+    return{sysT,qT,histT,docOne,docT,payload:sysT+qT+histT+docT+220};}
+  $("#sim").querySelectorAll("button").forEach(b=>b.onclick=()=>{$("#sim").querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.mult=+b.dataset.m;renderFit();renderModes();});
+  function renderFit(){const host=$("#fithost"),p=MODEL,e=estimate();
+    $("#estline").innerHTML=`tiktoken payload: <b>${nf(e.payload)}</b> tokens (sys ${nf(e.sysT)} + history ${nf(e.histT)} + q ${nf(e.qT)} + doc ${nf(e.docT)})`;
+    const pct=Math.min(100,e.payload/p.mtu*100),over=e.payload>p.mtu;
+    host.innerHTML=`<div class="fitrow"><div><div class="fp">${p.name}</div><div class="fm">${p.model}</div></div>
+      <div><div class="bar ${over?'over':''}"><i style="width:${pct.toFixed(1)}%"></i></div><div class="barmeta">${nf(e.payload)} / ${nf(p.mtu)} tokens · ${(e.payload/p.mtu*100).toFixed(1)}% of MTU</div></div>
+      <div class="verdict ${over?'over':'fit'}">${over?'⚠ EXCEEDS MTU':'✓ fits'}<span class="mtuv">${over?'fragment → RAG':'room to spare'}</span></div></div>`;}
+
+  /* transmit */
+  function renderLanes(){const host=$("#lanes"),p=MODEL;host.innerHTML="";const lane=document.createElement("div");lane.className="lane";lane.id="lane";lane.style.setProperty("--accent",p.color);lane.style.setProperty("--accent-bg",p.bg);
+    lane.innerHTML=`<div class="node"><div class="box">🖥</div>YOUR MACHINE</div><div class="wire"><div class="packet"><div class="core"></div></div></div><div class="node gw"><div class="box">LiteLLM</div>gateway</div><div class="wire"><div class="packet"><div class="core"></div></div></div><div class="node dst"><div class="box" style="background:${p.color}">${p.mark}</div>${p.name}</div>`;
+    host.appendChild(lane);}
+  function refreshSend(){$("#send").disabled=!state.params.userMsg.trim();}
+  $("#clear").onclick=()=>{state.history=[];state.mode="document";renderModes();renderFrame();renderFit();$("#responses").innerHTML=`<p class="hint">Response appears here after you ask.</p>`;};
+
+  $("#send").onclick=async()=>{const p=MODEL,pa=state.params,question=pa.userMsg.trim();if(!question)return;
+    $("#send").disabled=true;const l=$("#lane");l.classList.remove("go");void l.offsetWidth;l.classList.add("go");
+    $("#responses").innerHTML=`<div class="resp" id="resp" style="--accent:${p.color};--accent-bg:${p.bg}"><div class="rh"><span class="dot"></span><span class="nm">${p.name}</span><span class="tg">${p.model} · ${state.mode} · temp ${pa.temperature}</span></div><div class="rb"><span class="thinking">routing through gateway <i></i><i></i><i></i></span></div></div>`;
+    const msgs=buildMessages(true);
+    try{
+      const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:p.model,messages:msgs,temperature:pa.temperature,max_tokens:pa.max_tokens,top_p:pa.top_p,key:state.key})});
+      const d=await r.json();if(!r.ok)throw new Error(d.detail||JSON.stringify(d));
+      const answer=d.choices?.[0]?.message?.content||"(no content)";
+      $("#resp .rb").textContent=answer;
+      // grow history with TEXT only (document never stored in history — keeps it cheap)
+      state.history.push({role:"user",content:question});
+      state.history.push({role:"assistant",content:answer});
+      state.params.userMsg="";
+      renderModes();renderFrame();renderFit();
+    }catch(e){ if($("#resp")) $("#resp .rb").textContent="Error: "+e.message; }
+    refreshSend();};
+</script>
+</body>
+</html>
