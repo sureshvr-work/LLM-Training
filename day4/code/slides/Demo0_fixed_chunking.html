@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Fixed / rule-based chunking — live demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f4f2ec; --card:#ffffff; --ink:#23262e; --muted:#7b8190; --line:#e7e4dc;
+    --navy:#1d3a5f; --accent:#5f3dc4; --accent-soft:#ece6fa; --amber:#c9881a; --amber-line:#e0a008;
+    --c0:#E6F1FB; --c0b:#b9d6f2; --c1:#E3F5EC; --c1b:#b6e3cd; --c2:#FBF1DA; --c2b:#eed79f;
+    --c3:#EFEAFB; --c3b:#d4c6f1; --c4:#FBE7EC; --c4b:#f2c2cd; --c5:#E7F6F0; --c5b:#bfe6d5;
+    --sans:'IBM Plex Sans',system-ui,sans-serif; --serif:'Spectral',Georgia,serif; --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:
+      radial-gradient(900px 500px at 12% -10%, #ffffff 0%, rgba(255,255,255,0) 60%),
+      var(--paper);
+    color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1240px;margin:0 auto;padding:26px 26px 60px}
+
+  /* header */
+  header{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;
+    padding-bottom:18px;border-bottom:1px solid var(--line);margin-bottom:20px}
+  h1{font-family:var(--serif);font-weight:600;color:var(--navy);font-size:30px;margin:0 0 4px;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:13.5px;margin:0}
+  .docchip{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:10px 14px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+  .docchip .ic{width:26px;height:32px;border:1.5px solid var(--navy);border-radius:3px;position:relative;flex:none}
+  .docchip .ic:before{content:"";position:absolute;inset:5px 5px auto 5px;height:2px;background:#9fb3cc;box-shadow:0 5px #9fb3cc,0 10px #9fb3cc}
+  .docchip b{font-size:13px;color:var(--navy)} .docchip span{font-size:11.5px;color:var(--muted);font-family:var(--mono)}
+
+  /* tabs */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .tab{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);
+    border-radius:999px;padding:8px 14px 8px 9px;font-size:13px;font-weight:600;color:#4b5160;cursor:pointer;
+    transition:.18s;user-select:none}
+  .tab .n{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;
+    background:#eef0f3;color:#6b7280}
+  .tab:hover{border-color:#cfd3da;transform:translateY(-1px)}
+  .tab.on{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:0 6px 16px -8px rgba(29,58,95,.6)}
+  .tab.on .n{background:rgba(255,255,255,.22);color:#fff}
+
+  /* control card */
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;
+    box-shadow:0 1px 2px rgba(16,24,40,.04);margin-bottom:18px}
+  .ptop{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap}
+  .pname{display:flex;align-items:center;gap:10px}
+  .dot{width:11px;height:11px;border-radius:50%}
+  .pname h2{margin:0;font-size:17px;font-family:var(--serif);font-weight:600;color:var(--ink)}
+  .pill{font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+  .pdesc{color:#565c69;font-size:13px;margin:6px 0 0;max-width:560px;line-height:1.5}
+  .puse{color:var(--muted);font-size:12px;margin:3px 0 0}
+  .puse b{color:#5b6270;font-weight:600}
+
+  .controls{display:flex;gap:26px;flex-wrap:wrap;margin-top:16px}
+  .ctrl{min-width:210px;flex:1}
+  .ctrl label{display:flex;justify-content:space-between;font-size:12px;color:#5b6270;font-weight:600;margin-bottom:7px}
+  .ctrl label .v{font-family:var(--mono);color:var(--navy);background:#f1f3f6;border-radius:6px;padding:1px 7px}
+  input[type=range]{width:100%;-webkit-appearance:none;height:5px;border-radius:5px;background:#e6e2da;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;
+    background:var(--accent);cursor:pointer;border:3px solid #fff;box-shadow:0 1px 4px rgba(95,61,196,.4)}
+  input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:3px solid #fff}
+
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px dashed var(--line)}
+  .stat{background:#f7f8fa;border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:78px}
+  .stat .k{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .stat .val{font-family:var(--mono);font-size:18px;color:var(--navy);font-weight:500;line-height:1.2}
+  .stat.flag .val{font-size:14px}
+  .stat.bad{background:#fdecec;border-color:#f3c9c9} .stat.bad .val{color:#b23030}
+  .stat.good{background:#e9f6ef;border-color:#bfe6d5} .stat.good .val{color:#0F6E56}
+
+  /* map */
+  .maptitle{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:0 0 7px}
+  .map{display:flex;height:26px;border-radius:7px;overflow:hidden;border:1px solid var(--line);background:#fff}
+  .seg{height:100%;border-right:1px solid rgba(255,255,255,.85);cursor:pointer;transition:filter .15s;position:relative}
+  .seg:last-child{border-right:none}
+  .seg:hover{filter:brightness(.93)}
+  .seg.ov:after{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:repeating-linear-gradient(45deg,var(--amber-line),var(--amber-line) 2px,transparent 2px,transparent 4px)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:9px}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+
+  /* main grid */
+  .grid{display:grid;grid-template-columns:1.55fr 1fr;gap:18px;align-items:start}
+  @media(max-width:920px){.grid{grid-template-columns:1fr}}
+
+  .docwrap .bar{display:flex;align-items:center;gap:8px;padding:9px 14px;background:#fbfaf7;border:1px solid var(--line);
+    border-bottom:none;border-radius:14px 14px 0 0;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .docwrap .bar .d{width:9px;height:9px;border-radius:50%;background:#e2ddd2}
+  .doc{background:#fff;border:1px solid var(--line);border-radius:0 0 14px 14px;padding:26px 30px;
+    font-family:var(--serif);font-size:14.5px;line-height:1.78;white-space:pre-wrap;word-wrap:break-word;
+    max-height:70vh;overflow:auto;color:#2c313b;box-shadow:0 16px 40px -28px rgba(20,30,60,.4)}
+  .chunk{border-radius:2px;padding:0 .5px;transition:outline .12s}
+  .chunk.ov{border-bottom:2px solid var(--amber-line)}
+  .chunk.active{outline:2px solid var(--navy);outline-offset:1px;border-radius:3px}
+  .c0{background:var(--c0)} .c1{background:var(--c1)} .c2{background:var(--c2)}
+  .c3{background:var(--c3)} .c4{background:var(--c4)} .c5{background:var(--c5)}
+  .pagebreak{display:flex;align-items:center;gap:12px;margin:14px 0;color:#a9a294;font-family:var(--sans);font-size:11px;
+    text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+  .pagebreak:before,.pagebreak:after{content:"";flex:1;height:1px;background:repeating-linear-gradient(90deg,#ded8cc,#ded8cc 4px,transparent 4px,transparent 8px)}
+
+  .inspect .bar{display:flex;justify-content:space-between;align-items:center;padding:0 2px 10px}
+  .inspect .bar h3{margin:0;font-size:13px;color:var(--navy);font-family:var(--sans);font-weight:700;letter-spacing:.02em}
+  .inspect .bar span{font-size:11.5px;color:var(--muted);font-family:var(--mono)}
+  .chunks{display:flex;flex-direction:column;gap:8px;max-height:calc(70vh + 38px);overflow:auto;padding-right:4px}
+  .cc{border:1px solid var(--line);border-left-width:4px;border-radius:9px;padding:9px 11px;background:#fff;cursor:pointer;transition:.14s}
+  .cc:hover{transform:translateX(-2px);box-shadow:0 4px 14px -8px rgba(20,30,60,.3)}
+  .cc.active{box-shadow:0 0 0 2px var(--navy) inset}
+  .cc .h{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+  .cc .h b{font-size:12px;color:var(--ink)} .cc .h em{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+  .cc .t{font-family:var(--serif);font-size:11.5px;color:#6a7079;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+  .reveal{opacity:0;transform:translateY(8px);animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="reveal">
+    <div>
+      <h1>Fixed / rule-based chunking</h1>
+      <p class="sub">Six deterministic cutters on one document — change a rule and watch the boundaries re-flow.</p>
+    </div>
+    <div class="docchip"><div class="ic"></div><div><b>policy.pdf</b><br><span id="docmeta">10 pages</span></div></div>
+  </header>
+
+  <div class="tabs reveal" id="tabs" style="animation-delay:.05s"></div>
+
+  <div class="panel reveal" style="animation-delay:.1s">
+    <div class="ptop">
+      <div>
+        <div class="pname"><span class="dot" id="pdot"></span><h2 id="pname"></h2><span class="pill" id="ppill"></span></div>
+        <p class="pdesc" id="pdesc"></p>
+        <p class="puse" id="puse"></p>
+      </div>
+    </div>
+    <div class="controls" id="controls"></div>
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <div class="panel reveal" style="animation-delay:.15s">
+    <p class="maptitle">Boundary map — each block is one chunk, width ∝ size</p>
+    <div class="map" id="map"></div>
+    <div class="legend">
+      <span><i style="background:var(--c0)"></i>colors cycle per chunk</span>
+      <span><i style="background:var(--c2);border-bottom:2px solid var(--amber-line)"></i>amber underline / stripe = overlap (repeated text)</span>
+    </div>
+  </div>
+
+  <div class="grid reveal" style="animation-delay:.2s">
+    <div class="docwrap">
+      <div class="bar"><span class="d"></span><span class="d"></span><span class="d"></span>&nbsp;policy.pdf — source document</div>
+      <div class="doc" id="doc"></div>
+    </div>
+    <div class="inspect">
+      <div class="bar"><h3>CHUNKS</h3><span id="cnote"></span></div>
+      <div class="chunks" id="chunks"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------- sample document : 10 pages ---------------- */
+const PAGES=[
+ {title:"Member Coverage & Prior Authorization Handbook",paras:[
+  "This handbook explains how the Plan reviews requests for medical services that require approval before they are provided. It is written for members, prescribers, and the clinical staff who prepare and submit authorization requests.",
+  "Prior authorization is a utilization-management process. It confirms that a requested service is medically necessary and covered under the member's benefit plan before the service is delivered. Approval is not a guarantee of payment; final payment depends on eligibility at the time of service and the terms of the contract.",
+  "Throughout this document, \"Plan\" refers to the health plan administering these benefits, and \"member\" refers to the covered individual. Defined terms appear in Section 2."]},
+ {title:"Section 1 — Purpose and Scope",paras:[
+  "The purpose of prior authorization is to ensure that high-cost, high-risk, or frequently misused services are reviewed against accepted clinical criteria before they are rendered. The process protects members from unnecessary procedures and helps the Plan manage cost responsibly.",
+  "This policy applies to all in-network and out-of-network requests for the service categories listed in Section 4. It does not apply to emergency services, which are never subject to prior authorization and are reviewed retrospectively.",
+  "Where state or federal law imposes a stricter standard than this policy, the stricter standard governs. Nothing in this handbook waives any right granted to the member by applicable law."]},
+ {title:"Section 2 — Definitions",paras:[
+  "Medically necessary: a service that is clinically appropriate, consistent with accepted standards of practice, and not primarily for the convenience of the member or provider.",
+  "Formulary: the list of drugs the Plan covers. A drug may be covered but still require prior authorization. For example, Warfarin 5 mg is on the formulary, yet certain newer oral anticoagulants require review before they are dispensed.",
+  "Turnaround time: the period, measured in business hours, between receipt of a complete request and the Plan's decision. Turnaround times are listed in Section 7."]},
+ {title:"Section 3 — Eligibility and Enrollment",paras:[
+  "A member must be actively enrolled on the date the service is requested and on the date it is provided. Eligibility is verified at submission and re-verified before payment.",
+  "If coverage lapses between approval and service, the authorization is void. Providers should confirm eligibility through the provider portal immediately before delivering an authorized service.",
+  "Newborns are covered for the first thirty days under the mother's policy. Enrollment of the newborn must be completed within that window to avoid a gap in coverage."]},
+ {title:"Section 4 — Covered Services Requiring Authorization",paras:[
+  "The following categories require prior authorization: advanced imaging, inpatient admissions, specialty pharmacy, durable medical equipment above a set cost threshold, and select outpatient procedures.",
+  "Services not on this list generally do not require authorization, but the Plan may add categories with thirty days' notice. The current list is maintained on the provider portal and supersedes any printed copy.",
+  "Bundled services are reviewed as a single request. A provider must not split one episode of care into multiple requests to avoid the cost threshold; doing so may result in denial."]},
+ {title:"Section 5 — The Prior Authorization Process",paras:[
+  "Step 1: The prescriber or facility submits a request with the member's identifier, the requested service code, and supporting clinical documentation.",
+  "Step 2: A coordinator checks the request for completeness. Incomplete requests are returned within one business day with a list of what is missing.",
+  "Step 3: A clinical reviewer compares the request against the Plan's criteria. Routine requests are decided by a nurse reviewer; complex cases are escalated to a medical director.",
+  "Step 4: The Plan issues a decision — approved, denied, or pended for more information — and notifies the requester through the portal and by letter."]},
+ {title:"Section 6 — Submission Requirements",paras:[
+  "Every request must include the member's name and identifier, the ordering provider, the servicing provider, the diagnosis code, the requested procedure or drug code, and the clinical rationale.",
+  "Clinical documentation must be legible and current. Notes older than ninety days are not accepted as the primary basis for medical necessity unless the condition is chronic and stable.",
+  "Requests submitted without a diagnosis code are rejected automatically and must be resubmitted. The Plan does not infer diagnoses from narrative text."]},
+ {title:"Section 7 — Decision Timelines",paras:[
+  "Standard requests are decided within seventy-two business hours of receiving a complete submission. Urgent requests, where delay would jeopardize the member's health, are decided within twenty-four hours.",
+  "If the Plan requests additional information, the clock pauses until the information is received. The requester has fourteen calendar days to respond before the request is closed as withdrawn.",
+  "Expedited review is available on clinical request. Misuse of the expedited pathway for non-urgent cases may be referred for provider education."]},
+ {title:"Section 8 — Denials, Appeals, and Grievances",paras:[
+  "A denial letter states the specific reason for the decision, the criteria applied, and the member's right to appeal. Common reasons include insufficient documentation, a service not meeting medical-necessity criteria, and a benefit exclusion.",
+  "The member, or a provider acting on the member's behalf, may appeal within sixty days. A first-level appeal is reviewed by a clinician who was not involved in the original decision.",
+  "If the first-level appeal upholds the denial, the member may request an independent external review. The external reviewer's decision is binding on the Plan."]},
+ {title:"Section 9 — Contact Information and Appendix",paras:[
+  "Authorization requests are submitted through the provider portal. Telephone support is available during business hours for status checks and urgent escalations.",
+  "Appendix A lists the service codes that require authorization. Appendix B lists the clinical criteria sources. Both appendices are updated quarterly and are available on the portal.",
+  "Questions about this handbook should be directed to the Utilization Management department. This document is informational and does not modify the terms of any member contract."]}
+];
+
+/* ---------------- build full text + page ranges ---------------- */
+let fullText=""; const pageRanges=[];
+PAGES.forEach((p,i)=>{
+  const start=fullText.length;
+  fullText += p.title+"\n\n"+p.paras.join("\n\n");
+  pageRanges.push({n:i+1,title:p.title,start,end:fullText.length});
+  if(i<PAGES.length-1) fullText+="\n\n";
+});
+const L=fullText.length;
+pageRanges.forEach((p,i)=>{ p.end=(i<pageRanges.length-1)?pageRanges[i+1].start:L; });
+
+/* token approximation: words and punctuation as separate tokens */
+const TOKENS=[]; { const re=/\w+|[^\w\s]/g,m=[]; let x; while((x=re.exec(fullText))) TOKENS.push({start:x.index,end:x.index+x[0].length}); }
+
+document.getElementById('docmeta').textContent = PAGES.length+" pages · "+L.toLocaleString()+" chars · ~"+TOKENS.length.toLocaleString()+" tokens";
+
+/* ---------------- strategies ---------------- */
+const STRATS={
+ fixed:{name:"Fixed-size (character)",pill:"by characters",color:"#3b82c4",
+   desc:"Counts characters and cuts every N — the cutter never sees words.",
+   use:"Quick baseline for uniform, low-structure text (logs, scrapes, transcripts).",
+   ctrls:[{k:"size",label:"Chunk size",unit:"chars",min:100,max:1500,step:50,val:600}]},
+ token:{name:"Token-based",pill:"by tokens",color:"#2f8f5b",
+   desc:"Cuts every N tokens (here ≈ words & punctuation; real models use BPE).",
+   use:"When you must stay inside the model's token budget exactly.",
+   ctrls:[{k:"tpc",label:"Tokens / chunk",unit:"tokens",min:20,max:400,step:10,val:120}]},
+ sliding:{name:"Sliding-window / overlap",pill:"chars + overlap",color:"#c9881a",
+   desc:"Fixed-size, but each chunk repeats the tail of the previous one.",
+   use:"When continuity matters and a split idea must survive the seam.",
+   ctrls:[{k:"size",label:"Chunk size",unit:"chars",min:200,max:1500,step:50,val:600},
+          {k:"overlap",label:"Overlap",unit:"chars",min:0,max:400,step:20,val:120}]},
+ sentence:{name:"Sentence-based",pill:"by sentence",color:"#0F6E56",
+   desc:"Packs whole sentences up to a size limit — boundaries land only at sentence ends.",
+   use:"FAQ / Q&A and short-answer text where a sentence stands on its own.",
+   ctrls:[{k:"max",label:"Max chars / chunk",unit:"chars",min:150,max:1200,step:50,val:450}]},
+ paragraph:{name:"Paragraph-based",pill:"by paragraph",color:"#6b3fa0",
+   desc:"Packs whole paragraphs up to a size limit; an oversize paragraph stands alone.",
+   use:"Well-structured prose: articles, reports, policies.",
+   ctrls:[{k:"max",label:"Max chars / chunk",unit:"chars",min:200,max:1500,step:50,val:650}]},
+ page:{name:"Page-level",pill:"by page",color:"#b4456f",
+   desc:"One chunk per page (or per N pages) — no sub-splitting at all.",
+   use:"Short single-topic pages; or as the parent unit in small-to-big.",
+   ctrls:[{k:"ppc",label:"Pages / chunk",unit:"pages",min:1,max:4,step:1,val:1}]}
+};
+const ORDER=["fixed","token","sliding","sentence","paragraph","page"];
+let active="fixed", activeChunk=-1;
+
+/* ---------------- chunkers (all return [{start,end}] over fullText) ---------------- */
+function val(k){return STRATS[active].ctrls.find(c=>c.k===k).val;}
+function unitsBy(re){const u=[];let s=0,m;const r=new RegExp(re,'g');while((m=r.exec(fullText))){const e=m.index+m[0].length;u.push({start:s,end:e});s=e;}if(s<L)u.push({start:s,end:L});return u;}
+function pack(units,max){const ch=[];let cs=units[0].start,ce=units[0].end;for(let i=1;i<units.length;i++){const u=units[i];if(u.end-cs<=max)ce=u.end;else{ch.push({start:cs,end:ce});cs=u.start;ce=u.end;}}ch.push({start:cs,end:ce});return ch;}
+
+function compute(){
+  if(active==="fixed"){const n=val("size"),c=[];for(let i=0;i<L;i+=n)c.push({start:i,end:Math.min(i+n,L)});return c;}
+  if(active==="sliding"){let n=val("size"),o=Math.min(val("overlap"),n-20),step=Math.max(n-o,20),c=[];for(let i=0;i<L;i+=step){const e=Math.min(i+n,L);c.push({start:i,end:e});if(e>=L)break;}return c;}
+  if(active==="token"){const tpc=val("tpc"),c=[];for(let i=0;i<TOKENS.length;i+=tpc){const s=(i===0)?0:TOKENS[i].start,j=Math.min(i+tpc,TOKENS.length),e=(j<TOKENS.length)?TOKENS[j].start:L;c.push({start:s,end:e});}return c;}
+  if(active==="sentence")return pack(unitsBy("[.!?](?=\\s|$)|\\n{2,}"),val("max"));
+  if(active==="paragraph")return pack(unitsBy("\\n{2,}"),val("max"));
+  if(active==="page"){const ppc=val("ppc"),c=[];for(let i=0;i<pageRanges.length;i+=ppc){const s=pageRanges[i].start,e=pageRanges[Math.min(i+ppc,pageRanges.length)-1].end;c.push({start:s,end:e});}return c;}
+}
+
+/* ---------------- rendering ---------------- */
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+function renderTabs(){
+  document.getElementById('tabs').innerHTML=ORDER.map((k,i)=>
+    `<div class="tab${k===active?' on':''}" data-k="${k}"><span class="n">${i+1}</span>${STRATS[k].name.split(' (')[0].split(' / ')[0]}</div>`).join('');
+}
+function renderControls(){
+  const s=STRATS[active];
+  document.getElementById('pdot').style.background=s.color;
+  document.getElementById('pname').textContent=s.name;
+  document.getElementById('ppill').textContent=s.pill;
+  document.getElementById('pdesc').textContent=s.desc;
+  document.getElementById('puse').innerHTML="<b>Use when:</b> "+s.use;
+  document.getElementById('controls').innerHTML=s.ctrls.map(c=>
+    `<div class="ctrl"><label>${c.label}<span class="v" id="v_${c.k}">${c.val} ${c.unit}</span></label>
+     <input type="range" data-k="${c.k}" min="${c.min}" max="${c.max}" step="${c.step}" value="${c.val}"></div>`).join('');
+  document.querySelectorAll('#controls input').forEach(inp=>inp.addEventListener('input',e=>{
+    const k=e.target.dataset.k,c=s.ctrls.find(x=>x.k===k);c.val=+e.target.value;
+    if(active==="sliding"&&k==="overlap"){const sz=s.ctrls.find(x=>x.k==="size").val;if(c.val>sz-20){c.val=sz-20;e.target.value=c.val;}}
+    document.getElementById('v_'+k).textContent=c.val+' '+c.unit;refresh();
+  }));
+}
+function colorOf(i){return 'c'+(i%6);}
+
+function renderDoc(chunks){
+  const pts=new Set([0,L]);chunks.forEach(c=>{pts.add(c.start);pts.add(c.end);});pageRanges.forEach(p=>pts.add(p.start));
+  const P=[...pts].filter(p=>p>=0&&p<=L).sort((a,b)=>a-b);let html="";
+  for(let k=0;k<P.length-1;k++){
+    const a=P[k],b=P[k+1];if(a>=b)continue;
+    const pg=pageRanges.find(p=>p.start===a);
+    if(pg&&a>0)html+=`<div class="pagebreak">Page ${pg.n}</div>`;
+    const mid=(a+b)/2,cov=[];chunks.forEach((c,i)=>{if(c.start<=mid&&mid<c.end)cov.push(i);});
+    if(!cov.length){html+=esc(fullText.slice(a,b));continue;}
+    const idx=cov[0],ov=cov.length>1;
+    html+=`<span class="chunk ${colorOf(idx)}${ov?' ov':''}" data-ci="${idx}">${esc(fullText.slice(a,b))}</span>`;
+  }
+  document.getElementById('doc').innerHTML=html;
+}
+function renderMap(chunks){
+  const tot=chunks.reduce((s,c)=>s+(c.end-c.start),0);
+  document.getElementById('map').innerHTML=chunks.map((c,i)=>{
+    const ov=active==="sliding"&&i>0;
+    return `<div class="seg${ov?' ov':''}" data-ci="${i}" title="chunk ${i+1} · ${c.end-c.start} chars" style="width:${(c.end-c.start)/tot*100}%;background:var(--${colorOf(i)})"></div>`;
+  }).join('');
+}
+function renderList(chunks){
+  document.getElementById('cnote').textContent=chunks.length+" chunks";
+  document.getElementById('chunks').innerHTML=chunks.map((c,i)=>{
+    const txt=fullText.slice(c.start,c.end).replace(/\s+/g,' ').trim();
+    const toks=TOKENS.filter(t=>t.start>=c.start&&t.end<=c.end).length;
+    return `<div class="cc" data-ci="${i}" style="border-left-color:var(--${colorOf(i)}b)">
+      <div class="h"><b>Chunk ${i+1}</b><em>${c.end-c.start} chars · ~${toks} tok</em></div>
+      <div class="t">${esc(txt.slice(0,140))}${txt.length>140?'…':''}</div></div>`;
+  }).join('');
+}
+function renderStats(chunks){
+  const sizes=chunks.map(c=>c.end-c.start);
+  const avg=Math.round(sizes.reduce((a,b)=>a+b,0)/chunks.length);
+  const mn=Math.min(...sizes),mx=Math.max(...sizes);
+  let mid=false;chunks.forEach(c=>{if(c.end<L){const a=fullText[c.end-1],b=fullText[c.end];if(/\w/.test(a)&&/\w/.test(b))mid=true;}});
+  const cls=mid?'bad':'good',txt=mid?'Yes':'No';
+  document.getElementById('stats').innerHTML=
+    `<div class="stat"><div class="k">chunks</div><div class="val">${chunks.length}</div></div>
+     <div class="stat"><div class="k">avg size</div><div class="val">${avg}</div></div>
+     <div class="stat"><div class="k">smallest</div><div class="val">${mn}</div></div>
+     <div class="stat"><div class="k">largest</div><div class="val">${mx}</div></div>
+     <div class="stat flag ${cls}"><div class="k">mid-word cuts</div><div class="val">${txt}</div></div>`;
+}
+function wireHover(){
+  document.querySelectorAll('[data-ci]').forEach(el=>{
+    el.addEventListener('click',()=>setActive(+el.dataset.ci));
+    el.addEventListener('mouseenter',()=>flash(+el.dataset.ci,true));
+    el.addEventListener('mouseleave',()=>{if(activeChunk<0)flash(+el.dataset.ci,false);});
+  });
+}
+function flash(ci,on){document.querySelectorAll('.chunk[data-ci="'+ci+'"]').forEach(s=>s.classList.toggle('active',on));}
+function setActive(ci){
+  activeChunk=(activeChunk===ci)?-1:ci;
+  document.querySelectorAll('.chunk').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.cc').forEach(s=>s.classList.remove('active'));
+  if(activeChunk>=0){
+    document.querySelectorAll('.chunk[data-ci="'+ci+'"]').forEach(s=>s.classList.add('active'));
+    const card=document.querySelector('.cc[data-ci="'+ci+'"]');if(card)card.classList.add('active');
+    const first=document.querySelector('.chunk[data-ci="'+ci+'"]');if(first)first.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+}
+function refresh(){const c=compute();renderMap(c);renderDoc(c);renderList(c);renderStats(c);activeChunk=-1;wireHover();}
+function selectStrategy(k){active=k;activeChunk=-1;renderTabs();renderControls();refresh();
+  document.getElementById('tabs').querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>selectStrategy(t.dataset.k)));}
+
+renderTabs();
+document.getElementById('tabs').querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>selectStrategy(t.dataset.k)));
+renderControls();refresh();
+</script>
+</body>
+</html>
