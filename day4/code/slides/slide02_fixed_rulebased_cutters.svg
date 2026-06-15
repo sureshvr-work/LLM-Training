@@ -1,0 +1,152 @@
+<svg viewBox="0 0 730 872" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fixed and rule-based chunking: six deterministic cutters — fixed-size, token-based, sliding-window, sentence, paragraph, and page-level — each shown cutting the same policy PDF, with the use case for each.">
+<rect x="6" y="6" width="718" height="860" rx="14" fill="#FFFFFF" stroke="#e3e8ee" stroke-width="1"/>
+<text x="365" y="30" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="600" fill="#1d3a5f">Fixed / rule-based chunking — six deterministic cutters</text>
+<text x="365" y="48" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="600" fill="#5f3dc4">same policy.pdf, six rules — watch where each one places the boundary</text>
+
+<!-- ============================ CARD 1 : Fixed-size ============================ -->
+<rect x="20" y="62" width="340" height="250" rx="8" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<circle cx="42" cy="84" r="9" fill="#5f3dc4"/><text x="42" y="88" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="#FFFFFF">1</text>
+<text x="58" y="88" font-family="sans-serif" font-size="12.5" font-weight="700" fill="#4b2fa0">Fixed-size (character)</text>
+<rect x="256" y="74" width="92" height="16" rx="8" fill="#ece6fa" stroke="#5f3dc4" stroke-width="0.7"/><text x="302" y="85" text-anchor="middle" font-family="sans-serif" font-size="8" font-weight="600" fill="#4b2fa0">by characters</text>
+<rect x="34" y="102" width="148" height="196" rx="3" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<rect x="34" y="102" width="148" height="16" fill="#EEEDEC"/><text x="42" y="113" font-family="monospace" font-size="8" fill="#444441">policy.pdf</text>
+<rect x="46" y="128" width="86" height="8" rx="2" fill="#b9c2cc"/>
+<rect x="46" y="146" width="120" height="6" rx="2" fill="#D3D1C7"/><rect x="46" y="158" width="104" height="6" rx="2" fill="#D3D1C7"/>
+<rect x="46" y="182" width="124" height="6" rx="2" fill="#D3D1C7"/><rect x="46" y="194" width="96" height="6" rx="2" fill="#D3D1C7"/>
+<rect x="46" y="218" width="118" height="6" rx="2" fill="#D3D1C7"/><rect x="46" y="230" width="72" height="6" rx="2" fill="#D3D1C7"/>
+<line x1="34" y1="152" x2="182" y2="152" stroke="#D64545" stroke-width="1.4" stroke-dasharray="4 3"/>
+<line x1="34" y1="188" x2="182" y2="188" stroke="#D64545" stroke-width="1.4" stroke-dasharray="4 3"/>
+<line x1="34" y1="224" x2="182" y2="224" stroke="#D64545" stroke-width="1.4" stroke-dasharray="4 3"/>
+<text x="200" y="116" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#5f3dc4">USE WHEN</text>
+<text x="200" y="132" font-family="sans-serif" font-size="9" fill="#444441">Your quick baseline. Best for</text>
+<text x="200" y="146" font-family="sans-serif" font-size="9" fill="#444441">uniform, low-structure text —</text>
+<text x="200" y="160" font-family="sans-serif" font-size="9" fill="#444441">logs, scrapes, transcripts.</text>
+<text x="200" y="174" font-family="sans-serif" font-size="9" fill="#444441">Cheapest, and fully deterministic.</text>
+<line x1="200" y1="246" x2="346" y2="246" stroke="#e3e8ee" stroke-width="1"/>
+<text x="200" y="266" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#B23030">HOW IT CUTS</text>
+<text x="200" y="282" font-family="sans-serif" font-size="9" fill="#B23030">Counts characters and stops —</text>
+<text x="200" y="296" font-family="sans-serif" font-size="9" fill="#B23030">it can slice a word in half.</text>
+
+<!-- ============================ CARD 2 : Token-based ============================ -->
+<rect x="370" y="62" width="340" height="250" rx="8" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<circle cx="392" cy="84" r="9" fill="#5f3dc4"/><text x="392" y="88" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="#FFFFFF">2</text>
+<text x="408" y="88" font-family="sans-serif" font-size="12.5" font-weight="700" fill="#4b2fa0">Token-based</text>
+<rect x="612" y="74" width="86" height="16" rx="8" fill="#ece6fa" stroke="#5f3dc4" stroke-width="0.7"/><text x="655" y="85" text-anchor="middle" font-family="sans-serif" font-size="8" font-weight="600" fill="#4b2fa0">by tokens</text>
+<rect x="384" y="102" width="148" height="196" rx="3" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<rect x="384" y="102" width="148" height="16" fill="#EEEDEC"/><text x="392" y="113" font-family="monospace" font-size="8" fill="#444441">policy.pdf</text>
+<g fill="#cfe0f4" stroke="#85B7EB" stroke-width="0.5">
+<rect x="396" y="128" width="16" height="9" rx="1"/><rect x="414" y="128" width="12" height="9" rx="1"/><rect x="428" y="128" width="20" height="9" rx="1"/><rect x="450" y="128" width="14" height="9" rx="1"/><rect x="466" y="128" width="18" height="9" rx="1"/>
+<rect x="396" y="146" width="14" height="9" rx="1"/><rect x="412" y="146" width="18" height="9" rx="1"/><rect x="432" y="146" width="12" height="9" rx="1"/><rect x="446" y="146" width="22" height="9" rx="1"/>
+<rect x="396" y="168" width="20" height="9" rx="1"/><rect x="418" y="168" width="12" height="9" rx="1"/><rect x="432" y="168" width="16" height="9" rx="1"/><rect x="450" y="168" width="14" height="9" rx="1"/><rect x="466" y="168" width="18" height="9" rx="1"/>
+<rect x="396" y="190" width="14" height="9" rx="1"/><rect x="412" y="190" width="20" height="9" rx="1"/><rect x="434" y="190" width="12" height="9" rx="1"/>
+</g>
+<line x1="384" y1="162" x2="532" y2="162" stroke="#D64545" stroke-width="1.4" stroke-dasharray="4 3"/>
+<line x1="384" y1="206" x2="532" y2="206" stroke="#D64545" stroke-width="1.4" stroke-dasharray="4 3"/>
+<text x="392" y="232" font-family="monospace" font-size="7.5" fill="#888780">each box ≈ one token</text>
+<text x="550" y="116" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#5f3dc4">USE WHEN</text>
+<text x="550" y="132" font-family="sans-serif" font-size="9" fill="#444441">When you must stay inside the</text>
+<text x="550" y="146" font-family="sans-serif" font-size="9" fill="#444441">model's token budget exactly —</text>
+<text x="550" y="160" font-family="sans-serif" font-size="9" fill="#444441">embeddings and context windows</text>
+<text x="550" y="174" font-family="sans-serif" font-size="9" fill="#444441">count tokens, not characters.</text>
+<line x1="550" y1="246" x2="696" y2="246" stroke="#e3e8ee" stroke-width="1"/>
+<text x="550" y="266" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#B23030">HOW IT CUTS</text>
+<text x="550" y="282" font-family="sans-serif" font-size="9" fill="#B23030">Lands on the model's real unit,</text>
+<text x="550" y="296" font-family="sans-serif" font-size="9" fill="#B23030">but is still blind to meaning.</text>
+
+<!-- ============================ CARD 3 : Sliding-window ============================ -->
+<rect x="20" y="322" width="340" height="250" rx="8" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<circle cx="42" cy="344" r="9" fill="#5f3dc4"/><text x="42" y="348" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="#FFFFFF">3</text>
+<text x="58" y="348" font-family="sans-serif" font-size="12.5" font-weight="700" fill="#4b2fa0">Sliding-window / overlap</text>
+<rect x="244" y="334" width="104" height="16" rx="8" fill="#FAEEDA" stroke="#EF9F27" stroke-width="0.7"/><text x="296" y="345" text-anchor="middle" font-family="sans-serif" font-size="8" font-weight="600" fill="#854F0B">chars + overlap</text>
+<rect x="34" y="362" width="148" height="196" rx="3" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<rect x="34" y="362" width="148" height="16" fill="#EEEDEC"/><text x="42" y="373" font-family="monospace" font-size="8" fill="#444441">policy.pdf</text>
+<rect x="46" y="388" width="86" height="8" rx="2" fill="#b9c2cc"/>
+<rect x="46" y="406" width="120" height="6" rx="2" fill="#D3D1C7"/><rect x="46" y="418" width="104" height="6" rx="2" fill="#D3D1C7"/>
+<rect x="46" y="438" width="124" height="6" rx="2" fill="#D3D1C7"/><rect x="46" y="450" width="96" height="6" rx="2" fill="#D3D1C7"/>
+<rect x="46" y="472" width="118" height="6" rx="2" fill="#D3D1C7"/><rect x="46" y="484" width="72" height="6" rx="2" fill="#D3D1C7"/>
+<rect x="40" y="382" width="136" height="64" rx="4" fill="#FAEEDA" fill-opacity="0.5" stroke="#EF9F27" stroke-width="1" stroke-dasharray="4 3"/>
+<rect x="40" y="430" width="136" height="64" rx="4" fill="#FAEEDA" fill-opacity="0.5" stroke="#EF9F27" stroke-width="1" stroke-dasharray="4 3"/>
+<rect x="40" y="430" width="136" height="16" rx="2" fill="#F2C879" fill-opacity="0.75"/>
+<text x="200" y="376" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#5f3dc4">USE WHEN</text>
+<text x="200" y="392" font-family="sans-serif" font-size="9" fill="#444441">When continuity matters and an</text>
+<text x="200" y="406" font-family="sans-serif" font-size="9" fill="#444441">idea must survive the seam.</text>
+<text x="200" y="420" font-family="sans-serif" font-size="9" fill="#444441">Each chunk repeats a little of</text>
+<text x="200" y="434" font-family="sans-serif" font-size="9" fill="#444441">the one before, as a buffer.</text>
+<line x1="200" y1="506" x2="346" y2="506" stroke="#e3e8ee" stroke-width="1"/>
+<text x="200" y="526" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#854F0B">HOW IT CUTS</text>
+<text x="200" y="542" font-family="sans-serif" font-size="9" fill="#854F0B">Boundary is still blind; the</text>
+<text x="200" y="556" font-family="sans-serif" font-size="9" fill="#854F0B">overlap just covers the seam.</text>
+
+<!-- ============================ CARD 4 : Sentence-based ============================ -->
+<rect x="370" y="322" width="340" height="250" rx="8" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<circle cx="392" cy="344" r="9" fill="#5f3dc4"/><text x="392" y="348" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="#FFFFFF">4</text>
+<text x="408" y="348" font-family="sans-serif" font-size="12.5" font-weight="700" fill="#4b2fa0">Sentence-based</text>
+<rect x="606" y="334" width="92" height="16" rx="8" fill="#E1F5EE" stroke="#5DCAA5" stroke-width="0.7"/><text x="652" y="345" text-anchor="middle" font-family="sans-serif" font-size="8" font-weight="600" fill="#0F6E56">by sentence</text>
+<rect x="384" y="362" width="148" height="196" rx="3" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<rect x="384" y="362" width="148" height="16" fill="#EEEDEC"/><text x="392" y="373" font-family="monospace" font-size="8" fill="#444441">policy.pdf</text>
+<rect x="396" y="388" width="120" height="6" rx="2" fill="#D3D1C7"/><rect x="396" y="400" width="90" height="6" rx="2" fill="#D3D1C7"/>
+<rect x="396" y="424" width="124" height="6" rx="2" fill="#D3D1C7"/><rect x="396" y="436" width="70" height="6" rx="2" fill="#D3D1C7"/>
+<rect x="396" y="460" width="118" height="6" rx="2" fill="#D3D1C7"/><rect x="396" y="472" width="100" height="6" rx="2" fill="#D3D1C7"/>
+<line x1="384" y1="412" x2="532" y2="412" stroke="#1D9E75" stroke-width="1.4" stroke-dasharray="4 3"/>
+<line x1="384" y1="448" x2="532" y2="448" stroke="#1D9E75" stroke-width="1.4" stroke-dasharray="4 3"/>
+<line x1="384" y1="486" x2="532" y2="486" stroke="#1D9E75" stroke-width="1.4" stroke-dasharray="4 3"/>
+<text x="550" y="376" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#5f3dc4">USE WHEN</text>
+<text x="550" y="392" font-family="sans-serif" font-size="9" fill="#444441">FAQ and short-answer content,</text>
+<text x="550" y="406" font-family="sans-serif" font-size="9" fill="#444441">where one sentence stands on</text>
+<text x="550" y="420" font-family="sans-serif" font-size="9" fill="#444441">its own. Boundaries land only</text>
+<text x="550" y="434" font-family="sans-serif" font-size="9" fill="#444441">at sentence ends.</text>
+<line x1="550" y1="506" x2="696" y2="506" stroke="#e3e8ee" stroke-width="1"/>
+<text x="550" y="526" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#0F6E56">HOW IT CUTS</text>
+<text x="550" y="542" font-family="sans-serif" font-size="9" fill="#0F6E56">Clean cut; chunk length</text>
+<text x="550" y="556" font-family="sans-serif" font-size="9" fill="#0F6E56">tracks the sentence.</text>
+
+<!-- ============================ CARD 5 : Paragraph-based ============================ -->
+<rect x="20" y="582" width="340" height="250" rx="8" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<circle cx="42" cy="604" r="9" fill="#5f3dc4"/><text x="42" y="608" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="#FFFFFF">5</text>
+<text x="58" y="608" font-family="sans-serif" font-size="12.5" font-weight="700" fill="#4b2fa0">Paragraph-based</text>
+<rect x="248" y="594" width="100" height="16" rx="8" fill="#E1F5EE" stroke="#5DCAA5" stroke-width="0.7"/><text x="298" y="605" text-anchor="middle" font-family="sans-serif" font-size="8" font-weight="600" fill="#0F6E56">by paragraph</text>
+<rect x="34" y="622" width="148" height="196" rx="3" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<rect x="34" y="622" width="148" height="16" fill="#EEEDEC"/><text x="42" y="633" font-family="monospace" font-size="8" fill="#444441">policy.pdf</text>
+<rect x="46" y="648" width="86" height="8" rx="2" fill="#b9c2cc"/>
+<rect x="46" y="664" width="120" height="6" rx="2" fill="#D3D1C7"/><rect x="46" y="676" width="104" height="6" rx="2" fill="#D3D1C7"/>
+<rect x="46" y="704" width="124" height="6" rx="2" fill="#D3D1C7"/><rect x="46" y="716" width="96" height="6" rx="2" fill="#D3D1C7"/>
+<rect x="46" y="744" width="118" height="6" rx="2" fill="#D3D1C7"/><rect x="46" y="756" width="72" height="6" rx="2" fill="#D3D1C7"/>
+<line x1="34" y1="692" x2="182" y2="692" stroke="#1D9E75" stroke-width="1.4" stroke-dasharray="4 3"/>
+<line x1="34" y1="732" x2="182" y2="732" stroke="#1D9E75" stroke-width="1.4" stroke-dasharray="4 3"/>
+<text x="200" y="636" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#5f3dc4">USE WHEN</text>
+<text x="200" y="652" font-family="sans-serif" font-size="9" fill="#444441">Well-structured prose:</text>
+<text x="200" y="666" font-family="sans-serif" font-size="9" fill="#444441">articles, reports, policies —</text>
+<text x="200" y="680" font-family="sans-serif" font-size="9" fill="#444441">each paragraph carries one</text>
+<text x="200" y="694" font-family="sans-serif" font-size="9" fill="#444441">complete idea.</text>
+<line x1="200" y1="766" x2="346" y2="766" stroke="#e3e8ee" stroke-width="1"/>
+<text x="200" y="786" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#0F6E56">HOW IT CUTS</text>
+<text x="200" y="802" font-family="sans-serif" font-size="9" fill="#0F6E56">Clean cut at blank lines; size</text>
+<text x="200" y="816" font-family="sans-serif" font-size="9" fill="#0F6E56">follows the paragraph.</text>
+
+<!-- ============================ CARD 6 : Page-level ============================ -->
+<rect x="370" y="582" width="340" height="250" rx="8" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<circle cx="392" cy="604" r="9" fill="#5f3dc4"/><text x="392" y="608" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="#FFFFFF">6</text>
+<text x="408" y="608" font-family="sans-serif" font-size="12.5" font-weight="700" fill="#4b2fa0">Page-level</text>
+<rect x="618" y="594" width="80" height="16" rx="8" fill="#E1F5EE" stroke="#5DCAA5" stroke-width="0.7"/><text x="658" y="605" text-anchor="middle" font-family="sans-serif" font-size="8" font-weight="600" fill="#0F6E56">by page</text>
+<rect x="384" y="622" width="148" height="196" rx="3" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<rect x="384" y="622" width="148" height="16" fill="#EEEDEC"/><text x="392" y="633" font-family="monospace" font-size="8" fill="#444441">policy.pdf</text>
+<rect x="396" y="648" width="86" height="8" rx="2" fill="#b9c2cc"/>
+<rect x="396" y="664" width="120" height="6" rx="2" fill="#D3D1C7"/><rect x="396" y="676" width="104" height="6" rx="2" fill="#D3D1C7"/>
+<rect x="396" y="700" width="124" height="6" rx="2" fill="#D3D1C7"/><rect x="396" y="712" width="96" height="6" rx="2" fill="#D3D1C7"/>
+<rect x="396" y="736" width="118" height="6" rx="2" fill="#D3D1C7"/><rect x="396" y="748" width="72" height="6" rx="2" fill="#D3D1C7"/>
+<rect x="389" y="642" width="138" height="148" rx="5" fill="#1D9E75" fill-opacity="0.06" stroke="#1D9E75" stroke-width="1.4" stroke-dasharray="5 3"/>
+<text x="458" y="784" text-anchor="middle" font-family="sans-serif" font-size="8.5" font-weight="600" fill="#0F6E56">chunk = whole page</text>
+<text x="550" y="636" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#5f3dc4">USE WHEN</text>
+<text x="550" y="652" font-family="sans-serif" font-size="9" fill="#444441">Short, single-topic pages —</text>
+<text x="550" y="666" font-family="sans-serif" font-size="9" fill="#444441">forms, one-pagers, slide notes.</text>
+<text x="550" y="680" font-family="sans-serif" font-size="9" fill="#444441">Or as the parent unit in a</text>
+<text x="550" y="694" font-family="sans-serif" font-size="9" fill="#444441">small-to-big retrieval setup.</text>
+<line x1="550" y1="766" x2="696" y2="766" stroke="#e3e8ee" stroke-width="1"/>
+<text x="550" y="786" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#0F6E56">HOW IT CUTS</text>
+<text x="550" y="802" font-family="sans-serif" font-size="9" fill="#0F6E56">No splitting — the whole page</text>
+<text x="550" y="816" font-family="sans-serif" font-size="9" fill="#0F6E56">becomes one vector (if it fits).</text>
+
+<!-- footer caveat -->
+<line x1="20" y1="842" x2="710" y2="842" stroke="#e3e8ee" stroke-width="1"/>
+<text x="365" y="856" text-anchor="middle" font-family="sans-serif" font-size="8.5" font-style="italic" fill="#6b7785">All six are deterministic — no model, no meaning. Even sentence / paragraph / page need a size cap, so one long unit can't exceed the embedding limit.</text>
+</svg>

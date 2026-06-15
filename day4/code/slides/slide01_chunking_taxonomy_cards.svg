@@ -1,0 +1,167 @@
+<svg viewBox="0 0 730 1052" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Chunking families as cards: seven families, each with a mini visual of where it cuts and its list of strategies, plus a how-to-choose tip card.">
+<defs><marker id="tip" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L5,3 L0,6 Z" fill="#5f3dc4"/></marker></defs>
+<rect x="6" y="6" width="718" height="1040" rx="14" fill="#FFFFFF" stroke="#e3e8ee" stroke-width="1"/>
+<text x="365" y="32" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#1d3a5f">Chunking — the seven families</text>
+<text x="365" y="50" text-anchor="middle" font-family="sans-serif" font-size="11.5" font-weight="600" fill="#5f3dc4">each family is defined by what decides the boundary</text>
+
+<!-- ============================ CARD 1 : Fixed / rule-based (highlight) ============================ -->
+<rect x="20" y="62" width="340" height="235" rx="8" fill="#FFFFFF" stroke="#1D9E75" stroke-width="1.6"/>
+<circle cx="42" cy="84" r="9" fill="#1D9E75"/><text x="42" y="88" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="#FFFFFF">1</text>
+<text x="58" y="88" font-family="sans-serif" font-size="12.5" font-weight="700" fill="#0F6E56">Fixed / rule-based</text>
+<rect x="250" y="73" width="98" height="17" rx="8" fill="#E1F5EE" stroke="#5DCAA5" stroke-width="0.7"/><text x="299" y="85" text-anchor="middle" font-family="sans-serif" font-size="8.5" font-weight="600" fill="#0F6E56">six cutters ✓</text>
+<rect x="34" y="102" width="122" height="150" rx="3" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<rect x="44" y="120" width="80" height="6" rx="2" fill="#b9c2cc"/><rect x="44" y="134" width="95" height="5" rx="2" fill="#D3D1C7"/><rect x="44" y="146" width="78" height="5" rx="2" fill="#D3D1C7"/>
+<rect x="44" y="166" width="95" height="5" rx="2" fill="#D3D1C7"/><rect x="44" y="178" width="70" height="5" rx="2" fill="#D3D1C7"/>
+<rect x="44" y="198" width="90" height="5" rx="2" fill="#D3D1C7"/><rect x="44" y="210" width="60" height="5" rx="2" fill="#D3D1C7"/>
+<rect x="38" y="183" width="114" height="14" rx="2" fill="#FAEEDA" fill-opacity="0.6" stroke="#EF9F27" stroke-width="0.8" stroke-dasharray="3 2"/>
+<line x1="34" y1="158" x2="156" y2="158" stroke="#D64545" stroke-width="1.3" stroke-dasharray="4 3"/>
+<line x1="34" y1="190" x2="156" y2="190" stroke="#D64545" stroke-width="1.3" stroke-dasharray="4 3"/>
+<line x1="34" y1="222" x2="156" y2="222" stroke="#D64545" stroke-width="1.3" stroke-dasharray="4 3"/>
+<text x="95" y="245" text-anchor="middle" font-family="sans-serif" font-size="8.5" fill="#6b7785">uniform cuts + overlap</text>
+<text x="170" y="117" font-family="sans-serif" font-size="9" font-weight="700" fill="#5f3dc4">STRATEGIES</text>
+<text x="170" y="133" font-family="sans-serif" font-size="9" fill="#444441">• Fixed-size (character)</text>
+<text x="170" y="148" font-family="sans-serif" font-size="9" fill="#444441">• Token-based</text>
+<text x="170" y="163" font-family="sans-serif" font-size="9" fill="#444441">• Sliding-window / overlap</text>
+<text x="170" y="178" font-family="sans-serif" font-size="9" fill="#444441">• Sentence-based</text>
+<text x="170" y="193" font-family="sans-serif" font-size="9" fill="#444441">• Paragraph-based</text>
+<text x="170" y="208" font-family="sans-serif" font-size="9" fill="#444441">• Page-level</text>
+<line x1="34" y1="262" x2="346" y2="262" stroke="#e3e8ee" stroke-width="1"/>
+<text x="34" y="276" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#5F5E5A">BOUNDARY SET BY</text>
+<text x="34" y="290" font-family="sans-serif" font-size="9.5" fill="#444441">A counting rule: characters, tokens, sentences, pages.</text>
+
+<!-- ============================ CARD 2 : Structure-aware ============================ -->
+<rect x="370" y="62" width="340" height="235" rx="8" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<circle cx="392" cy="84" r="9" fill="#5f3dc4"/><text x="392" y="88" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="#FFFFFF">2</text>
+<text x="408" y="88" font-family="sans-serif" font-size="12.5" font-weight="700" fill="#4b2fa0">Structure-aware</text>
+<rect x="606" y="73" width="92" height="17" rx="8" fill="#ece6fa" stroke="#5f3dc4" stroke-width="0.7"/><text x="652" y="85" text-anchor="middle" font-family="sans-serif" font-size="8.5" font-weight="600" fill="#4b2fa0">follows layout</text>
+<rect x="384" y="102" width="122" height="150" rx="3" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<rect x="394" y="116" width="90" height="7" rx="2" fill="#b9c2cc"/>
+<rect x="406" y="132" width="72" height="5" rx="2" fill="#D3D1C7"/><rect x="406" y="143" width="60" height="5" rx="2" fill="#D3D1C7"/>
+<rect x="394" y="166" width="72" height="30" rx="2" fill="none" stroke="#85B7EB" stroke-width="0.8"/><line x1="430" y1="166" x2="430" y2="196" stroke="#85B7EB" stroke-width="0.8"/><line x1="394" y1="181" x2="466" y2="181" stroke="#85B7EB" stroke-width="0.8"/>
+<rect x="394" y="208" width="85" height="5" rx="2" fill="#D3D1C7"/>
+<line x1="384" y1="127" x2="506" y2="127" stroke="#1D9E75" stroke-width="1.3" stroke-dasharray="4 3"/>
+<line x1="384" y1="155" x2="506" y2="155" stroke="#1D9E75" stroke-width="1.3" stroke-dasharray="4 3"/>
+<line x1="384" y1="202" x2="506" y2="202" stroke="#1D9E75" stroke-width="1.3" stroke-dasharray="4 3"/>
+<text x="445" y="245" text-anchor="middle" font-family="sans-serif" font-size="8.5" fill="#6b7785">heading · block · table</text>
+<text x="520" y="117" font-family="sans-serif" font-size="9" font-weight="700" fill="#5f3dc4">STRATEGIES</text>
+<text x="520" y="133" font-family="sans-serif" font-size="9" fill="#444441">• Recursive character</text>
+<text x="520" y="148" font-family="sans-serif" font-size="9" fill="#444441">• Layout-aware (MD/HTML)</text>
+<text x="520" y="163" font-family="sans-serif" font-size="9" fill="#444441">• Clause-level</text>
+<text x="520" y="178" font-family="sans-serif" font-size="9" fill="#444441">• Code-aware (fn/class)</text>
+<text x="520" y="193" font-family="sans-serif" font-size="9" fill="#444441">• Table-aware</text>
+<line x1="384" y1="262" x2="696" y2="262" stroke="#e3e8ee" stroke-width="1"/>
+<text x="384" y="276" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#5F5E5A">BOUNDARY SET BY</text>
+<text x="384" y="290" font-family="sans-serif" font-size="9.5" fill="#444441">The document's own markup: headings, code, tables.</text>
+
+<!-- ============================ CARD 3 : Meaning-based ============================ -->
+<rect x="20" y="309" width="340" height="235" rx="8" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<circle cx="42" cy="331" r="9" fill="#5f3dc4"/><text x="42" y="335" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="#FFFFFF">3</text>
+<text x="58" y="335" font-family="sans-serif" font-size="12.5" font-weight="700" fill="#4b2fa0">Meaning-based</text>
+<rect x="276" y="320" width="72" height="17" rx="8" fill="#ece6fa" stroke="#5f3dc4" stroke-width="0.7"/><text x="312" y="332" text-anchor="middle" font-family="sans-serif" font-size="8.5" font-weight="600" fill="#4b2fa0">by meaning</text>
+<rect x="34" y="349" width="122" height="150" rx="3" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<g fill="#85B7EB"><circle cx="52" cy="372" r="4"/><circle cx="68" cy="372" r="4"/><circle cx="84" cy="372" r="4"/><circle cx="100" cy="372" r="4"/><circle cx="60" cy="386" r="4"/><circle cx="76" cy="386" r="4"/><circle cx="92" cy="386" r="4"/></g>
+<line x1="34" y1="408" x2="156" y2="408" stroke="#1D9E75" stroke-width="1.4" stroke-dasharray="4 3"/>
+<g fill="#5DCAA5"><circle cx="56" cy="430" r="4"/><circle cx="72" cy="430" r="4"/><circle cx="88" cy="430" r="4"/><circle cx="64" cy="444" r="4"/><circle cx="80" cy="444" r="4"/><circle cx="96" cy="444" r="4"/><circle cx="48" cy="444" r="4"/></g>
+<text x="95" y="490" text-anchor="middle" font-family="sans-serif" font-size="8.5" fill="#6b7785">cut where meaning shifts</text>
+<text x="170" y="364" font-family="sans-serif" font-size="9" font-weight="700" fill="#5f3dc4">STRATEGIES</text>
+<text x="170" y="380" font-family="sans-serif" font-size="9" fill="#444441">• Semantic (embedding-sim)</text>
+<text x="170" y="395" font-family="sans-serif" font-size="9" fill="#444441">• Semantic double-pass merge</text>
+<text x="170" y="410" font-family="sans-serif" font-size="9" fill="#444441">• Topic-based</text>
+<text x="170" y="425" font-family="sans-serif" font-size="9" fill="#444441">• Proposition-based</text>
+<line x1="34" y1="509" x2="346" y2="509" stroke="#e3e8ee" stroke-width="1"/>
+<text x="34" y="523" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#5F5E5A">BOUNDARY SET BY</text>
+<text x="34" y="537" font-family="sans-serif" font-size="9.5" fill="#444441">Where meaning shifts — typically via embeddings.</text>
+
+<!-- ============================ CARD 4 : Hierarchical ============================ -->
+<rect x="370" y="309" width="340" height="235" rx="8" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<circle cx="392" cy="331" r="9" fill="#5f3dc4"/><text x="392" y="335" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="#FFFFFF">4</text>
+<text x="408" y="335" font-family="sans-serif" font-size="12" font-weight="700" fill="#4b2fa0">Hierarchical / multi-granularity</text>
+<rect x="632" y="320" width="66" height="17" rx="8" fill="#ece6fa" stroke="#5f3dc4" stroke-width="0.7"/><text x="665" y="332" text-anchor="middle" font-family="sans-serif" font-size="8.5" font-weight="600" fill="#4b2fa0">multi-scale</text>
+<rect x="384" y="349" width="122" height="150" rx="3" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<rect x="396" y="364" width="98" height="120" rx="4" fill="#f7f5fd" stroke="#5f3dc4" stroke-width="1"/>
+<rect x="404" y="374" width="82" height="28" rx="3" fill="#FFFFFF" stroke="#8a7bc8" stroke-width="0.8"/>
+<rect x="404" y="406" width="82" height="28" rx="3" fill="#FFFFFF" stroke="#8a7bc8" stroke-width="0.8"/>
+<rect x="404" y="438" width="82" height="28" rx="3" fill="#FFFFFF" stroke="#8a7bc8" stroke-width="0.8"/>
+<text x="445" y="490" text-anchor="middle" font-family="sans-serif" font-size="8.5" fill="#6b7785">parent holds children</text>
+<text x="520" y="364" font-family="sans-serif" font-size="9" font-weight="700" fill="#5f3dc4">STRATEGIES</text>
+<text x="520" y="380" font-family="sans-serif" font-size="9" fill="#444441">• Hierarchical</text>
+<text x="520" y="395" font-family="sans-serif" font-size="9" fill="#444441">• Small-to-big (parent-child)</text>
+<text x="520" y="410" font-family="sans-serif" font-size="9" fill="#444441">• Cross-granularity</text>
+<text x="520" y="425" font-family="sans-serif" font-size="9" fill="#444441">• Sentence-window</text>
+<text x="520" y="440" font-family="sans-serif" font-size="9" fill="#444441">• Auto-merging</text>
+<line x1="384" y1="509" x2="696" y2="509" stroke="#e3e8ee" stroke-width="1"/>
+<text x="384" y="523" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#5F5E5A">BOUNDARY SET BY</text>
+<text x="384" y="537" font-family="sans-serif" font-size="9.5" fill="#444441">Several sizes at once: small to find, large to read.</text>
+
+<!-- ============================ CARD 5 : LLM-driven ============================ -->
+<rect x="20" y="556" width="340" height="235" rx="8" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<circle cx="42" cy="578" r="9" fill="#5f3dc4"/><text x="42" y="582" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="#FFFFFF">5</text>
+<text x="58" y="582" font-family="sans-serif" font-size="12.5" font-weight="700" fill="#4b2fa0">LLM-driven</text>
+<rect x="254" y="567" width="94" height="17" rx="8" fill="#ece6fa" stroke="#5f3dc4" stroke-width="0.7"/><text x="301" y="579" text-anchor="middle" font-family="sans-serif" font-size="8.5" font-weight="600" fill="#4b2fa0">model decides</text>
+<rect x="34" y="596" width="122" height="150" rx="3" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<rect x="44" y="614" width="95" height="5" rx="2" fill="#D3D1C7"/><rect x="44" y="626" width="78" height="5" rx="2" fill="#D3D1C7"/>
+<rect x="44" y="668" width="90" height="5" rx="2" fill="#D3D1C7"/><rect x="44" y="680" width="70" height="5" rx="2" fill="#D3D1C7"/>
+<rect x="58" y="636" width="40" height="20" rx="6" fill="#1d3a5f"/><text x="78" y="650" text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="700" fill="#FFFFFF">LLM</text>
+<line x1="98" y1="646" x2="120" y2="646" stroke="#1D9E75" stroke-width="1.2" marker-end="url(#tip)"/>
+<line x1="34" y1="652" x2="156" y2="652" stroke="#1D9E75" stroke-width="1.4" stroke-dasharray="4 3"/>
+<text x="95" y="738" text-anchor="middle" font-family="sans-serif" font-size="8.5" fill="#6b7785">the model picks the break</text>
+<text x="170" y="611" font-family="sans-serif" font-size="9" font-weight="700" fill="#5f3dc4">STRATEGIES</text>
+<text x="170" y="627" font-family="sans-serif" font-size="9" fill="#444441">• Agentic</text>
+<text x="170" y="642" font-family="sans-serif" font-size="9" fill="#444441">• LLM-based / generative</text>
+<line x1="34" y1="756" x2="346" y2="756" stroke="#e3e8ee" stroke-width="1"/>
+<text x="34" y="770" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#5F5E5A">BOUNDARY SET BY</text>
+<text x="34" y="784" font-family="sans-serif" font-size="9.5" fill="#444441">An LLM reads the text and picks the breakpoints.</text>
+
+<!-- ============================ CARD 6 : Embedding / retrieval-time ============================ -->
+<rect x="370" y="556" width="340" height="235" rx="8" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<circle cx="392" cy="578" r="9" fill="#5f3dc4"/><text x="392" y="582" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="#FFFFFF">6</text>
+<text x="408" y="582" font-family="sans-serif" font-size="12" font-weight="700" fill="#4b2fa0">Embedding / retrieval-time</text>
+<rect x="606" y="567" width="92" height="17" rx="8" fill="#ece6fa" stroke="#5f3dc4" stroke-width="0.7"/><text x="652" y="579" text-anchor="middle" font-family="sans-serif" font-size="8.5" font-weight="600" fill="#4b2fa0">at embed / retrieve</text>
+<rect x="384" y="596" width="122" height="150" rx="3" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<rect x="404" y="612" width="82" height="22" rx="3" fill="#f7f5fd" stroke="#5f3dc4" stroke-width="0.8"/><text x="445" y="627" text-anchor="middle" font-family="sans-serif" font-size="8.5" font-weight="600" fill="#4b2fa0">chunk</text>
+<line x1="445" y1="634" x2="445" y2="650" stroke="#5f3dc4" stroke-width="1.2" marker-end="url(#tip)"/>
+<text x="445" y="665" text-anchor="middle" font-family="monospace" font-size="9" fill="#4b2fa0">[0.02, -0.11, …]</text>
+<circle cx="438" cy="690" r="9" fill="none" stroke="#4b2fa0" stroke-width="1.6"/><line x1="445" y1="697" x2="453" y2="705" stroke="#4b2fa0" stroke-width="1.6"/>
+<text x="445" y="734" text-anchor="middle" font-family="sans-serif" font-size="8.5" fill="#6b7785">forms at embed / retrieve</text>
+<text x="520" y="611" font-family="sans-serif" font-size="9" font-weight="700" fill="#5f3dc4">STRATEGIES</text>
+<text x="520" y="627" font-family="sans-serif" font-size="9" fill="#444441">• Late chunking</text>
+<text x="520" y="642" font-family="sans-serif" font-size="9" fill="#444441">• Contextual retrieval</text>
+<text x="520" y="657" font-family="sans-serif" font-size="9" fill="#444441">• Late-interaction (ColBERT)</text>
+<line x1="384" y1="756" x2="696" y2="756" stroke="#e3e8ee" stroke-width="1"/>
+<text x="384" y="770" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#5F5E5A">BOUNDARY SET BY</text>
+<text x="384" y="784" font-family="sans-serif" font-size="9.5" fill="#444441">At embed or retrieve time — not a way of splitting.</text>
+
+<!-- ============================ CARD 7 : Enrichment ============================ -->
+<rect x="20" y="803" width="340" height="235" rx="8" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<circle cx="42" cy="825" r="9" fill="#5f3dc4"/><text x="42" y="829" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="#FFFFFF">7</text>
+<text x="58" y="829" font-family="sans-serif" font-size="12.5" font-weight="700" fill="#4b2fa0">Enrichment</text>
+<rect x="252" y="816" width="96" height="17" rx="8" fill="#ece6fa" stroke="#5f3dc4" stroke-width="0.7"/><text x="300" y="828" text-anchor="middle" font-family="sans-serif" font-size="8.5" font-weight="600" fill="#4b2fa0">adds metadata</text>
+<rect x="34" y="843" width="122" height="150" rx="3" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+<rect x="42" y="886" width="62" height="42" rx="4" fill="#f7f5fd" stroke="#5f3dc4" stroke-width="1"/><text x="73" y="911" text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="600" fill="#4b2fa0">chunk</text>
+<path d="M108 884 L142 884 L152 901 L142 918 L108 918 Z" fill="#E1F5EE" stroke="#5DCAA5" stroke-width="0.8"/><text x="126" y="905" text-anchor="middle" font-family="monospace" font-size="8" fill="#0F6E56">p.12 §3</text>
+<text x="95" y="984" text-anchor="middle" font-family="sans-serif" font-size="8.5" fill="#6b7785">no cut — just a tag</text>
+<text x="170" y="858" font-family="sans-serif" font-size="9" font-weight="700" fill="#5f3dc4">STRATEGIES</text>
+<text x="170" y="874" font-family="sans-serif" font-size="9" fill="#444441">• Metadata-enriched</text>
+<text x="170" y="900" font-family="sans-serif" font-size="8.5" font-style="italic" fill="#8a7bc8">applied on top of any family</text>
+<text x="170" y="913" font-family="sans-serif" font-size="8.5" font-style="italic" fill="#8a7bc8">above — not instead of them.</text>
+<line x1="34" y1="1003" x2="346" y2="1003" stroke="#e3e8ee" stroke-width="1"/>
+<text x="34" y="1017" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#5F5E5A">BOUNDARY SET BY</text>
+<text x="34" y="1031" font-family="sans-serif" font-size="9.5" fill="#444441">Nothing is split — it tags chunks to improve recall.</text>
+
+<!-- ============================ CARD 8 : How to choose (tip) ============================ -->
+<rect x="370" y="803" width="340" height="235" rx="8" fill="#FFFFFF" stroke="#6b7785" stroke-width="1" stroke-dasharray="5 3"/>
+<text x="384" y="830" font-family="sans-serif" font-size="12.5" font-weight="700" fill="#444441">How to choose</text>
+<text x="384" y="853" font-family="sans-serif" font-size="9.5" fill="#5F5E5A">Match the cutter to the document's own structure.</text>
+<text x="384" y="869" font-family="sans-serif" font-size="9.5" fill="#5F5E5A">Start with fixed or recursive; reach for a heavier</text>
+<text x="384" y="885" font-family="sans-serif" font-size="9.5" fill="#5F5E5A">family only when retrieval metrics justify the cost.</text>
+<line x1="384" y1="904" x2="696" y2="904" stroke="#e3e8ee" stroke-width="1"/>
+<text x="384" y="924" font-family="sans-serif" font-size="9" font-weight="700" fill="#5F5E5A">READING THE SIGNATURE FRAMES</text>
+<line x1="388" y1="943" x2="410" y2="943" stroke="#D64545" stroke-width="2" stroke-dasharray="4 3"/>
+<text x="418" y="946" font-family="sans-serif" font-size="9.5" fill="#B23030">blind cut — ignores meaning</text>
+<line x1="388" y1="963" x2="410" y2="963" stroke="#EF9F27" stroke-width="2" stroke-dasharray="4 3"/>
+<text x="418" y="966" font-family="sans-serif" font-size="9.5" fill="#854F0B">overlap — repeats text, covers the seam</text>
+<line x1="388" y1="983" x2="410" y2="983" stroke="#1D9E75" stroke-width="2" stroke-dasharray="4 3"/>
+<text x="418" y="986" font-family="sans-serif" font-size="9.5" fill="#0F6E56">clean boundary — lands on a real seam</text>
+<text x="384" y="1018" font-family="sans-serif" font-size="8.5" font-style="italic" fill="#8a7bc8">Boundaries blur: recursive is "structure-aware</text>
+<text x="384" y="1031" font-family="sans-serif" font-size="8.5" font-style="italic" fill="#8a7bc8">fixed-size"; small-to-big overlaps hierarchical.</text>
+</svg>
