@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<!-- saved from url=(0053)file:///Users/ramji/Downloads/hybrid_full_demo_1.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Full pipeline demo — PDF → answer</title>
+<style>
+  :root{
+    --navy:#1d3a5f; --navy2:#185FA5; --navy-bg:#E6EEF7;
+    --teal:#0F6E56; --teal2:#1D9E75; --teal-bg:#E1F5EE;
+    --amber:#854F0B; --amber2:#EF9F27; --amber-bg:#FAEEDA;
+    --purple:#7B3FA0; --purple-bg:#F0E8F8; --red:#C0392B; --red-bg:#FBEAE7;
+    --gray:#5F5E5A; --line:#e3e0d9; --bg:#f5f6f8;
+  }
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:var(--bg);color:#222;}
+  .wrap{max-width:990px;margin:0 auto;padding:24px 20px 60px;}
+  h1{color:var(--navy);font-size:21px;margin:0 0 3px;}
+  .sub{color:var(--gray);font-size:13px;margin:0 0 14px;}
+  .controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
+  button.act{border:1.5px solid var(--line);background:#fff;color:var(--navy);border-radius:9px;padding:9px 15px;font-size:12.5px;font-weight:700;cursor:pointer;}
+  button.act.run{background:var(--navy2);color:#fff;border-color:var(--navy2);}
+  button.act:disabled{opacity:.35;cursor:default;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px;}
+  .chip{font-size:11px;font-weight:700;padding:5px 10px;border-radius:20px;border:1.5px solid var(--line);color:var(--gray);background:#fff;}
+  .chip.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .chip.done{background:var(--navy-bg);color:var(--navy);border-color:#cdddf0;}
+  .scene{background:#fff;border:1px solid var(--line);border-radius:13px;padding:6px;}
+  .note{font-size:12.5px;color:#222;background:#eef3f9;border-left:4px solid var(--navy);border-radius:8px;padding:10px 13px;margin-top:12px;min-height:20px;line-height:1.5;}
+  .note b{color:var(--navy);}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Full pipeline — from <span style="color:#C0392B">PDF</span> to <span style="color:#1d3a5f">answer</span></h1>
+  <p class="sub">One run, end to end: load → chunk → embed + index → query → choose K → fuse &amp; rerank. Keyword (inverted index) and meaning (vector galaxy) work side by side.</p>
+
+  <div class="steps" id="steps"><span class="chip done">1 · Load PDF</span><span class="chip done">2 · Chunk</span><span class="chip done">3 · Embed + index</span><span class="chip done">4 · Query</span><span class="chip done">5 · Choose K</span><span class="chip on">6 · Fuse + rerank</span></div>
+  <div class="controls">
+    <button class="act" id="backBtn">◀ Back</button>
+    <button class="act run" id="nextBtn" disabled="">✓ Done</button>
+    <button class="act" id="resetBtn">↺ Restart</button>
+  </div>
+
+  <div class="scene">
+    <svg width="100%" viewBox="0 0 980 600" xmlns="http://www.w3.org/2000/svg" id="svg">
+      <defs>
+        <marker id="tip" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M1.5 1L8.5 5L1.5 9" fill="none" stroke="#9aa6b4" stroke-width="1.8"></path>
+        </marker>
+        <radialgradient id="galaxyBg" cx="42%" cy="40%" r="80%">
+          <stop offset="0%" stop-color="#16243d"></stop><stop offset="55%" stop-color="#0e1830"></stop><stop offset="100%" stop-color="#080d1c"></stop>
+        </radialgradient>
+        <radialgradient id="neb1" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#1D9E75" stop-opacity="0.5"></stop><stop offset="100%" stop-color="#1D9E75" stop-opacity="0"></stop>
+        </radialgradient>
+        <radialgradient id="neb2" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#7B3FA0" stop-opacity="0.45"></stop><stop offset="100%" stop-color="#7B3FA0" stop-opacity="0"></stop>
+        </radialgradient>
+        <radialgradient id="qglow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#EF9F27" stop-opacity="0.9"></stop><stop offset="100%" stop-color="#EF9F27" stop-opacity="0"></stop>
+        </radialgradient>
+      </defs>
+      <g id="stage" style="transition: opacity 0.4s; opacity: 1;">
+    <text x="40" y="28" font-size="12.5" font-weight="800" fill="#1d3a5f">⑥ Fuse (RRF) → rerank (cross-encoder) → LLM</text>
+    <text x="40" y="60" font-size="10" font-weight="800" fill="#854F0B">KEYWORD top-K</text>
+    <rect x="24" y="68" width="210" height="26" rx="7" fill="#FFFDF8" stroke="#854F0B" stroke-width="1.1"></rect><text x="34" y="80" font-size="9.5" font-weight="800" fill="#854F0B">#1 · A</text><text x="34" y="90" font-size="7.5" fill="#666">ach charge electronic debit…</text><rect x="24" y="98" width="210" height="26" rx="7" fill="#FFFDF8" stroke="#854F0B" stroke-width="1.1"></rect><text x="34" y="110" font-size="9.5" font-weight="800" fill="#854F0B">#2 · B</text><text x="34" y="120" font-size="7.5" fill="#666">dispute notify bank writing 60…</text><rect x="24" y="128" width="210" height="26" rx="7" fill="#FFFDF8" stroke="#854F0B" stroke-width="1.1"></rect><text x="34" y="140" font-size="9.5" font-weight="800" fill="#854F0B">#3 · D</text><text x="34" y="150" font-size="7.5" fill="#666">daily ach transfer limit 25000…</text>
+    <text x="40" y="232" font-size="10" font-weight="800" fill="#0F6E56">MEANING top-K</text>
+    <rect x="24" y="240" width="210" height="26" rx="7" fill="#F6FBF9" stroke="#0F6E56" stroke-width="1.1"></rect><text x="34" y="252" font-size="9.5" font-weight="800" fill="#0F6E56">#1 · B</text><text x="34" y="262" font-size="7.5" fill="#666">To dispute one, notify your bank…</text><rect x="24" y="270" width="210" height="26" rx="7" fill="#F6FBF9" stroke="#0F6E56" stroke-width="1.1"></rect><text x="34" y="282" font-size="9.5" font-weight="800" fill="#0F6E56">#2 · A</text><text x="34" y="292" font-size="7.5" fill="#666">An ACH charge is an electronic…</text><rect x="24" y="300" width="210" height="26" rx="7" fill="#F6FBF9" stroke="#0F6E56" stroke-width="1.1"></rect><text x="34" y="312" font-size="9.5" font-weight="800" fill="#0F6E56">#3 · C</text><text x="34" y="322" font-size="7.5" fill="#666">Funds taken without your approval…</text>
+    <line x1="244" y1="150" x2="300" y2="210" stroke="#9aa6b4" stroke-width="1.7" marker-end="url(#tip)"></line> <line x1="244" y1="300" x2="300" y2="250" stroke="#9aa6b4" stroke-width="1.7" marker-end="url(#tip)"></line>
+    <text x="318" y="120" font-size="11" font-weight="800" fill="#7B3FA0">RRF</text>
+    <rect x="318" y="130" width="210" height="26" rx="7" fill="#fff" stroke="#7B3FA0" stroke-width="1.1"></rect><text x="328" y="142" font-size="9.5" font-weight="800" fill="#7B3FA0">#1 · A</text><text x="328" y="152" font-size="7.5" fill="#666">An ACH charge is an electronic…</text><text x="520" y="146" text-anchor="end" font-size="10" font-weight="800" class="mono" fill="#7B3FA0">0.0325</text><rect x="318" y="160" width="210" height="26" rx="7" fill="#fff" stroke="#7B3FA0" stroke-width="1.1"></rect><text x="328" y="172" font-size="9.5" font-weight="800" fill="#7B3FA0">#2 · B</text><text x="328" y="182" font-size="7.5" fill="#666">To dispute one, notify your bank…</text><text x="520" y="176" text-anchor="end" font-size="10" font-weight="800" class="mono" fill="#7B3FA0">0.0325</text><rect x="318" y="190" width="210" height="26" rx="7" fill="#fff" stroke="#7B3FA0" stroke-width="1.1"></rect><text x="328" y="202" font-size="9.5" font-weight="800" fill="#7B3FA0">#3 · C</text><text x="328" y="212" font-size="7.5" fill="#666">Funds taken without your approval…</text><text x="520" y="206" text-anchor="end" font-size="10" font-weight="800" class="mono" fill="#7B3FA0">0.0159</text><rect x="318" y="220" width="210" height="26" rx="7" fill="#fff" stroke="#7B3FA0" stroke-width="1.1"></rect><text x="328" y="232" font-size="9.5" font-weight="800" fill="#7B3FA0">#4 · D</text><text x="328" y="242" font-size="7.5" fill="#666">Your daily ACH transfer limit is…</text><text x="520" y="236" text-anchor="end" font-size="10" font-weight="800" class="mono" fill="#7B3FA0">0.0159</text>
+    <text x="318" y="116" font-size="8.5" fill="#7d6b8e"></text>
+    <text x="322" y="262" font-size="8.5" fill="#7B3FA0">A &amp; B tie → reranker decides</text>
+    <line x1="534" y1="200" x2="590" y2="200" stroke="#9aa6b4" stroke-width="1.7" marker-end="url(#tip)"></line>
+    <text x="610" y="120" font-size="11" font-weight="800" fill="#1d3a5f">RERANK</text>
+    <rect x="610" y="130" width="210" height="26" rx="7" fill="#fff" stroke="#1D9E75" stroke-width="1.7"></rect><text x="620" y="142" font-size="9.5" font-weight="800" fill="#1D9E75">#1 · B ★</text><text x="620" y="152" font-size="7.5" fill="#666">To dispute one, notify your bank…</text><text x="812" y="146" text-anchor="end" font-size="10" font-weight="800" class="mono" fill="#1d3a5f">0.95</text><rect x="610" y="160" width="210" height="26" rx="7" fill="#fff" stroke="#1d3a5f" stroke-width="1.1"></rect><text x="620" y="172" font-size="9.5" font-weight="800" fill="#1d3a5f">#2 · C</text><text x="620" y="182" font-size="7.5" fill="#666">Funds taken without your approval…</text><text x="812" y="176" text-anchor="end" font-size="10" font-weight="800" class="mono" fill="#1d3a5f">0.58</text><rect x="610" y="190" width="210" height="26" rx="7" fill="#fff" stroke="#C0392B" stroke-width="1.7"></rect><text x="620" y="202" font-size="9.5" font-weight="800" fill="#C0392B">#3 · A ▼</text><text x="620" y="212" font-size="7.5" fill="#666">An ACH charge is an electronic…</text><text x="812" y="206" text-anchor="end" font-size="10" font-weight="800" class="mono" fill="#1d3a5f">0.31</text><rect x="610" y="220" width="210" height="26" rx="7" fill="#fff" stroke="#1d3a5f" stroke-width="1.1"></rect><text x="620" y="232" font-size="9.5" font-weight="800" fill="#1d3a5f">#4 · D</text><text x="620" y="242" font-size="7.5" fill="#666">Your daily ACH transfer limit is…</text><text x="812" y="236" text-anchor="end" font-size="10" font-weight="800" class="mono" fill="#1d3a5f">0.12</text>
+    <line x1="826" y1="200" x2="882" y2="200" stroke="#9aa6b4" stroke-width="1.7" marker-end="url(#tip)"></line>
+    <rect x="836" y="150" width="120" height="100" rx="10" fill="#1d3a5f"></rect>
+    <text x="896" y="186" text-anchor="middle" font-size="11" font-weight="800" fill="#fff">LLM</text>
+    <text x="896" y="206" text-anchor="middle" font-size="8.5" fill="#cdd8e6">top 5–10</text>
+    <text x="896" y="222" text-anchor="middle" font-size="8.5" fill="#cdd8e6">chunks only</text>
+    <text x="40" y="468" font-size="10" fill="#43566e">recall (both hunters find everything) → fair merge (RRF) → precision (cross-encoder keeps what answers) → grounded answer.</text></g>
+    </svg>
+  </div>
+
+  <div class="note" id="note"><b>⑥ The rest of hybrid.</b> Merge the two top-K lists with <b>RRF</b> (A &amp; B tie — retrieval can't tell the definition from the answer), then a <b>cross-encoder reranks</b> → B rises, A is demoted → only the top few go to the LLM.</div>
+</div>
+
+<script>
+const NS="http://www.w3.org/2000/svg", SVG=document.getElementById("svg");
+const $=id=>document.getElementById(id);
+
+/* ---------- canonical data (same banking corpus as the rest of the deck) ---------- */
+const CH={
+  A:{text:"An ACH charge is an electronic debit pulled from your account.", tokens:"ach charge electronic debit pulled account", fx:.50, fy:.46, role:"definition"},
+  B:{text:"To dispute one, notify your bank in writing within 60 days.",    tokens:"dispute notify bank writing 60 days",        fx:.40, fy:.37, role:"the answer"},
+  C:{text:"Funds taken without your approval are refunded after review.",   tokens:"funds taken without approval refunded after review", fx:.34, fy:.56, role:"synonym outcome"},
+  D:{text:"Your daily ACH transfer limit is 25000 dollars.",                tokens:"daily ach transfer limit 25000 dollars",     fx:.80, fy:.80, role:"off-topic"},
+};
+const IDS=["A","B","C","D"];
+const QFX=.45, QFY=.45;                       // query vector lands near B/A
+const INDEX=[["ach",["A","D"]],["charge",["A"]],["debit",["A"]],["dispute",["B"]],["notify",["B"]],
+             ["bank",["B"]],["approval",["C"]],["refunded",["C"]],["transfer",["D"]],["limit",["D"]]];
+const QTERMS=["dispute","unauthorized","ach","charge"];     // unauthorized MISSES
+let K=3;
+
+/* nearest-by-meaning order to the query (design): B,A,C close; D far */
+const DENSE_ORDER=["B","A","C","D"];
+const SPARSE_ORDER=["A","B","D"];             // BM25 candidates (C has no exact term)
+
+/* precompute a starfield */
+const STARS=[]; (function(){ let s=8; const rnd=()=>{ s=(s*1103515245+12345)&0x7fffffff; return s/0x7fffffff; };
+  for(let i=0;i<90;i++) STARS.push({x:rnd(),y:rnd(),r:0.4+rnd()*1.0,o:0.18+rnd()*0.6}); })();
+
+/* ---------- small helpers ---------- */
+const ar=(x1,y1,x2,y2,c)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c||'#9aa6b4'}" stroke-width="1.7" marker-end="url(#tip)"/>`;
+const card=(x,y,w,h,stroke,fill)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="${fill||'#fff'}" stroke="${stroke}" stroke-width="1.5"/>`;
+function trunc(t,n){ return t.length>n ? t.slice(0,t.slice(0,n).lastIndexOf(' '))+'…' : t; }
+
+/* ---------- the galaxy (vector space) ---------- */
+function galaxy(x,y,w,h,opts){
+  opts=opts||{}; const showQ=opts.q, near=opts.near||[], dim=opts.dim||[];
+  const px=(fx)=>x+10+fx*(w-20), py=(fy)=>y+10+fy*(h-20);
+  let s=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="12" fill="url(#galaxyBg)" stroke="#22304a"/>`;
+  s+=`<ellipse cx="${px(.40)}" cy="${py(.45)}" rx="${w*0.34}" ry="${h*0.32}" fill="url(#neb1)"/>`;
+  s+=`<ellipse cx="${px(.72)}" cy="${py(.72)}" rx="${w*0.22}" ry="${h*0.22}" fill="url(#neb2)"/>`;
+  STARS.forEach(st=>{ s+=`<circle cx="${px(st.x)}" cy="${py(st.y)}" r="${st.r}" fill="#dce7f5" opacity="${st.o}"><animate attributeName="opacity" values="${st.o};${st.o*0.3};${st.o}" dur="${2+st.x*3}s" repeatCount="indefinite"/></circle>`; });
+  s+=`<text x="${x+12}" y="${y+20}" font-size="10" font-weight="800" fill="#9fb6d8">VECTOR SPACE · OpenAI text-embedding-3-small (1536-dim → 2D)</text>`;
+  // query glow + links to nearest
+  if(showQ){
+    const qx=px(QFX), qy=py(QFY);
+    near.forEach(id=>{ s+=`<line x1="${qx}" y1="${qy}" x2="${px(CH[id].fx)}" y2="${py(CH[id].fy)}" stroke="#EF9F27" stroke-width="1.3" opacity="0.6" stroke-dasharray="3 3"/>`; });
+    s+=`<circle cx="${qx}" cy="${qy}" r="22" fill="url(#qglow)"><animate attributeName="r" values="18;26;18" dur="2s" repeatCount="indefinite"/></circle>`;
+    s+=`<circle cx="${qx}" cy="${qy}" r="6" fill="#EF9F27" stroke="#fff" stroke-width="1.3"/>`;
+    s+=`<text x="${qx}" y="${qy-16}" text-anchor="middle" font-size="9" font-weight="800" fill="#FAD7A0">query</text>`;
+  }
+  // chunk stars
+  IDS.forEach(id=>{ const cx=px(CH[id].fx), cy=py(CH[id].fy);
+    const isNear=near.includes(id), isDim=dim.includes(id);
+    const col= id==="D" ? "#C0392B" : "#1D9E75";
+    const op = isDim?0.35:1;
+    s+=`<circle cx="${cx}" cy="${cy}" r="${isNear?13:9}" fill="${col}" opacity="${0.18*op}"/>`;
+    s+=`<circle cx="${cx}" cy="${cy}" r="${isNear?8:6.5}" fill="${col}" opacity="${op}" stroke="#dff3ec" stroke-width="${isNear?1.6:0.8}"/>`;
+    s+=`<text x="${cx}" y="${cy+3}" text-anchor="middle" font-size="8.5" font-weight="800" fill="#fff" opacity="${op}">${id}</text>`;
+    if(isNear) s+=`<text x="${cx+11}" y="${cy+3}" font-size="8.5" font-weight="700" fill="#bfe0d4">#${near.indexOf(id)+1}</text>`;
+  });
+  return s;
+}
+
+/* ---------- inverted index panel ---------- */
+function invIndexPanel(x,y,w,h,hotTerms){
+  hotTerms=hotTerms||[];
+  let s=card(x,y,w,h,"#EF9F27","#FFFDF8");
+  s+=`<text x="${x+14}" y="${y+20}" font-size="11" font-weight="800" fill="#854F0B">INVERTED INDEX · term → postings</text>`;
+  INDEX.forEach((r,i)=>{ const ry=y+38+i*((h-46)/INDEX.length); const hot=hotTerms.includes(r[0]);
+    if(hot) s+=`<rect x="${x+8}" y="${ry-12}" width="${w-16}" height="20" rx="5" fill="#FAEEDA"/>`;
+    s+=`<text x="${x+16}" y="${ry+3}" font-size="9.5" font-weight="${hot?800:700}" class="mono" fill="${hot?'#854F0B':'#9a7b4a'}">${r[0]}</text>`;
+    s+=`<text x="${x+96}" y="${ry+3}" font-size="9.5" fill="#cbb89a">→</text>`;
+    r[1].forEach((p,j)=>{ s+=`<rect x="${x+112+j*30}" y="${ry-9}" width="24" height="16" rx="4" fill="${hot?'#FAEEDA':'#fff'}" stroke="#854F0B"/><text x="${x+124+j*30}" y="${ry+3}" text-anchor="middle" font-size="8.5" font-weight="700" fill="#854F0B">${p}</text>`; });
+  });
+  return s;
+}
+
+/* ---------- ranked-list helper ---------- */
+function listRows(x,y,w,rows,color,bg,field){
+  let s=""; rows.forEach((r,i)=>{ const ry=y+i*30; const id=r[0];
+    const st = r[2]===-1?"#C0392B":(r[2]===1?"#1D9E75":color);
+    const mk = r[2]===1?" ★":(r[2]===-1?" ▼":"");
+    s+=`<rect x="${x}" y="${ry}" width="${w}" height="26" rx="7" fill="${bg}" stroke="${st}" stroke-width="${r[2]?1.7:1.1}"/>`;
+    s+=`<text x="${x+10}" y="${ry+12}" font-size="9.5" font-weight="800" fill="${st}">#${i+1} · ${id}${mk}</text>`;
+    s+=`<text x="${x+10}" y="${ry+22}" font-size="7.5" fill="#666">${field?trunc(CH[id][field],34):""}</text>`;
+    if(r[1]!=null) s+=`<text x="${x+w-8}" y="${ry+16}" text-anchor="end" font-size="10" font-weight="800" class="mono" fill="${color}">${r[1]}</text>`;
+  });
+  return s;
+}
+
+/* ===================== STAGES ===================== */
+function stage1(){
+  return {note:"<b>① Load the PDF.</b> Pull the raw text out of the source document — here a banking FAQ. (Real corpora: hundreds of PDFs; we follow 4 chunks so the whole run stays hand-traceable.)",
+    svg:`
+    <text x="40" y="40" font-size="13" font-weight="800" fill="#1d3a5f">① Load the source PDF → extract text</text>
+    ${card(120,90,230,380,"#C0392B")}
+    <text x="140" y="120" font-size="11" font-weight="800" fill="#C0392B">banking_faq.pdf</text>
+    ${[0,1,2,3,4,5,6,7,8].map(i=>`<rect x="140" y="${138+i*32}" width="${190-(i%3)*26}" height="9" rx="3" fill="#e2e6ea"/>`).join("")}
+    <rect x="140" y="138" width="170" height="9" rx="3" fill="#f1c9c3"/>
+    ${ar(360,280,470,280)}
+    ${card(490,210,400,140,"#cfd6df","#fbfcfd")}
+    <text x="510" y="238" font-size="11" font-weight="800" fill="#43566e">extracted text</text>
+    <text x="510" y="262" font-size="9.5" fill="#555">“An ACH charge is an electronic debit… To dispute</text>
+    <text x="510" y="280" font-size="9.5" fill="#555">one, notify your bank within 60 days… Funds taken</text>
+    <text x="510" y="298" font-size="9.5" fill="#555">without your approval are refunded… Your daily ACH</text>
+    <text x="510" y="316" font-size="9.5" fill="#555">transfer limit is 25000 dollars… ”</text>`};
+}
+function stage2(){
+  const xs=[40,272,504,736];
+  return {note:"<b>② Chunk — fixed-size strategy.</b> Slice the text into equal windows (e.g. ~200 tokens) with a little overlap so sentences aren't cut mid-thought. Out come the chunks we'll index.",
+    svg:`
+    <text x="40" y="40" font-size="13" font-weight="800" fill="#1d3a5f">② Fixed-size chunking (window + small overlap)</text>
+    <rect x="40" y="70" width="850" height="26" rx="6" fill="#eef2f7" stroke="#cfd6df"/>
+    ${[0,1,2,3].map(i=>`<rect x="${48+i*210}" y="73" width="206" height="20" rx="4" fill="${['#FAEEDA','#E1F5EE','#F0E8F8','#FBEAE7'][i]}" stroke="#cfd6df"/>`).join("")}
+    <text x="40" y="116" font-size="9" fill="#9aa">overlap keeps context across the cut →</text>
+    ${IDS.map((id,i)=>`${card(xs[i],140,210,150,"#cfd6df")}
+      <circle cx="${xs[i]+20}" cy="162" r="10" fill="#1d3a5f"/><text x="${xs[i]+20}" y="166" text-anchor="middle" font-size="10" font-weight="800" fill="#fff">${id}</text>
+      <text x="${xs[i]+38}" y="166" font-size="10" font-weight="700" fill="#1d3a5f">chunk ${id}</text>
+      <foreignObject x="${xs[i]+14}" y="178" width="184" height="104"><div xmlns="http://www.w3.org/1999/xhtml" style="font:10px system-ui;color:#555;line-height:1.3">${CH[id].text}</div></foreignObject>`).join("")}
+    <text x="40" y="320" font-size="10" fill="#9aa">…and 30 more chunks in a real doc (we trace these 4).</text>`};
+}
+function stage3(){
+  return {note:"<b>③ Build BOTH indexes from the same chunks.</b> Left: analyze → <b>inverted index</b> (keyword). Right: <b>embed via OpenAI</b> → a point in the <b>vector galaxy</b> (meaning). A·B·C land near each other; D (transfer limit) drifts off — a different topic.",
+    svg:`
+    <text x="40" y="32" font-size="13" font-weight="800" fill="#1d3a5f">③ Embed + index — keyword &amp; meaning, side by side</text>
+    ${invIndexPanel(24,56,440,500,[])}
+    ${galaxy(488,56,468,500,{})}`};
+}
+function stage4(){
+  return {note:"<b>④ Ask a query.</b> “How do I dispute an unauthorized ACH charge?” → embed it the <b>same way</b> → it drops into the galaxy <b>next to B, A, C</b> (the chunks that mean the same). Its terms also light up the postings — but <span class='mono'>unauthorized</span> finds nothing (docs say “without approval”).",
+    svg:`
+    <text x="40" y="30" font-size="12.5" font-weight="800" fill="#1d3a5f">④ Embed the query → drop it in the same space + look up postings</text>
+    <rect x="24" y="44" width="440" height="34" rx="9" fill="#fff" stroke="#C0392B"/>
+    <text x="38" y="65" font-size="10.5" class="mono" fill="#333">Q: How do I dispute an unauthorized ACH charge?</text>
+    ${invIndexPanel(24,90,440,466,["ach","charge","dispute"])}
+    ${galaxy(488,44,468,512,{q:true, near:["B","A","C"], dim:["D"]})}`};
+}
+function stage5(){
+  const near=DENSE_ORDER.slice(0,K).filter(id=>id!=="D" || K>=4);
+  return {note:`<b>⑤ Choose K</b> — how many candidates to pull from <b>each</b> retriever before fusing. Bigger K = more recall, more rerank cost. <b>Pick one to continue.</b>  (currently K = ${K})`,
+    svg:`
+    <text x="40" y="30" font-size="12.5" font-weight="800" fill="#1d3a5f">⑤ Top-K — how many to keep from each side?</text>
+    <g id="kbtns"></g>
+    <text x="24" y="92" font-size="10" font-weight="800" fill="#854F0B">KEYWORD · top-${K} postings</text>
+    ${listRows(24,102,250,SPARSE_ORDER.slice(0,K).map(id=>[id,null,0]),"#854F0B","#FFFDF8","tokens")}
+    <text x="24" y="${118+Math.min(K,SPARSE_ORDER.length)*30}" font-size="9" fill="#9aa">D matches exact “ach”; C has no exact term → keyword misses it.</text>
+    ${galaxy(488,72,468,484,{q:true, near:DENSE_ORDER.slice(0,K), dim:K<4?["D"]:[]})}
+    <text x="500" y="66" font-size="10" font-weight="800" fill="#0F6E56">MEANING · top-${K} nearest (the K closest stars)</text>`};
+}
+function stage6(){
+  const fused=[["A","0.0325",0],["B","0.0325",0],["C","0.0159",0],["D","0.0159",0]];
+  const rer=[["B","0.95",1],["C","0.58",0],["A","0.31",-1],["D","0.12",0]];
+  return {note:"<b>⑥ The rest of hybrid.</b> Merge the two top-K lists with <b>RRF</b> (A &amp; B tie — retrieval can't tell the definition from the answer), then a <b>cross-encoder reranks</b> → B rises, A is demoted → only the top few go to the LLM.",
+    svg:`
+    <text x="40" y="28" font-size="12.5" font-weight="800" fill="#1d3a5f">⑥ Fuse (RRF) → rerank (cross-encoder) → LLM</text>
+    <text x="40" y="60" font-size="10" font-weight="800" fill="#854F0B">KEYWORD top-K</text>
+    ${listRows(24,68,210,SPARSE_ORDER.map(id=>[id,null,0]),"#854F0B","#FFFDF8","tokens")}
+    <text x="40" y="232" font-size="10" font-weight="800" fill="#0F6E56">MEANING top-K</text>
+    ${listRows(24,240,210,DENSE_ORDER.slice(0,3).map(id=>[id,null,0]),"#0F6E56","#F6FBF9","text")}
+    ${ar(244,150,300,210)} ${ar(244,300,300,250)}
+    <text x="318" y="120" font-size="11" font-weight="800" fill="#7B3FA0">RRF</text>
+    ${listRows(318,130,210,fused,"#7B3FA0","#fff","text")}
+    <text x="318" y="116" font-size="8.5" fill="#7d6b8e"></text>
+    <text x="322" y="262" font-size="8.5" fill="#7B3FA0">A &amp; B tie → reranker decides</text>
+    ${ar(534,200,590,200)}
+    <text x="610" y="120" font-size="11" font-weight="800" fill="#1d3a5f">RERANK</text>
+    ${listRows(610,130,210,rer,"#1d3a5f","#fff","text")}
+    ${ar(826,200,882,200)}
+    <rect x="836" y="150" width="120" height="100" rx="10" fill="#1d3a5f"/>
+    <text x="896" y="186" text-anchor="middle" font-size="11" font-weight="800" fill="#fff">LLM</text>
+    <text x="896" y="206" text-anchor="middle" font-size="8.5" fill="#cdd8e6">top 5–10</text>
+    <text x="896" y="222" text-anchor="middle" font-size="8.5" fill="#cdd8e6">chunks only</text>
+    <text x="40" y="468" font-size="10" fill="#43566e">recall (both hunters find everything) → fair merge (RRF) → precision (cross-encoder keeps what answers) → grounded answer.</text>`};
+}
+
+const STAGES=[stage1,stage2,stage3,stage4,stage5,stage6];
+const LABELS=["1 · Load PDF","2 · Chunk","3 · Embed + index","4 · Query","5 · Choose K","6 · Fuse + rerank"];
+let cur=0;
+
+function renderSteps(){ $("steps").innerHTML=LABELS.map((l,i)=>`<span class="chip ${i===cur?'on':(i<cur?'done':'')}">${l}</span>`).join(""); }
+function kButtons(){
+  const g=$("kbtns"); if(!g) return;
+  const opts=[3,5,10];
+  g.innerHTML=`<text x="40" y="60" font-size="11" fill="#43566e">K =</text>`+opts.map((k,i)=>{
+    const x=78+i*70, on=(k===K);
+    return `<g style="cursor:pointer" onclick="selectK(${k})"><rect x="${x}" y="46" width="60" height="26" rx="13" fill="${on?'#185FA5':'#fff'}" stroke="#185FA5" stroke-width="1.5"/><text x="${x+30}" y="63" text-anchor="middle" font-size="11" font-weight="800" fill="${on?'#fff':'#185FA5'}">${k}</text></g>`;
+  }).join("");
+}
+window.selectK=function(k){ K=k; draw(); };
+
+function draw(){
+  const {svg,note}=STAGES[cur]();
+  const g=$("stage"); g.setAttribute("style","transition:opacity .4s ease"); g.style.opacity="0";
+  setTimeout(()=>{ g.innerHTML=svg; if(cur===4) kButtons(); g.style.opacity="1"; },180);
+  $("note").innerHTML=note;
+  renderSteps();
+  $("backBtn").disabled=(cur===0);
+  $("nextBtn").innerHTML = cur===STAGES.length-1 ? "✓ Done" : "Next ▶";
+  $("nextBtn").disabled = (cur===STAGES.length-1);
+}
+$("nextBtn").addEventListener("click",()=>{ if(cur<STAGES.length-1){ cur++; draw(); } });
+$("backBtn").addEventListener("click",()=>{ if(cur>0){ cur--; draw(); } });
+$("resetBtn").addEventListener("click",()=>{ cur=0; K=3; draw(); });
+draw();
+</script>
+
+
+</body></html>
