@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The prompt is everything — message format</title>
+<style>
+  :root{
+    --navy:#1d3a5f; --navy2:#185FA5; --navy-bg:#eef3f9;
+    --teal:#0F6E56; --teal2:#1D9E75; --teal-bg:#E1F5EE;
+    --amber:#854F0B; --amber2:#EF9F27; --amber-bg:#FAEEDA;
+    --purple:#7B3FA0; --purple-bg:#EFE7F4;
+    --gray:#5F5E5A; --line:#e3e0d9; --bg:#f5f6f8;
+  }
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:var(--bg);color:#222;}
+  .wrap{max-width:1060px;margin:0 auto;padding:22px 20px 60px;}
+  h1{color:var(--navy);font-size:23px;margin:0 0 4px;letter-spacing:-.01em;}
+  h1 .em{color:var(--teal);}
+  .sub{color:var(--gray);font-size:13.5px;margin:0 0 14px;line-height:1.55;max-width:90ch;}
+  .sub b{color:var(--navy2);}
+
+  /* thesis strip */
+  .thesis{background:#fff;border:1px solid var(--line);border-left:4px solid var(--navy);border-radius:11px;
+          padding:11px 14px;font-size:13px;line-height:1.55;color:#33485f;margin-bottom:14px;}
+  .thesis b{color:var(--navy);}
+  .thesis .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--navy2);}
+
+  /* provider switch bar */
+  .switch{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);
+          border-radius:12px;padding:11px 15px;margin-bottom:16px;}
+  .switch .now{display:flex;align-items:center;gap:10px;}
+  .pill{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;font-weight:800;letter-spacing:.04em;
+        padding:6px 13px;border-radius:8px;color:#fff;}
+  .root.anthropic .pill{background:var(--navy);}
+  .root.openai    .pill{background:var(--teal);}
+  .switch .nm{font-size:13.5px;font-weight:700;color:var(--navy);}
+  .switch .nm .api{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;font-weight:600;color:var(--gray);}
+  .flip{margin-left:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;font-weight:700;
+        border:1.5px solid var(--navy);background:var(--navy-bg);color:var(--navy);padding:9px 15px;border-radius:9px;cursor:pointer;
+        display:inline-flex;align-items:center;gap:8px;transition:all .15s;}
+  .flip:hover{background:#e4edf8;}
+  .root.openai .flip{border-color:var(--teal);background:var(--teal-bg);color:var(--teal);}
+  .root.openai .flip:hover{background:#d3efe5;}
+  .expander{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;font-weight:700;border:1.5px solid var(--line);
+            background:#fff;color:#333;padding:9px 14px;border-radius:9px;cursor:pointer;transition:all .15s;}
+  .expander:hover{border-color:var(--navy);color:var(--navy);}
+
+  /* foldable cards */
+  .acard{border:1px solid var(--line);border-radius:11px;overflow:hidden;background:#fff;margin-bottom:11px;}
+  .ahead{display:flex;align-items:center;gap:11px;padding:12px 15px;cursor:pointer;user-select:none;transition:background .15s;}
+  .ahead:hover{background:#fafbfc;}
+  .ahead .dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto;}
+  .ahead .nm{font-weight:800;font-size:14px;color:#333;}
+  .ahead .nm .code{font-family:ui-monospace,Menlo,Consolas,monospace;}
+  .ahead .role{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:var(--gray);font-weight:600;}
+  .ahead .chev{margin-left:auto;color:#9aa4ad;font-size:16px;transition:transform .3s;}
+  .acard.open .ahead .chev{transform:rotate(90deg);}
+  .acard.sys .dot{background:var(--navy);}     .acard.sys.open .ahead .nm{color:var(--navy);}
+  .acard.msg .dot{background:var(--purple);}    .acard.msg.open .ahead .nm{color:var(--purple);}
+  .acard.tool .dot{background:var(--teal2);}    .acard.tool.open .ahead .nm{color:var(--teal);}
+  .acard.resp .dot{background:var(--amber2);}   .acard.resp.open .ahead .nm{color:var(--amber);}
+  .abody{max-height:0;overflow:hidden;transition:max-height .5s ease;}
+  .acard.open .abody{max-height:1400px;}
+  .abody .inner{padding:2px 15px 15px;}
+  .cap{font-size:12.5px;line-height:1.55;color:var(--gray);padding:4px 2px 10px;}
+  .cap b{color:#333;}
+
+  /* provider-swapped code blocks */
+  .prov{display:none;}
+  .root.anthropic .prov.anthropic{display:block;}
+  .root.openai    .prov.openai{display:block;}
+
+  pre.code{background:#10263b;color:#dfe8f0;font-family:ui-monospace,Menlo,Consolas,monospace;
+           font-size:11.5px;line-height:1.65;padding:15px 16px;border-radius:10px;overflow-x:auto;white-space:pre;margin:0;}
+  pre.code .ky{color:#6fb3e0;}                 /* json key */
+  pre.code .st{color:#f0b35a;}                 /* string value */
+  pre.code .nu{color:#c5a3e8;}                 /* number/literal */
+  pre.code .cm{color:#7e93a8;}                 /* comment */
+  pre.code .hl{color:#46c79a;font-weight:700;} /* highlighted differentiator */
+  pre.code .arw{color:#efa54a;font-weight:600;}/* annotation arrow */
+
+  /* "key difference" callout */
+  .diff{margin-top:11px;border-radius:9px;padding:9px 12px;font-size:12px;line-height:1.5;
+        display:flex;gap:9px;align-items:flex-start;}
+  .root.anthropic .diff{background:var(--navy-bg);color:#33485f;}
+  .root.openai    .diff{background:var(--teal-bg);color:#0c5a46;}
+  .diff .mk{font-weight:800;flex:0 0 auto;}
+  .root.anthropic .diff .mk{color:var(--navy);}
+  .root.openai    .diff .mk{color:var(--teal);}
+  .diff code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;background:#ffffff8c;padding:1px 5px;border-radius:4px;}
+
+  /* closing loop note */
+  .loopnote{background:#10263b;color:#dfe8f0;border-radius:12px;padding:14px 16px;margin-top:18px;
+            font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.7;}
+  .loopnote .h{color:#46c79a;font-weight:700;}
+  .loopnote .arw{color:#efa54a;}
+  .loopnote .cm{color:#7e93a8;}
+
+  .foot{font-size:11px;color:var(--gray);margin-top:12px;line-height:1.5;}
+  .foot code{font-family:ui-monospace,Menlo,Consolas,monospace;}
+  @media (prefers-reduced-motion:reduce){*{transition-duration:.01ms !important;}}
+</style>
+</head>
+<body>
+<div class="wrap root anthropic" id="root">
+  <h1>The prompt <span class="em">is</span> everything</h1>
+  <p class="sub">The agent harness does one thing: build a request, send it, read the reply, append it, repeat. That request — <b>system + messages + tools</b> — is the whole prompt. Here's exactly what it looks like on the wire. <b>Flip</b> between providers; <b>click a part</b> to open it.</p>
+
+  <div class="thesis">
+    <b>Same three inputs as the anatomy slide</b> — <span class="mono">system</span> (the Goal), <span class="mono">messages</span> (the Memory), <span class="mono">tools</span> (the catalog) — now as literal JSON. The model is a pure function of this payload; nothing else exists between turns.
+  </div>
+
+  <div class="switch">
+    <div class="now">
+      <span class="pill" id="provPill">ANTHROPIC</span>
+      <span class="nm" id="provName">Anthropic <span class="api">· Messages API</span></span>
+    </div>
+    <button class="flip" id="flipBtn">⇄ <span id="flipLabel">Switch to OpenAI</span></button>
+    <button class="expander" id="allBtn">Expand all</button>
+  </div>
+
+  <!-- ============ SYSTEM ============ -->
+  <div class="acard sys open" id="card-sys">
+    <div class="ahead" data-card="sys"><span class="dot"></span><span class="nm"><span class="code">system</span> — the Goal</span> <span class="role">· role + objective</span> <span class="chev">›</span></div>
+    <div class="abody"><div class="inner">
+      <div class="cap"><b>Where the standing instruction lives.</b> This is the one structural fork between the two APIs.</div>
+
+      <pre class="code prov anthropic"><span class="cm"># Anthropic — `system` is its own TOP-LEVEL field, beside messages</span>
+{
+  <span class="ky">"model"</span>: <span class="st">"claude-..."</span>,
+  <span class="ky">"max_tokens"</span>: <span class="nu">1024</span>,
+  <span class="hl">"system"</span>: <span class="st">"You plan trips and book within budget."</span>,   <span class="arw">← top-level</span>
+  <span class="ky">"messages"</span>: [ <span class="cm">/* the conversation */</span> ],
+  <span class="ky">"tools"</span>:    [ <span class="cm">/* the catalog   */</span> ]
+}</pre>
+
+      <pre class="code prov openai"><span class="cm"># OpenAI — `system` is the FIRST message inside the messages array</span>
+{
+  <span class="ky">"model"</span>: <span class="st">"gpt-..."</span>,
+  <span class="ky">"messages"</span>: [
+    { <span class="ky">"role"</span>: <span class="hl">"system"</span>,                          <span class="arw">← first message</span>
+      <span class="ky">"content"</span>: <span class="st">"You plan trips and book within budget."</span> },
+    <span class="cm">/* ...then user / assistant / tool messages... */</span>
+  ],
+  <span class="ky">"tools"</span>: [ <span class="cm">/* the catalog */</span> ]
+}</pre>
+
+      <div class="diff"><span class="mk">⚑</span><span><b class="prov anthropic">Anthropic:</b><b class="prov openai">OpenAI:</b>
+        <span class="prov anthropic">the goal is a separate <code>system</code> parameter — it isn't part of the conversation.</span>
+        <span class="prov openai">the goal is just the first <code>role: "system"</code> message — there is no separate field.</span></span></div>
+    </div></div>
+  </div>
+
+  <!-- ============ MESSAGES ============ -->
+  <div class="acard msg" id="card-msg">
+    <div class="ahead" data-card="msg"><span class="dot"></span><span class="nm"><span class="code">messages</span> — the Memory</span> <span class="role">· the whole conversation, re-sent every turn</span> <span class="chev">›</span></div>
+    <div class="abody"><div class="inner">
+      <div class="cap"><b>The running history.</b> One slice: the request, the assistant's tool call, and the tool's result coming back. Three real differences hide in here.</div>
+
+      <pre class="code prov anthropic"><span class="cm"># Anthropic — tool call = a content block; tool result rides in a USER message</span>
+<span class="ky">"messages"</span>: [
+  { <span class="ky">"role"</span>: <span class="st">"user"</span>,
+    <span class="ky">"content"</span>: <span class="st">"Plan a trip: Goa, 5★, 5 nights, under $5,000"</span> },
+
+  { <span class="ky">"role"</span>: <span class="st">"assistant"</span>,
+    <span class="ky">"content"</span>: [
+      { <span class="ky">"type"</span>: <span class="st">"text"</span>, <span class="ky">"text"</span>: <span class="st">"Searching flights first."</span> },
+      { <span class="ky">"type"</span>: <span class="hl">"tool_use"</span>, <span class="ky">"id"</span>: <span class="st">"toolu_01"</span>,
+        <span class="ky">"name"</span>: <span class="st">"search_flights"</span>,
+        <span class="ky">"input"</span>: { <span class="ky">"from"</span>: <span class="st">"GOI"</span>, <span class="ky">"when"</span>: <span class="st">"next month"</span> } } ] },  <span class="arw">← input = OBJECT</span>
+
+  { <span class="ky">"role"</span>: <span class="hl">"user"</span>,                                  <span class="arw">← result rides in a USER msg</span>
+    <span class="ky">"content"</span>: [
+      { <span class="ky">"type"</span>: <span class="hl">"tool_result"</span>, <span class="ky">"tool_use_id"</span>: <span class="st">"toolu_01"</span>,
+        <span class="ky">"content"</span>: <span class="st">"12 flights · cheapest $1,180"</span> } ] }
+]</pre>
+
+      <pre class="code prov openai"><span class="cm"># OpenAI — tool call = a tool_calls array; tool result = its own role:"tool" msg</span>
+<span class="ky">"messages"</span>: [
+  { <span class="ky">"role"</span>: <span class="st">"user"</span>,
+    <span class="ky">"content"</span>: <span class="st">"Plan a trip: Goa, 5★, 5 nights, under $5,000"</span> },
+
+  { <span class="ky">"role"</span>: <span class="st">"assistant"</span>, <span class="ky">"content"</span>: <span class="nu">null</span>,
+    <span class="hl">"tool_calls"</span>: [
+      { <span class="ky">"id"</span>: <span class="st">"call_01"</span>, <span class="ky">"type"</span>: <span class="st">"function"</span>,
+        <span class="ky">"function"</span>: {
+          <span class="ky">"name"</span>: <span class="st">"search_flights"</span>,
+          <span class="ky">"arguments"</span>: <span class="hl">"{\"from\":\"GOI\",\"when\":\"next month\"}"</span> } } ] },  <span class="arw">← args = STRING</span>
+
+  { <span class="ky">"role"</span>: <span class="hl">"tool"</span>, <span class="ky">"tool_call_id"</span>: <span class="st">"call_01"</span>,          <span class="arw">← its own "tool" role</span>
+    <span class="ky">"content"</span>: <span class="st">"12 flights · cheapest $1,180"</span> }
+]</pre>
+
+      <div class="diff"><span class="mk">⚑</span><span><b>Three differences to point at:</b>
+        <span class="prov anthropic">(1) the call is a <code>tool_use</code> content block; (2) <code>input</code> is a real <b>object</b>; (3) the result comes back as a <code>tool_result</code> block inside a <b>user</b> message.</span>
+        <span class="prov openai">(1) the call is a <code>tool_calls</code> array; (2) <code>arguments</code> is a <b>JSON string</b> you must parse; (3) the result is its own message with <code>role: "tool"</code>.</span></span></div>
+    </div></div>
+  </div>
+
+  <!-- ============ TOOLS ============ -->
+  <div class="acard tool" id="card-tool">
+    <div class="ahead" data-card="tool"><span class="dot"></span><span class="nm"><span class="code">tools</span> — the catalog</span> <span class="role">· what it may call + how to pick</span> <span class="chev">›</span></div>
+    <div class="abody"><div class="inner">
+      <div class="cap"><b>Each tool is a name, a description, and an argument schema.</b> The <i>description</i> is the model's only basis for picking the tool — it's prompt real estate, not documentation.</div>
+
+      <pre class="code prov anthropic"><span class="cm"># Anthropic — schema key is `input_schema`, tool sits at top level</span>
+<span class="ky">"tools"</span>: [
+  { <span class="ky">"name"</span>: <span class="st">"search_flights"</span>,
+    <span class="ky">"description"</span>: <span class="st">"Find flights between two cities for given dates."</span>,
+    <span class="hl">"input_schema"</span>: {                          <span class="arw">← input_schema</span>
+      <span class="ky">"type"</span>: <span class="st">"object"</span>,
+      <span class="ky">"properties"</span>: {
+        <span class="ky">"from"</span>: { <span class="ky">"type"</span>: <span class="st">"string"</span> },
+        <span class="ky">"when"</span>: { <span class="ky">"type"</span>: <span class="st">"string"</span> } },
+      <span class="ky">"required"</span>: [<span class="st">"from"</span>, <span class="st">"when"</span>] } }
+]</pre>
+
+      <pre class="code prov openai"><span class="cm"># OpenAI — wrapped in {type:"function", function:{...}}, schema key is `parameters`</span>
+<span class="ky">"tools"</span>: [
+  { <span class="ky">"type"</span>: <span class="hl">"function"</span>,                          <span class="arw">← function wrapper</span>
+    <span class="ky">"function"</span>: {
+      <span class="ky">"name"</span>: <span class="st">"search_flights"</span>,
+      <span class="ky">"description"</span>: <span class="st">"Find flights between two cities for given dates."</span>,
+      <span class="hl">"parameters"</span>: {                            <span class="arw">← parameters</span>
+        <span class="ky">"type"</span>: <span class="st">"object"</span>,
+        <span class="ky">"properties"</span>: {
+          <span class="ky">"from"</span>: { <span class="ky">"type"</span>: <span class="st">"string"</span> },
+          <span class="ky">"when"</span>: { <span class="ky">"type"</span>: <span class="st">"string"</span> } },
+        <span class="ky">"required"</span>: [<span class="st">"from"</span>, <span class="st">"when"</span>] } } }
+]</pre>
+
+      <div class="diff"><span class="mk">⚑</span><span>The JSON-schema body is <b>identical</b>. Only the wrapper differs:
+        <span class="prov anthropic"><code>input_schema</code> sits directly on the tool.</span>
+        <span class="prov openai">the tool is wrapped in <code>{ "type": "function", "function": { … "parameters": … } }</code>.</span></span></div>
+    </div></div>
+  </div>
+
+  <!-- ============ RESPONSE ============ -->
+  <div class="acard resp" id="card-resp">
+    <div class="ahead" data-card="resp"><span class="dot"></span><span class="nm">the response — one decision back</span> <span class="role">· read the stop signal, then branch</span> <span class="chev">›</span></div>
+    <div class="abody"><div class="inner">
+      <div class="cap"><b>This is the Reason box's output.</b> You read one field to decide: did it call a tool, or is it done?</div>
+
+      <pre class="code prov anthropic"><span class="cm"># Anthropic — content blocks + stop_reason; read response.content directly</span>
+{
+  <span class="ky">"id"</span>: <span class="st">"msg_..."</span>,
+  <span class="ky">"role"</span>: <span class="st">"assistant"</span>,
+  <span class="ky">"content"</span>: [
+    { <span class="ky">"type"</span>: <span class="st">"tool_use"</span>, <span class="ky">"id"</span>: <span class="st">"toolu_02"</span>,
+      <span class="ky">"name"</span>: <span class="st">"find_hotels"</span>,
+      <span class="ky">"input"</span>: { <span class="ky">"city"</span>: <span class="st">"Goa"</span>, <span class="ky">"stars"</span>: <span class="nu">5</span> } } ],
+  <span class="hl">"stop_reason"</span>: <span class="st">"tool_use"</span>,        <span class="arw">← "tool_use" = call a tool · "end_turn" = final answer</span>
+  <span class="ky">"usage"</span>: { <span class="ky">"input_tokens"</span>: <span class="nu">1843</span>, <span class="ky">"output_tokens"</span>: <span class="nu">56</span> }
+}</pre>
+
+      <pre class="code prov openai"><span class="cm"># OpenAI — nested under choices[0].message; finish_reason carries the signal</span>
+{
+  <span class="ky">"id"</span>: <span class="st">"chatcmpl-..."</span>,
+  <span class="ky">"choices"</span>: [
+    { <span class="ky">"index"</span>: <span class="nu">0</span>,
+      <span class="ky">"message"</span>: {
+        <span class="ky">"role"</span>: <span class="st">"assistant"</span>, <span class="ky">"content"</span>: <span class="nu">null</span>,
+        <span class="ky">"tool_calls"</span>: [
+          { <span class="ky">"id"</span>: <span class="st">"call_02"</span>, <span class="ky">"type"</span>: <span class="st">"function"</span>,
+            <span class="ky">"function"</span>: { <span class="ky">"name"</span>: <span class="st">"find_hotels"</span>,
+              <span class="ky">"arguments"</span>: <span class="st">"{\"city\":\"Goa\",\"stars\":5}"</span> } } ] },
+      <span class="hl">"finish_reason"</span>: <span class="st">"tool_calls"</span> }   <span class="arw">← "tool_calls" = call a tool · "stop" = final answer</span>
+  ],
+  <span class="ky">"usage"</span>: { <span class="cm">/* ... */</span> }
+}</pre>
+
+      <div class="diff"><span class="mk">⚑</span><span>Same branch, different field name:
+        <span class="prov anthropic">read <code>stop_reason</code> — <code>tool_use</code> → run the tool &amp; loop; <code>end_turn</code> → done. The reply is <code>response.content</code>.</span>
+        <span class="prov openai">read <code>choices[0].finish_reason</code> — <code>tool_calls</code> → run the tool &amp; loop; <code>stop</code> → done. The reply is <code>choices[0].message</code>.</span></span></div>
+    </div></div>
+  </div>
+
+  <!-- closing loop note -->
+  <div class="loopnote">
+<span class="h"># the entire agent, in five lines:</span>
+req = { system, messages, tools }        <span class="cm"># ← the prompt = everything</span>
+resp = POST(req)                         <span class="cm"># one stateless call</span>
+<span class="arw">if</span> stop_signal == "call a tool":         <span class="cm"># stop_reason / finish_reason</span>
+    messages += [ the call, run(tool) ]  <span class="cm"># append → grows the Memory</span>
+    <span class="arw">repeat</span>                               <span class="cm"># else: messages holds the final answer — done</span>
+  </div>
+
+  <p class="foot">Schemas trimmed for teaching; full field lists at <code>docs.claude.com</code> (Messages API) and <code>platform.openai.com</code> (Chat Completions). OpenAI also offers the newer Responses API; the Chat Completions shape above is the one most code uses today.</p>
+</div>
+
+<script>
+(function(){
+  const root=document.getElementById('root');
+  const cards=[...document.querySelectorAll('.acard')];
+  const allBtn=document.getElementById('allBtn');
+
+  // foldable
+  document.querySelectorAll('.ahead').forEach(h=>{
+    h.addEventListener('click',()=>{ h.closest('.acard').classList.toggle('open'); syncAll(); });
+  });
+  function syncAll(){
+    const open=cards.filter(c=>c.classList.contains('open')).length;
+    allBtn.textContent = open===cards.length ? 'Collapse all' : 'Expand all';
+  }
+  allBtn.addEventListener('click',()=>{
+    const open=cards.filter(c=>c.classList.contains('open')).length;
+    const target=open<cards.length;
+    cards.forEach(c=>c.classList.toggle('open',target));
+    syncAll();
+  });
+
+  // provider flip
+  const flipBtn=document.getElementById('flipBtn');
+  const flipLabel=document.getElementById('flipLabel');
+  const provPill=document.getElementById('provPill');
+  const provName=document.getElementById('provName');
+  function setProvider(p){
+    root.classList.toggle('anthropic', p==='anthropic');
+    root.classList.toggle('openai',    p==='openai');
+    if(p==='anthropic'){
+      provPill.textContent='ANTHROPIC';
+      provName.innerHTML='Anthropic <span class="api">· Messages API</span>';
+      flipLabel.textContent='Switch to OpenAI';
+    }else{
+      provPill.textContent='OPENAI';
+      provName.innerHTML='OpenAI <span class="api">· Chat Completions</span>';
+      flipLabel.textContent='Switch to Anthropic';
+    }
+  }
+  flipBtn.addEventListener('click',()=>{
+    setProvider(root.classList.contains('anthropic') ? 'openai' : 'anthropic');
+  });
+
+  // keyboard: 1-4 toggle cards, f flips
+  window.addEventListener('keydown',e=>{
+    const map={'1':'sys','2':'msg','3':'tool','4':'resp'};
+    if(map[e.key]){ document.getElementById('card-'+map[e.key]).classList.toggle('open'); syncAll(); }
+    else if(e.key==='f'||e.key==='F'){ flipBtn.click(); }
+  });
+  syncAll();
+})();
+</script>
+</body>
+</html>

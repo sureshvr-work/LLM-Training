@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The magic trick — RAG vs agent</title>
+<style>
+  :root{
+    --navy:#1d3a5f; --navy2:#185FA5; --navy-bg:#eef3f9;
+    --teal:#0F6E56; --teal2:#1D9E75; --teal-bg:#E1F5EE;
+    --amber:#854F0B; --amber2:#EF9F27; --amber-bg:#FAEEDA;
+    --purple:#7B3FA0; --purple-bg:#EFE7F4;
+    --red:#C0392B; --red-bg:#FBEAE7;
+    --gray:#5F5E5A; --line:#e3e0d9; --bg:#f5f6f8; --ink:#222;
+    --ease:cubic-bezier(.22,.61,.36,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+    background:var(--bg);color:var(--ink);
+    min-height:100vh;display:flex;flex-direction:column;overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  .stage{
+    flex:1;width:min(1200px,95vw);margin:0 auto;
+    padding:clamp(18px,3vh,40px) 0 clamp(12px,2vh,24px);
+    display:flex;flex-direction:column;gap:clamp(12px,2.2vh,24px);
+  }
+  .head{display:flex;flex-direction:column;gap:8px}
+  .kicker{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gray)}
+  h1{font-family:system-ui,sans-serif;font-weight:800;font-size:clamp(23px,3.8vw,42px);line-height:1.08;letter-spacing:-.02em;color:var(--navy)}
+  .sub{font-size:clamp(13px,1.5vw,15px);color:var(--gray);line-height:1.5;max-width:74ch}
+  .sub b{color:var(--navy2)}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,2vw,22px);flex:1;align-content:start}
+  .panel{
+    background:#fff;border:1px solid var(--line);border-radius:14px;border-top:4px solid var(--accent);
+    padding:clamp(14px,1.8vh,20px) clamp(15px,1.7vw,22px);display:flex;flex-direction:column;gap:12px;
+  }
+  .panel.l{--accent:var(--amber2)}
+  .panel.r{--accent:var(--teal)}
+  .phead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .ptag{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;font-weight:700;letter-spacing:.05em;padding:4px 10px;border-radius:7px}
+  .panel.l .ptag{background:var(--amber-bg);color:var(--amber)}
+  .panel.r .ptag{background:var(--teal-bg);color:var(--teal)}
+  .psub{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:var(--gray)}
+
+  .trace{display:flex;flex-direction:column;gap:8px;flex:1}
+  .trow{
+    font-size:12.5px;line-height:1.45;color:var(--ink);
+    display:grid;grid-template-columns:58px 1fr;gap:10px;align-items:start;
+    opacity:0;transform:translateY(7px);
+    transition:opacity .5s var(--ease),transform .5s var(--ease);
+  }
+  .trow.show{opacity:1;transform:none}
+  .pre{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:9.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;text-align:right;padding-top:2px}
+  .pre.q,.pre.in{color:var(--gray)}
+  .pre.retr,.pre.call{color:var(--teal)}
+  .pre.read,.pre.think{color:var(--navy2)}
+  .pre.result{color:var(--amber)}
+  .pre.answer{color:var(--purple)}
+  .pre.gap{color:var(--red)}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .txt b{color:var(--navy)}
+  .dim{color:var(--gray)}
+  .chip{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10px;border-radius:6px;padding:2px 7px;margin-left:8px;white-space:nowrap;background:var(--teal-bg);color:var(--teal);font-weight:700}
+  .trow.key .txt{background:var(--purple-bg);border-radius:6px;padding:4px 8px;display:inline-block}
+  .trow.key .txt b{color:var(--purple)}
+
+  /* cascade delays */
+  .d1{transition-delay:.05s}.d2{transition-delay:.45s}.d3{transition-delay:.85s}
+  .d4{transition-delay:1.25s}.d5{transition-delay:1.65s}.d6{transition-delay:2.05s}.d7{transition-delay:2.45s}
+
+  .verdict{
+    font-size:12px;font-weight:600;line-height:1.45;border-radius:9px;padding:10px 13px;display:flex;gap:9px;align-items:flex-start;
+    opacity:0;transform:translateY(7px);transition:opacity .5s var(--ease),transform .5s var(--ease);
+  }
+  .verdict.show{opacity:1;transform:none}
+  .verdict .mk{font-weight:800;font-size:14px;line-height:1.15}
+  .verdict.warn{background:var(--amber-bg);color:#7a4a0a}.verdict.warn .mk{color:var(--amber2)}
+  .verdict.good{background:var(--teal-bg);color:#0c5a46}.verdict.good .mk{color:var(--teal)}
+  #panelL .verdict{transition-delay:1.25s}
+  #panelR .verdict{transition-delay:2.9s}
+
+  .thesis{
+    border-top:1px solid var(--line);padding-top:clamp(10px,2vh,16px);
+    font-family:system-ui,sans-serif;font-size:clamp(14px,1.7vw,18px);font-weight:600;line-height:1.5;color:var(--navy);letter-spacing:-.01em;
+    opacity:0;transform:translateY(10px);transition:opacity .6s var(--ease),transform .6s var(--ease);
+  }
+  .thesis.show{opacity:1;transform:none}
+  .thesis em{font-style:normal;color:var(--purple);font-weight:800}
+  .thesis .tool{color:var(--teal);font-weight:800;font-style:normal}
+
+  .bar{display:flex;align-items:center;justify-content:space-between;width:min(1200px,95vw);margin:0 auto;padding:8px 0 16px}
+  .hint{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:var(--gray);letter-spacing:.04em}
+  .btns{display:flex;gap:10px}
+  button{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;font-weight:700;letter-spacing:.04em;border:1.5px solid var(--line);background:#fff;color:var(--ink);padding:9px 16px;border-radius:9px;cursor:pointer;transition:all .2s var(--ease)}
+  button:hover{border-color:var(--navy);color:var(--navy)}
+  button:disabled{opacity:.4;cursor:default}
+  button.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+  button.primary:hover{background:var(--navy2);color:#fff}
+
+  @media (max-width:780px){.grid{grid-template-columns:1fr}}
+  @media (prefers-reduced-motion:reduce){*{transition-duration:.01ms !important}}
+</style>
+</head>
+<body>
+  <main class="stage">
+    <header class="head">
+      <h1>Why did claim #4471 deny — and what else is at risk?</h1>
+      <p class="sub">Who decides what happens next.</p>
+    </header>
+
+    <section class="grid">
+      <!-- LEFT: RAG pipeline -->
+      <div class="panel l" id="panelL">
+        <div class="phead"><span class="ptag">RAG PIPELINE</span><span class="psub">retrieve once · then read</span></div>
+        <div class="trace">
+          <div class="trow show"><span class="pre q">query</span><span class="txt">Why did #4471 deny — and what else is at risk?</span></div>
+          <div class="trow d1"><span class="pre retr">retrieve</span><span class="txt mono">cosine top-k over chunked claim history → <b>{#4471 · DENIED · prior-auth · Dr. Lin}</b></span></div>
+          <div class="trow d2"><span class="pre read">read</span><span class="txt">#4471 denied — <b>prior authorization was missing</b>.</span></div>
+          <div class="trow d3"><span class="pre gap">gap</span><span class="txt dim">“…and what else is at risk?” — no chunk matches a query it never knew to ask.</span></div>
+        </div>
+        <div class="verdict warn"><span class="mk">!</span><span>Perfect on the lookup. But RAG retrieves <b>once</b>, from the question as asked — it never goes back with what it just learned.</span></div>
+      </div>
+
+      <!-- RIGHT: agent -->
+      <div class="panel r" id="panelR">
+        <div class="phead"><span class="ptag">AGENT</span><span class="psub">retrieve · learn · retrieve again · answer</span></div>
+        <div class="trace">
+          <div class="trow show"><span class="pre in">input</span><span class="txt">Why did #4471 deny — and what else is at risk?</span></div>
+          <div class="trow d1"><span class="pre think">think</span><span class="txt">First — why did #4471 deny?</span></div>
+          <div class="trow d2"><span class="pre call">call</span><span class="txt mono">search_claim_notes("#4471")<span class="chip">← this is your RAG retriever</span></span></div>
+          <div class="trow d3"><span class="pre result">result</span><span class="txt mono">DENIED · prior-auth missing · provider: <b>Dr. Lin</b></span></div>
+          <div class="trow d4 key"><span class="pre think">think</span><span class="txt">Now use that — any <b>other Dr. Lin claims</b> with the same gap?</span></div>
+          <div class="trow d5"><span class="pre call">call</span><span class="txt mono">find_open_claims(provider="Dr. Lin", gap="prior-auth")</span></div>
+          <div class="trow d6"><span class="pre result">result</span><span class="txt mono">3 open claims · same gap</span></div>
+          <div class="trow d7"><span class="pre answer">answer</span><span class="txt">#4471: prior-auth missing. <b>3 more of Dr. Lin's claims share it</b> — flag them.</span></div>
+        </div>
+        <div class="verdict good"><span class="mk">✓</span><span>The second query <b>didn't exist</b> until the first result came back. That loop is the whole difference.</span></div>
+      </div>
+    </section>
+
+    <p class="thesis" id="thesis">
+      RAG retrieves <em>once</em>, from the question as asked — and it's the agent's <span class="tool">first tool</span>, not its rival.
+      The agent wraps a <em>loop</em> around it: read the result, form the query that didn't exist yet, go back.
+      One retrieval enough? Use RAG. Next step depends on the last answer? That's the agent.
+    </p>
+  </main>
+
+  <div class="bar">
+    <span class="hint"></span>
+    <div class="btns">
+      <button id="back" disabled>← Back</button>
+      <button class="primary" id="next">Next →</button>
+    </div>
+  </div>
+
+<script>
+(function(){
+  // 0: question on both | 1: RAG runs (one hop, ✗ on part 2) | 2: agent runs (dependent 2-hop) | 3: thesis
+  const MAX=3; let step=0;
+  const lRows=[...document.querySelectorAll('#panelL .trow.d1, #panelL .trow.d2, #panelL .trow.d3')];
+  const lV=document.querySelector('#panelL .verdict');
+  const rRows=[...document.querySelectorAll('#panelR .trow.d1, #panelR .trow.d2, #panelR .trow.d3, #panelR .trow.d4, #panelR .trow.d5, #panelR .trow.d6, #panelR .trow.d7')];
+  const rV=document.querySelector('#panelR .verdict');
+  const thesis=document.getElementById('thesis');
+
+  function render(){
+    lRows.forEach(r=>r.classList.toggle('show', step>=1));
+    lV.classList.toggle('show', step>=1);
+    rRows.forEach(r=>r.classList.toggle('show', step>=2));
+    rV.classList.toggle('show', step>=2);
+    thesis.classList.toggle('show', step>=MAX);
+    document.getElementById('back').disabled = step===0;
+    document.getElementById('next').textContent = step>=MAX ? 'Replay ↺' : 'Next →';
+  }
+  function next(){ step = step>=MAX ? 0 : step+1; render(); }
+  function back(){ if(step>0){ step--; render(); } }
+  document.getElementById('next').addEventListener('click', next);
+  document.getElementById('back').addEventListener('click', back);
+  window.addEventListener('keydown', e=>{
+    if(e.key===' '||e.key==='ArrowRight'||e.key==='Enter'){ e.preventDefault(); next(); }
+    else if(e.key==='ArrowLeft'){ e.preventDefault(); back(); }
+    else if(e.key==='r'||e.key==='R'){ step=0; render(); }
+  });
+  render();
+})();
+</script>
+</body>
+</html>
