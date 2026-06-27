@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<!-- saved from url=(0055)file:///Users/ramji/Downloads/slide00_intro_deck_1.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What is an agent?</title>
+<style>
+  :root{
+    --navy:#1d3a5f; --navy2:#185FA5; --navy-bg:#eef3f9;
+    --teal:#0F6E56; --teal2:#1D9E75; --teal-bg:#E1F5EE;
+    --amber:#854F0B; --amber2:#EF9F27; --amber-bg:#FAEEDA;
+    --purple:#7B3FA0; --purple-bg:#EFE7F4;
+    --red:#C0392B; --red-bg:#FBEAE7;
+    --gray:#5F5E5A; --line:#e3e0d9; --bg:#f5f6f8; --ink:#222;
+    --ease:cubic-bezier(.22,.61,.36,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--ink);
+    min-height:100vh;display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased}
+  .stage{flex:1;width:min(1100px,94vw);margin:0 auto;padding:clamp(14px,2.4vh,36px) 0 clamp(8px,1.4vh,18px);
+    display:flex;flex-direction:column;justify-content:center}
+  .sec{display:flex;flex-direction:column;gap:clamp(12px,2.1vh,24px)}
+  .kicker{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gray)}
+
+  /* shared instruction header */
+  .youline{display:flex;align-items:center;gap:11px}
+  .avatar{width:34px;height:34px;border-radius:50%;flex:none;background:var(--navy);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:800;font-size:10px}
+  .youtag{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--gray)}
+  .goal{font-weight:800;font-size:clamp(20px,3vw,34px);line-height:1.16;letter-spacing:-.02em;color:var(--navy);max-width:25ch}
+  .goal .hi{color:var(--teal)}
+  #secB .goal .hi{color:var(--purple)}
+  .goal .hi2{color:var(--purple)}
+
+  .beat0sub,.sub{font-size:clamp(13px,1.5vw,16px);color:var(--gray);line-height:1.5;max-width:64ch;
+    opacity:0;transform:translateY(6px);transition:opacity .5s var(--ease),transform .5s var(--ease)}
+  .beat0sub.show,.sub.show{opacity:1;transform:none}
+  .beat0sub b,.sub b{color:var(--navy)}
+
+  /* loop chain */
+  .hloop{display:flex;flex-direction:column;gap:9px;opacity:0;transform:translateY(8px);transition:opacity .5s var(--ease),transform .5s var(--ease)}
+  .hloop.show{opacity:1;transform:none}
+  .chain{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+  .step{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;font-weight:600;color:var(--navy);background:#fff;border:1px solid var(--line);border-radius:7px;padding:5px 10px}
+  .arr{color:var(--gray);font-size:12px}
+  .reveal{font-size:clamp(13px,1.6vw,16px);font-weight:600;color:var(--navy);line-height:1.45}
+  .reveal em{font-style:normal;color:var(--teal);font-weight:800}
+
+  /* fork (A) */
+  .fork{display:grid;grid-template-columns:1fr 1fr;gap:clamp(12px,1.8vw,20px);opacity:0;transform:translateY(9px);transition:opacity .55s var(--ease),transform .55s var(--ease)}
+  .fork.show{opacity:1;transform:none}
+  .sys{border:1px solid var(--line);border-radius:13px;border-top:4px solid var(--accent);background:#fff;padding:clamp(13px,1.7vh,18px) clamp(15px,1.6vw,20px);display:flex;flex-direction:column;gap:10px}
+  .sys.trad{--accent:var(--amber2)} .sys.agent{--accent:var(--teal)}
+  .syshead{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+  .systag{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;font-weight:700;letter-spacing:.05em;padding:4px 9px;border-radius:6px}
+  .sys.trad .systag{background:var(--amber-bg);color:var(--amber)} .sys.agent .systag{background:var(--teal-bg);color:var(--teal)}
+  .verb{font-weight:800;font-size:15px;letter-spacing:-.01em}
+  .sys.trad .verb{color:var(--amber)} .sys.agent .verb{color:var(--teal)}
+  .does{font-size:13px;line-height:1.5;color:var(--ink)} .does b{color:var(--navy)} .does .dim{color:var(--gray)}
+  .traits{display:flex;flex-wrap:wrap;gap:5px;margin-top:auto;padding-top:9px;border-top:1px dashed var(--line)}
+  .trait{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10px;font-weight:600;border-radius:5px;padding:2px 7px}
+  .sys.trad .trait{background:#f3efe7;color:#7a6a4d} .sys.agent .trait{background:var(--teal-bg);color:var(--teal)}
+
+  /* punch (shared, children non-conflicting) */
+  .punch{font-size:clamp(15px,1.95vw,22px);font-weight:700;color:var(--navy);letter-spacing:-.01em;line-height:1.42;opacity:0;transform:translateY(8px);transition:opacity .5s var(--ease),transform .5s var(--ease)}
+  .punch.show{opacity:1;transform:none}
+  .punch .tells{color:var(--amber)} .punch .does2{color:var(--purple);font-weight:800}
+  .punch em{font-style:normal;color:var(--teal);font-weight:800}
+  .punch .nx{display:block;margin-top:7px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--gray)}
+  .punch .nx b{color:var(--amber)}
+
+  /* trace (B) */
+  .trace{background:#fff;border:1px solid var(--line);border-radius:13px;padding:clamp(12px,1.7vh,18px) clamp(15px,1.7vw,22px);display:flex;flex-direction:column;gap:9px}
+  .trow{display:grid;grid-template-columns:74px 1fr;gap:12px;align-items:start;opacity:0;transform:translateY(7px);transition:opacity .45s var(--ease),transform .45s var(--ease)}
+  .trow.show{opacity:1;transform:none}
+  .pre{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;text-align:right;padding-top:3px}
+  .pre.plan{color:var(--navy2)}.pre.write{color:var(--teal)}.pre.run{color:var(--amber)}.pre.read{color:var(--navy2)}.pre.pass{color:var(--teal)}.pre.commit{color:var(--purple)}
+  .txt{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.5;color:var(--ink)}
+  .txt b{color:var(--navy)} .txt .dim{color:var(--gray)} .txt .bad{color:var(--red);font-weight:700} .txt .good{color:var(--teal);font-weight:700}
+  .loopback{grid-column:2;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10.5px;color:var(--red);font-weight:700;letter-spacing:.02em}
+
+  /* broaden (C) */
+  .broadhead{font-weight:800;font-size:clamp(21px,3vw,36px);line-height:1.13;letter-spacing:-.02em;color:var(--navy)}
+  .broadhead .one{color:var(--teal)} .broadhead .notdef{color:var(--amber)}
+  .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(9px,1.3vw,14px);transition:opacity .5s var(--ease),transform .5s var(--ease)}
+  .gallery.recede{opacity:.3;transform:scale(.985)}
+  .prof{border:1px solid var(--line);border-left:3px solid var(--pa,var(--navy2));border-radius:10px;background:#fff;padding:10px 13px;display:flex;flex-direction:column;gap:2px;opacity:0;transform:translateY(8px);transition:opacity .45s var(--ease),transform .45s var(--ease)}
+  .gallery.show .prof{opacity:1;transform:none}
+  .prof .pname{font-weight:700;font-size:13.5px;color:var(--navy);line-height:1.2}
+  .prof .pgoal{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10.5px;color:var(--gray)}
+  .prof.you{border-color:var(--teal);border-left-color:var(--teal);background:var(--teal-bg)}
+  .prof.you .pname{color:var(--teal)}
+  .prof.you .pseen{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:9.5px;font-weight:800;color:var(--teal);letter-spacing:.03em;margin-top:1px}
+  .prof:nth-child(1){--pa:var(--purple)}.prof:nth-child(2){--pa:var(--navy2)}.prof:nth-child(3){--pa:var(--amber2)}
+  .prof:nth-child(4){--pa:var(--teal2)}.prof:nth-child(5){--pa:var(--purple)}.prof:nth-child(6){--pa:var(--navy2)}
+  .prof:nth-child(7){--pa:var(--amber2)}.prof:nth-child(8){--pa:var(--teal2)}
+  .gallery.show .prof:nth-child(1){transition-delay:.03s}.gallery.show .prof:nth-child(2){transition-delay:.07s}
+  .gallery.show .prof:nth-child(3){transition-delay:.11s}.gallery.show .prof:nth-child(4){transition-delay:.15s}
+  .gallery.show .prof:nth-child(5){transition-delay:.19s}.gallery.show .prof:nth-child(6){transition-delay:.23s}
+  .gallery.show .prof:nth-child(7){transition-delay:.27s}.gallery.show .prof:nth-child(8){transition-delay:.31s}
+  .gallery.show .prof:nth-child(9){transition-delay:.35s}
+  .broadsub{font-size:13.5px;color:var(--gray);line-height:1.5;opacity:0;transform:translateY(6px);transition:opacity .5s var(--ease),transform .5s var(--ease)}
+  .broadsub.show{opacity:1;transform:none}
+  .broadsub b{color:var(--navy)}
+  .sentence{display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line);padding-top:clamp(12px,2.2vh,20px);opacity:0;transform:translateY(10px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
+  .sentence.show{opacity:1;transform:none}
+  .sentence .l1{font-weight:700;font-size:clamp(19px,2.6vw,32px);color:var(--amber);letter-spacing:-.01em;line-height:1.2}
+  .sentence .l2{font-weight:800;font-size:clamp(23px,3.6vw,44px);color:var(--purple);letter-spacing:-.02em;line-height:1.1}
+  .sentence .nx{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--gray);font-weight:600;letter-spacing:.02em;margin-top:8px}
+  .sentence .nx b{color:var(--navy)}
+
+  /* nav */
+  .bar{display:flex;align-items:center;justify-content:space-between;width:min(1100px,94vw);margin:0 auto;padding:8px 0 16px}
+  .navmeta{display:flex;align-items:center;gap:12px}
+  .hint{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:var(--gray);letter-spacing:.04em}
+  .dots{display:flex;gap:5px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--line);transition:background .25s var(--ease),transform .25s var(--ease)}
+  .dot.on{background:var(--navy);transform:scale(1.25)}
+  .btns{display:flex;gap:10px}
+  button.nav{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;font-weight:700;letter-spacing:.04em;border:1.5px solid var(--line);background:#fff;color:var(--ink);padding:9px 16px;border-radius:9px;cursor:pointer;transition:all .2s var(--ease)}
+  button.nav:hover{border-color:var(--navy);color:var(--navy)}
+  button.nav:focus-visible{outline:2px solid var(--navy2);outline-offset:2px}
+  button.nav:disabled{opacity:.4;cursor:default}
+  button.nav.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+  button.nav.primary:hover{background:var(--navy2);color:#fff}
+
+  @media (max-width:720px){body{overflow:auto}.stage{justify-content:flex-start}.fork{grid-template-columns:1fr}.gallery{grid-template-columns:1fr 1fr}.trow{grid-template-columns:60px 1fr}.navmeta .hint{display:none}}
+  @media (prefers-reduced-motion:reduce){*{transition-duration:.01ms !important}}
+</style>
+</head>
+<body>
+  <main class="stage">
+
+    <!-- ================= SECTION A — assistant ================= -->
+    <section class="sec" id="secA" style="">
+      <span class="kicker">What is an agent? You already know one.</span>
+      <div class="youline"><div class="avatar">YOU</div><span class="youtag">YOU TELL YOUR ASSISTANT →</span></div>
+      <h1 class="goal">“Book me a flight to Chennai next Friday <span class="hi">under $800</span>, an <span class="hi">aisle seat</span> — and <span class="hi">email me the itinerary</span>.”</h1>
+      <p class="beat0sub show" id="A_sub">Do they come back asking which airline, which tab, which button to click? <b>No.</b> They take the goal and run.</p>
+      <div class="hloop" id="A_loop">
+        <div class="chain">
+          <span class="step">understand the goal</span><span class="arr">→</span>
+          <span class="step">break into tasks</span><span class="arr">→</span>
+          <span class="step">search</span><span class="arr">→</span>
+          <span class="step">compare</span><span class="arr">→</span>
+          <span class="step">decide</span><span class="arr">→</span>
+          <span class="step">book</span><span class="arr">→</span>
+          <span class="step">report back</span>
+        </div>
+        <p class="reveal">That's an <em>agent</em>. The exact same loop — it just reaches for software tools instead of hands.</p>
+      </div>
+      <div class="fork" id="A_fork">
+        <div class="sys trad">
+          <div class="syshead"><span class="systag">TRADITIONAL AI</span><span class="verb">it answers</span></div>
+          <p class="does">“Here's <b>how</b> you could book a flight to Chennai: open a travel site, filter by price, sort for aisle seats…” <span class="dim">— then hands the work back to you.</span></p>
+          <div class="traits"><span class="trait">answers questions</span><span class="trait">one prompt</span><span class="trait">no plan</span><span class="trait">no memory</span><span class="trait">no tools</span><span class="trait">doesn't act</span></div>
+        </div>
+        <div class="sys agent">
+          <div class="syshead"><span class="systag">AN AGENT</span><span class="verb">it completes</span></div>
+          <p class="does">Searches <b>40 fares</b>, holds the three under $800, picks the aisle on the 9:10am, <b>books seat 14F</b>, emails you the itinerary. <span class="dim">— done.</span></p>
+          <div class="traits"><span class="trait">completes goals</span><span class="trait">multi-step</span><span class="trait">plans</span><span class="trait">uses memory</span><span class="trait">uses tools</span><span class="trait">takes action</span></div>
+        </div>
+      </div>
+      <p class="punch" id="A_punch">Traditional AI <span class="tells">tells you how</span>. An agent <span class="does2">does it</span>.<span class="nx">next → hand the same agent a keyboard</span></p>
+    </section>
+
+    <!-- ================= SECTION B — keyboard ================= -->
+    <section class="sec" id="secB" style="display: none;">
+      <span class="kicker">Same loop — now give it a keyboard</span>
+      <div class="youline"><div class="avatar">YOU</div><span class="youtag">YOU TELL YOUR CODING AGENT →</span></div>
+      <h1 class="goal">“Stand up a REST API — <span class="hi">Express</span>, <span class="hi">auth</span>, <span class="hi">unit tests all green</span>, committed.”</h1>
+      <p class="sub show" id="B_sub">You don't hand it commands. You hand it a <b>goal</b> — then watch it work, fail, and recover.</p>
+      <div class="trace" id="B_trace">
+        <div class="trow show"><span class="pre plan">plan</span><span class="txt">scaffold the app, add an auth middleware, write tests for both <span class="dim">— in that order.</span></span></div>
+        <div class="trow show"><span class="pre write">write</span><span class="txt">creates <b>app.js</b>, <b>auth.js</b>, <b>app.test.js</b> <span class="dim">— 3 files written.</span></span></div>
+        <div class="trow show"><span class="pre run">run</span><span class="txt">npm test → <span class="bad">2 failing ✗</span> <span class="dim">auth rejects a valid token.</span></span></div>
+        <div class="trow show"><span class="pre read">read</span><span class="txt">the failure says the check compares the wrong field. <span class="dim">edits auth.js, re-runs.</span><span class="loopback">↳ it loops back on its own — nobody told it to</span></span></div>
+        <div class="trow show"><span class="pre pass">run</span><span class="txt">npm test → <span class="good">all green ✓</span></span></div>
+        <div class="trow show"><span class="pre commit">commit</span><span class="txt">git commit — “feat: REST API with auth + passing tests” <span class="dim">— done.</span></span></div>
+      </div>
+      <p class="punch show" id="B_punch">You never typed a single command. It <em>planned</em>, ran, hit a failure, <em>fixed itself</em>, and finished.<span class="nx">but this is <b>one keyboard</b> out of many — next → the others</span></p>
+    </section>
+
+    <!-- ================= SECTION C — applications ================= -->
+    <section class="sec" id="secC" style="display: none;">
+      <span class="kicker">The same loop, everywhere</span>
+      <h1 class="broadhead">One loop. <span class="one">Many applications.</span></h1>
+      <div class="gallery show recede" id="C_gallery">
+        <div class="prof"><span class="pname">Loan processing</span><span class="pgoal">underwrite the application</span></div>
+        <div class="prof"><span class="pname">Travel planner</span><span class="pgoal">book the trip</span></div>
+        <div class="prof"><span class="pname">Synthetic data generator</span><span class="pgoal">spin up realistic test data</span></div>
+        <div class="prof"><span class="pname">Incident responder</span><span class="pgoal">triage the alert, roll back</span></div>
+        <div class="prof"><span class="pname">Customer support</span><span class="pgoal">resolve the ticket</span></div>
+        <div class="prof you"><span class="pname">Coding assistant</span><span class="pgoal">ship the feature</span><span class="pseen">← YOU JUST SAW THIS ONE</span></div>
+      </div>
+      <p class="broadsub show" id="C_sub">The same loop you just watched — goal in, plan, tools, action, report — pointed at a different job each time.</p>
+      <div class="sentence show" id="C_sentence">
+        <span class="l1">LLMs answer questions.</span>
+        <span class="l2">Agents achieve goals.</span>
+        <span class="nx">next → <b>the anatomy of the loop</b> that makes this possible</span>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="bar">
+    <div class="navmeta">
+      <div class="dots"><span class="dot on" data-s="A"></span><span class="dot" data-s="B"></span><span class="dot" data-s="C"></span></div>
+    </div>
+    <div class="btns">
+      <button class="nav" id="back" disabled="">← Back</button>
+      <button class="nav primary" id="next">Next →</button>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const el=id=>document.getElementById(id);
+  // global step → section ranges: A 0-2 (3), B 3-9 (7), C 10-11 (2)
+  const SECS=[{id:'secA',n:3},{id:'secB',n:7},{id:'secC',n:2}];
+  const MAX=SECS.reduce((a,s)=>a+s.n,0)-1; // 11
+  let step=0;
+
+  const bRows=[...document.querySelectorAll('#B_trace .trow')];
+
+  function locate(s){
+    let acc=0;
+    for(let i=0;i<SECS.length;i++){ if(s<acc+SECS[i].n) return {sec:i, local:s-acc}; acc+=SECS[i].n; }
+    return {sec:SECS.length-1, local:SECS[SECS.length-1].n-1};
+  }
+
+  function renderA(b){
+    el('A_sub').classList.toggle('show',b>=0);
+    el('A_loop').classList.toggle('show',b>=1);
+    el('A_fork').classList.toggle('show',b>=2);
+    el('A_punch').classList.toggle('show',b>=2);
+  }
+  function renderB(b){
+    el('B_sub').classList.toggle('show',b>=0);
+    bRows.forEach((r,i)=>r.classList.toggle('show', b>=i+1));
+    el('B_punch').classList.toggle('show',b>=6);
+  }
+  function renderC(b){
+    el('C_gallery').classList.toggle('show',b>=0);
+    el('C_gallery').classList.toggle('recede',b>=1);
+    el('C_sub').classList.toggle('show',b>=0);
+    el('C_sentence').classList.toggle('show',b>=1);
+  }
+
+  function render(){
+    const {sec,local}=locate(step);
+    SECS.forEach((s,i)=>{ document.getElementById(s.id).style.display = (i===sec)?'':'none'; });
+    if(sec===0) renderA(local);
+    else if(sec===1) renderB(local);
+    else renderC(local);
+    [...document.querySelectorAll('.dot')].forEach((d,i)=>d.classList.toggle('on', i===sec));
+    el('back').disabled = step===0;
+    el('next').textContent = step>=MAX ? 'Replay \u21ba' : 'Next \u2192';
+  }
+  function next(){ step = step>=MAX ? 0 : step+1; render(); }
+  function back(){ if(step>0){ step--; render(); } }
+  el('next').addEventListener('click',next);
+  el('back').addEventListener('click',back);
+  // tap a dot to jump to the start of a section
+  [...document.querySelectorAll('.dot')].forEach((d,i)=>d.addEventListener('click',()=>{
+    let acc=0; for(let k=0;k<i;k++) acc+=SECS[k].n; step=acc; render();
+  }));
+  window.addEventListener('keydown',e=>{
+    if(e.key===' '||e.key==='ArrowRight'||e.key==='Enter'){ e.preventDefault(); next(); }
+    else if(e.key==='ArrowLeft'){ e.preventDefault(); back(); }
+    else if(e.key==='r'||e.key==='R'){ step=0; render(); }
+  });
+  render();
+})();
+</script>
+
+
+</body></html>

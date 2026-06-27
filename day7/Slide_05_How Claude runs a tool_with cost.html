@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<!-- saved from url=(0059)file:///Users/ramji/Downloads/how_claude_runs_a_tool_3.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Claude runs a tool — the round-trip &amp; what it costs</title>
+<style>
+  :root{
+    --navy:#1d3a5f; --navy2:#185FA5; --navy-bg:#eef3f9;
+    --teal:#0F6E56; --teal2:#1D9E75; --teal-bg:#E1F5EE;
+    --amber:#854F0B; --amber2:#EF9F27; --amber-bg:#FAEEDA;
+    --purple:#7B3FA0; --purple-bg:#EFE7F4;
+    --red:#C0392B; --red-bg:#FBEAE7;
+    --gray:#5F5E5A; --line:#e3e0d9; --bg:#f5f6f8; --ink:#222;
+    --ease:cubic-bezier(.22,.61,.36,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--ink);
+       min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;overflow-y:auto;-webkit-font-smoothing:antialiased}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .stage{flex:1;width:min(1180px,96vw);margin:0 auto;padding:clamp(12px,2vh,24px) 0 clamp(6px,1.2vh,12px);
+         display:flex;flex-direction:column;gap:clamp(7px,1.3vh,13px)}
+  h1{font-family:system-ui;font-weight:800;font-size:clamp(20px,3vw,34px);letter-spacing:-.02em;color:var(--navy)}
+  .sub{margin-top:4px;font-size:clamp(12px,1.35vw,14.5px);color:var(--gray);line-height:1.5;max-width:94ch}
+  .sub b{color:var(--navy2)}
+
+  .diagram{background:#fff;border:1px solid var(--line);border-radius:13px;padding:6px 10px}
+  svg{width:100%;height:auto;max-height:42vh;display:block}
+  .lifeline{stroke:var(--line);stroke-width:2;stroke-dasharray:4 5}
+  .hdr rect{fill:#fff;stroke-width:2}
+  .hdr.machine rect{stroke:var(--teal)} .hdr.api rect{stroke:var(--navy2)}
+  .hdr .ht{font-family:system-ui;font-weight:800;font-size:14px}
+  .hdr.machine .ht{fill:var(--teal)} .hdr.api .ht{fill:var(--navy)}
+  .hdr .hs{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:9.3px;fill:var(--gray)}
+
+  .beat{opacity:0;transition:opacity .4s var(--ease)} .beat.show{opacity:1} .beat.dim{opacity:.3}
+  .beat.cur .msg{filter:drop-shadow(0 0 3px currentColor)}
+  .msg{stroke-width:2;fill:none}
+  .msg.req{stroke:var(--navy2);color:var(--navy2)} .msg.result{stroke:var(--amber2);color:var(--amber2)}
+  .msg.run{stroke:var(--teal);color:var(--teal)} .msg.final{stroke:var(--purple);color:var(--purple)}
+  .lab{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;font-weight:700}
+  .lab.req{fill:var(--navy)} .lab.result{fill:var(--amber)} .lab.run{fill:var(--teal)} .lab.final{fill:var(--purple)}
+  .ctag{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:8.5px;font-weight:700}
+  .ctag.tok{fill:var(--navy2)} .ctag.cpu{fill:var(--teal)}
+  .repeatpill rect{fill:var(--purple-bg);stroke:var(--purple);stroke-width:1.5;stroke-dasharray:5 4}
+  .repeatpill text{fill:var(--purple);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;font-weight:700}
+  /* traveling packet */
+  .packet{opacity:0}
+  .beat.cur .packet{opacity:1;animation:travel .7s var(--ease)}
+  @keyframes travel{from{transform:translateX(var(--from))}to{transform:translateX(var(--to))}}
+
+  /* ── cost gauges ── */
+  .costs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:760px){.costs{grid-template-columns:1fr}}
+  .gauge{background:#fff;border:1px solid var(--line);border-radius:11px;padding:11px 13px;position:relative}
+  .ghead{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:7px}
+  .gname{font-size:12.5px;font-weight:700;color:var(--navy)}
+  .gval{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;font-weight:800;color:var(--navy2);transition:color .3s}
+  .gbar{height:12px;border-radius:6px;background:#eef0f2;overflow:hidden}
+  .gbar>i{display:block;height:100%;width:0;border-radius:6px;transition:width .6s var(--ease),background .4s}
+  #tokBar{background:var(--navy2)} #tokBar.hot{background:var(--amber2)}
+  #macBar{background:var(--teal2)} #macBar.spike{background:var(--amber2);animation:throb .5s ease-in-out 2}
+  @keyframes throb{50%{filter:brightness(1.25)}}
+  .gcap{font-size:10.5px;color:var(--gray);margin-top:7px;line-height:1.45}
+  .gcap b{color:#333}
+  .watch{position:absolute;top:11px;right:13px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:9.5px;font-weight:800;
+         color:var(--amber);background:var(--amber-bg);border-radius:5px;padding:2px 7px;opacity:0;transition:opacity .3s}
+  .watch.on{opacity:1}
+  .delta{position:absolute;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;font-weight:800;color:var(--navy2);
+         left:50%;top:6px;opacity:0;pointer-events:none}
+  .delta.pop{animation:pop 1s var(--ease)}
+  @keyframes pop{0%{opacity:0;transform:translateY(4px)}25%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
+
+  .note{font-size:13px;color:#222;background:var(--navy-bg);border-left:4px solid var(--navy);border-radius:8px;
+        padding:10px 13px;line-height:1.5;min-height:42px}
+  .note b{color:var(--navy)} .note .hot{color:var(--teal);font-weight:700}
+  .note .tk{color:var(--navy2);font-weight:700}
+  .note code{background:#e3e9f1;border-radius:4px;padding:1px 5px;font-size:12px;font-family:ui-monospace,Menlo,Consolas,monospace}
+
+  .thesis{border-top:1px solid var(--line);padding-top:9px;font-family:system-ui;font-size:clamp(12.5px,1.45vw,16px);
+          font-weight:600;line-height:1.5;color:var(--navy);letter-spacing:-.01em;
+          opacity:0;transform:translateY(8px);transition:opacity .5s var(--ease),transform .5s var(--ease)}
+  .thesis.show{opacity:1;transform:none}
+  .thesis em{font-style:normal;color:var(--teal);font-weight:800} .thesis .tk{color:var(--navy2);font-weight:800}
+
+  .bar{display:flex;align-items:center;justify-content:flex-end;width:min(1180px,96vw);margin:0 auto;padding:8px 0 12px;gap:10px;
+       position:sticky;bottom:0;background:linear-gradient(to top,var(--bg) 70%,transparent)}
+  button{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;font-weight:700;border:1.5px solid var(--line);
+         background:#fff;color:var(--ink);padding:9px 16px;border-radius:9px;cursor:pointer;transition:all .2s var(--ease)}
+  button:hover{border-color:var(--navy);color:var(--navy)} button:disabled{opacity:.4;cursor:default}
+  button.primary{background:var(--navy);color:#fff;border-color:var(--navy)} button.primary:hover{background:var(--navy2)}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+  <main class="stage">
+    <header>
+      <h1>What it costs to run a tool — across the wire</h1>
+      <p class="sub">The model only <b>asks</b>; your machine runs it and sends the result back. Watch two meters as it goes: <b>tokens</b> climb every turn (the conversation is re-sent), while <b>your machine</b> only blips when a tool actually runs.</p>
+    </header>
+
+    <div class="diagram">
+      <svg viewBox="0 0 840 360" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="mNavy" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#185FA5"></path></marker>
+          <marker id="mAmber" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#EF9F27"></path></marker>
+          <marker id="mTeal" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#0F6E56"></path></marker>
+          <marker id="mPurple" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7B3FA0"></path></marker>
+        </defs>
+
+        <g class="hdr machine">
+          <rect x="30" y="8" width="320" height="50" rx="10"></rect>
+          <text class="ht" x="190" y="29" text-anchor="middle">YOUR MACHINE</text>
+          <text class="hs" x="190" y="46" text-anchor="middle">the loop · sandbox · your files — CPU/RAM here</text>
+        </g>
+        <g class="hdr api">
+          <rect x="490" y="8" width="320" height="50" rx="10"></rect>
+          <text class="ht" x="650" y="29" text-anchor="middle">ANTHROPIC API</text>
+          <text class="hs" x="650" y="46" text-anchor="middle">reasons on GPUs here · not your RAM · stateless</text>
+        </g>
+
+        <line class="lifeline" x1="190" y1="60" x2="190" y2="348"></line>
+        <line class="lifeline" x1="650" y1="60" x2="650" y2="348"></line>
+
+        <!-- ① send -->
+        <g class="beat show dim" id="b1">
+          <text class="lab req" x="420" y="84" text-anchor="middle">① send: system + conversation + tools</text>
+          <text class="ctag tok" x="420" y="106" text-anchor="middle">＋ tokens (input)</text>
+          <line class="msg req" x1="190" y1="92" x2="644" y2="92" marker-end="url(#mNavy)"></line>
+          <circle class="packet" cx="190" cy="92" r="5" fill="#185FA5" style="--from:0px;--to:454px"></circle>
+        </g>
+        <!-- ② tool_use -->
+        <g class="beat show dim" id="b2">
+          <text class="lab req" x="420" y="132" text-anchor="middle">② tool_use: run_command("pytest")</text>
+          <line class="msg req" x1="650" y1="140" x2="196" y2="140" marker-end="url(#mNavy)"></line>
+          <circle class="packet" cx="650" cy="140" r="5" fill="#185FA5" style="--from:0px;--to:-454px"></circle>
+        </g>
+        <!-- ③ run locally -->
+        <g class="beat show dim" id="b3">
+          <text class="lab run" x="96" y="166">③ sandbox runs pytest — your CPU/RAM</text>
+          <path class="msg run" d="M190,176 H96 V206 H184" marker-end="url(#mTeal)"></path>
+        </g>
+        <!-- ④ tool_result -->
+        <g class="beat show cur" id="b4">
+          <text class="lab result" x="420" y="234" text-anchor="middle">④ tool_result: 2 passed · 1 failed</text>
+          <text class="ctag tok" x="420" y="256" text-anchor="middle">＋ tokens (result + whole convo re-sent)</text>
+          <line class="msg result" x1="190" y1="242" x2="644" y2="242" marker-end="url(#mAmber)"></line>
+          <circle class="packet" cx="190" cy="242" r="5" fill="#EF9F27" style="--from:0px;--to:454px"></circle>
+        </g>
+        <!-- ⑤ repeat -->
+        <g class="beat repeatpill" id="b5">
+          <rect x="278" y="272" width="284" height="28" rx="14"></rect>
+          <text x="420" y="290" text-anchor="middle">↻ each turn re-sends everything — bigger now</text>
+        </g>
+        <!-- ⑥ final -->
+        <g class="beat" id="b6">
+          <text class="lab final" x="420" y="332" text-anchor="middle">⑥ no tool call → final answer (loop ends)</text>
+          <line class="msg final" x1="650" y1="340" x2="196" y2="340" marker-end="url(#mPurple)"></line>
+          <circle class="packet" cx="650" cy="340" r="5" fill="#7B3FA0" style="--from:0px;--to:-454px"></circle>
+        </g>
+      </svg>
+    </div>
+
+    <div class="costs">
+      <div class="gauge">
+        <span class="watch" id="tokWatch">⚠ watch this</span>
+        <span class="delta pop" id="tokDelta">+1.5k</span>
+        <div class="ghead"><span class="gname">Tokens → API</span><span class="gval" id="tokVal" style="color: var(--navy2);">3.2k</span></div>
+        <div class="gbar"><i id="tokBar" class="" style="width: 39%;"></i></div>
+        <div class="gcap">Re-sent <b>every turn</b> — grows as the conversation &amp; files pile up. Long runs with big files get <b>expensive in tokens</b>. This is the meter to watch — far more than RAM.</div>
+      </div>
+      <div class="gauge">
+        <div class="ghead"><span class="gname">Your machine · CPU / RAM</span><span class="gval" id="macVal" style="color: var(--teal);">floor</span></div>
+        <div class="gbar"><i id="macBar" class="" style="width: 22%;"></i></div>
+        <div class="gcap">A <b>normal OS process / lightweight container</b> running ordinary commands. Spikes only while a tool runs — <b>same cost as running it yourself</b>. Baseline ≈ a few hundred MB.</div>
+      </div>
+    </div>
+
+    <div class="note" id="note">The result goes back as a <b>new message</b>. The model is stateless, so the <b>entire conversation is re-sent</b> — which is why <span class="tk">tokens</span>, not RAM, are the cost that grows.</div>
+
+    <p class="thesis" id="thesis">
+      The model <span class="tk">reasons</span> (on its GPUs); your machine <em>acts</em>. The cost that grows isn't your memory —
+      it's <span class="tk">tokens</span>, because the whole conversation is re-sent every turn. Your RAM just blips while a tool runs, then settles back to the container floor.
+    </p>
+  </main>
+
+  <div class="bar">
+    <button id="back">← Back</button>
+    <button id="next" class="primary">Next →</button>
+  </div>
+
+<script>
+(function(){
+  const NOTES = [
+    'Your machine sends the goal, the <b>whole conversation</b>, and the list of tools the model may ask for. That input is billed in <span class="tk">tokens</span> — your files stay <span class="hot">on your machine.</span>',
+    'The model replies “call <code>run_command("pytest")</code>.” It only <b>decides</b> — <span class="hot">it cannot run anything or see your machine.</span> Its reply is billed in tokens too.',
+    'Your machine runs the tool in a <span class="hot">sandbox</span> — a normal OS process or lightweight container running ordinary commands. This is your <b>CPU/RAM</b>, the same spike as running <code>pytest</code> yourself. Costs the API nothing.',
+    'The result goes back as a <b>new message</b>. The model is stateless, so the <b>entire conversation is re-sent</b> — which is why <span class="tk">tokens</span>, not RAM, are the cost that grows.',
+    'Turn 2 re-sends <b>everything again, now bigger</b>. Big files in context make each turn pricier. <span class="tk">Token meter jumps</span> — your machine barely moved.',
+    'No tool call → the model is answering → the loop ends. Final token tick; your RAM is already back at the floor.'
+  ];
+  // cost state indexed by cur (0..6):  tokens(absolute), token %, machine %, machine spike?
+  const TOK   = [0, 1200, 1700, 1700, 3200, 6800, 8400];
+  const TOKP  = [0, 15,   21,   21,   39,   70,   84  ];
+  const MAC   = [18,18,   18,   74,   22,   22,   18  ];
+  const SPIKE = [false,false,false,true,false,false,false];
+
+  const N = 6; let cur = 0;
+  const beats=[1,2,3,4,5,6].map(i=>document.getElementById("b"+i));
+  const note=document.getElementById("note"), thesis=document.getElementById("thesis");
+  const tokBar=document.getElementById("tokBar"), tokVal=document.getElementById("tokVal");
+  const macBar=document.getElementById("macBar"), macVal=document.getElementById("macVal");
+  const tokWatch=document.getElementById("tokWatch"), tokDelta=document.getElementById("tokDelta");
+
+  const fmt = n => n>=1000 ? (n/1000).toFixed(1).replace(/\.0$/,'')+"k" : ""+n;
+
+  function render(prev){
+    beats.forEach((b,i)=>{
+      b.classList.toggle("show", i < cur);
+      b.classList.remove("cur"); b.classList.toggle("dim", i < cur-1);
+    });
+    if(cur>0) beats[cur-1].classList.add("cur");
+
+    // tokens
+    tokBar.style.width = TOKP[cur] + "%";
+    tokBar.classList.toggle("hot", TOKP[cur] >= 55);
+    tokWatch.classList.toggle("on", TOKP[cur] >= 55);
+    tokVal.textContent = fmt(TOK[cur]);
+    tokVal.style.color = TOKP[cur] >= 55 ? "var(--amber)" : "var(--navy2)";
+    // delta pop on growth
+    const d = TOK[cur] - (TOK[prev] ?? 0);
+    if(d > 0){ tokDelta.textContent = "+" + fmt(d); tokDelta.classList.remove("pop"); void tokDelta.offsetWidth; tokDelta.classList.add("pop"); }
+
+    // machine
+    macBar.style.width = MAC[cur] + "%";
+    macBar.classList.toggle("spike", SPIKE[cur]);
+    macVal.textContent = SPIKE[cur] ? "▲ pytest" : "floor";
+    macVal.style.color = SPIKE[cur] ? "var(--amber)" : "var(--teal)";
+
+    note.innerHTML = cur>0 ? NOTES[cur-1] : 'Press <b>Next</b> to walk one tool call across the wire — and watch the two meters.';
+    thesis.classList.toggle("show", cur>=N);
+    document.getElementById("back").disabled = cur===0;
+    document.getElementById("next").textContent = cur>=N ? "Replay ↺" : "Next →";
+  }
+  function next(){ const p=cur; cur = cur>=N ? 0 : cur+1; render(cur>=p?p:0); }
+  function back(){ if(cur>0){ const p=cur; cur--; render(p); } }
+  document.getElementById("next").addEventListener("click",next);
+  document.getElementById("back").addEventListener("click",back);
+  window.addEventListener("keydown",e=>{
+    if(e.key===" "||e.key==="ArrowRight"||e.key==="Enter"){e.preventDefault();next();}
+    else if(e.key==="ArrowLeft"){e.preventDefault();back();}
+    else if(e.key==="r"||e.key==="R"){cur=0;render(0);}
+  });
+  render(0);
+})();
+</script>
+
+
+</body></html>

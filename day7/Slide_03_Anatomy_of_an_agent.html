@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<!-- saved from url=(0050)file:///Users/ramji/Downloads/agent_anatomy_7.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anatomy of an agent — the Agent Template</title>
+<style>
+  :root{
+    --navy:#1d3a5f; --navy2:#185FA5; --navy-bg:#eef3f9;
+    --teal:#0F6E56; --teal2:#1D9E75; --teal-bg:#E1F5EE;
+    --amber:#854F0B; --amber2:#EF9F27; --amber-bg:#FAEEDA;
+    --purple:#7B3FA0; --purple-bg:#EFE7F4;
+    --gray:#5F5E5A; --line:#e3e0d9; --bg:#f5f6f8;
+  }
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:var(--bg);color:#222;}
+  .wrap{max-width:1100px;margin:0 auto;padding:22px 20px 44px;}
+  h1{color:var(--navy);font-size:22px;margin:0 0 3px;letter-spacing:-.01em;}
+  .sub{color:var(--gray);font-size:13.5px;margin:0 0 16px;line-height:1.5;}
+  .sub b{color:var(--navy2);}
+
+  .scene{background:#fff;border:1px solid var(--line);border-radius:13px;padding:14px;}
+
+  .layout{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;}
+  .col-left{flex:0 0 380px;max-width:380px;display:flex;flex-direction:column;gap:12px;}
+  .col-right{flex:1 1 480px;min-width:320px;display:flex;flex-direction:column;gap:11px;}
+
+  /* beat-1 annotation beside the box */
+  .note{background:var(--navy-bg);border:1px solid #d4e0ef;border-left:4px solid var(--navy);
+        border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.5;color:#33485f;}
+  .note b{color:var(--navy);font-weight:800;}
+
+  .tmpl svg{display:block;width:100%;height:auto;}
+
+  /* collapsible animation cards */
+  .acard{border:1px solid var(--line);border-radius:11px;overflow:hidden;background:#fff;}
+  .ahead{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;
+         font-weight:700;font-size:13.5px;color:#333;user-select:none;transition:background .15s;}
+  .ahead:hover{background:#fafbfc;}
+  .ahead .dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto;}
+  .ahead .role{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10.5px;color:var(--gray);
+               font-weight:600;letter-spacing:.02em;}
+  .ahead .chev{margin-left:auto;color:#9aa4ad;font-size:15px;transition:transform .3s;}
+  .acard.open .ahead .chev{transform:rotate(90deg);}
+  .acard.s .dot{background:var(--amber2);}  .acard.s.open .ahead{color:var(--amber);}
+  .acard.r .dot{background:var(--navy);}     .acard.r.open .ahead{color:var(--navy);}
+  .acard.a .dot{background:var(--teal2);}    .acard.a.open .ahead{color:var(--teal);}
+  .abody{max-height:0;overflow:hidden;transition:max-height .45s ease;}
+  .acard.open .abody{max-height:1500px;}
+  .abody .inner{padding:2px 12px 12px;}
+  .abody svg{display:block;width:100%;height:auto;}
+  .cap{font-size:12px;line-height:1.5;color:var(--gray);padding:0 2px 4px;}
+  .cap b{color:#333;}
+
+  /* developer code disclosure inside Reason */
+  .codewrap{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;}
+  .codetoggle{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;font-weight:700;
+              border:1.5px solid var(--navy);background:var(--navy-bg);color:var(--navy);
+              padding:7px 13px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
+  .codetoggle:hover{background:#e4edf8;}
+  .codetoggle .cv{transition:transform .3s;}
+  .codewrap.open .codetoggle .cv{transform:rotate(90deg);}
+  .codebox{max-height:0;overflow:hidden;transition:max-height .45s ease;}
+  .codewrap.open .codebox{max-height:760px;}
+  pre.code{background:#10263b;color:#dfe8f0;font-family:ui-monospace,Menlo,Consolas,monospace;
+           font-size:11px;line-height:1.7;padding:15px 16px;border-radius:10px;overflow-x:auto;
+           white-space:pre;margin:11px 0 0;}
+  pre.code .c{color:#7e93a8;}
+  pre.code .s{color:#f0b35a;}
+  pre.code .k{color:#6fb3e0;}
+  pre.code .goal{color:#8fc0f0;font-weight:600;}
+  pre.code .tool{color:#46c79a;font-weight:600;}
+  pre.code .gray{color:#9aa4ad;}
+  pre.code .amb{color:#efa54a;font-weight:600;}
+
+  /* reason decision states (this turn ↔ a later turn) */
+  .flipbtn{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;font-weight:700;
+           border:1.5px solid var(--teal);background:var(--teal-bg);color:var(--teal);
+           padding:7px 13px;border-radius:8px;cursor:pointer;margin-top:10px;}
+  .flipbtn:hover{background:#d3efe5;}
+  #reasonSvg .box-tool{fill:var(--teal-bg);stroke:var(--teal);stroke-width:2;}
+  #reasonSvg .box-ans {fill:#fff;stroke:#cfd6dd;stroke-width:1.4;}
+  #reasonSvg .tool-lbl{fill:var(--teal);} #reasonSvg .tool-sub{fill:#0c5a46;}
+  #reasonSvg .ans-lbl {fill:#9aa4ad;}     #reasonSvg .ans-sub{fill:#aab2ba;}
+  #reasonSvg .br-tool{fill:none;stroke:var(--teal);stroke-width:2;marker-end:url(#arr);}
+  #reasonSvg .br-ans {fill:none;stroke:#b9c2cc;stroke-width:1.6;marker-end:url(#arrD);}
+  #reasonSvg .lbl-no{fill:var(--teal);} #reasonSvg .lbl-yes{fill:#9aa4ad;}
+  #reasonSvg .later,#reasonSvg .state-later{display:none;}
+  #reasonSvg.flip .box-tool{fill:#fff;stroke:#cfd6dd;stroke-width:1.4;}
+  #reasonSvg.flip .box-ans {fill:var(--navy-bg);stroke:var(--navy);stroke-width:2;}
+  #reasonSvg.flip .tool-lbl{fill:#9aa4ad;} #reasonSvg.flip .tool-sub{fill:#aab2ba;}
+  #reasonSvg.flip .ans-lbl {fill:var(--navy);} #reasonSvg.flip .ans-sub{fill:#0c5a46;}
+  #reasonSvg.flip .br-tool{stroke:#b9c2cc;stroke-width:1.6;marker-end:url(#arrD);}
+  #reasonSvg.flip .br-ans {stroke:var(--navy);stroke-width:2;marker-end:url(#arrN);}
+  #reasonSvg.flip .lbl-no{fill:#9aa4ad;} #reasonSvg.flip .lbl-yes{fill:var(--navy);}
+  #reasonSvg.flip .now,#reasonSvg.flip .state-now{display:none;}
+  #reasonSvg.flip .later,#reasonSvg.flip .state-later{display:inline;}
+  #reasonSvg.flip .flow-tool{display:none;}
+  pre.code .banner{color:#EF9F27;}
+
+  .bar{display:flex;align-items:center;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:10px;}
+  .hint{font-size:11px;color:var(--gray);font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.03em;}
+  .btns{display:flex;gap:9px;}
+  button{font-size:13px;font-weight:700;border:1.5px solid var(--line);background:#fff;color:#333;
+         padding:9px 16px;border-radius:9px;cursor:pointer;transition:all .15s;}
+  button:hover{border-color:var(--navy);color:var(--navy);}
+  button.go{background:var(--navy);color:#fff;border-color:var(--navy);}
+  button.go:hover{background:var(--navy2);color:#fff;}
+
+  .lbl{font-family:system-ui,sans-serif;font-weight:700;text-anchor:middle;}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;}
+  .edge{fill:none;stroke:var(--gray);stroke-width:1.6;}
+  .edge.dim{stroke:#b9c2cc;}
+  .packet{fill:var(--navy2);}
+  .flow{fill:var(--navy2);}
+
+  /* clickable steps on the template */
+  .step{cursor:pointer;}
+  .step .hit{fill:transparent;}
+  .step:hover .frame{stroke-width:3;}
+  .step.active .frame{stroke-width:3.4;}
+  .plus{font-family:ui-monospace,monospace;font-weight:700;}
+
+  @media (prefers-reduced-motion:reduce){.packet,.flow{display:none;}}
+  @media (max-width:780px){.col-left{flex:1 1 100%;max-width:100%;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Anatomy of an agent</h1>
+  <p class="sub">Almost any agent you build reduces to the model below. <b>Click Sense · Reason · Act</b> to open up the work happening inside each step.</p>
+
+  <!-- global marker defs -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="3.2" orient="auto"><path d="M0 0 L7 3.2 L0 6.4 Z" fill="#5F5E5A"></path></marker>
+    <marker id="arrD" markerWidth="9" markerHeight="9" refX="7" refY="3.2" orient="auto"><path d="M0 0 L7 3.2 L0 6.4 Z" fill="#b9c2cc"></path></marker>
+    <marker id="arrN" markerWidth="9" markerHeight="9" refX="7" refY="3.2" orient="auto"><path d="M0 0 L7 3.2 L0 6.4 Z" fill="#185FA5"></path></marker>
+    <marker id="arrA" markerWidth="9" markerHeight="9" refX="7" refY="3.2" orient="auto"><path d="M0 0 L7 3.2 L0 6.4 Z" fill="#EF9F27"></path></marker>
+  </defs></svg>
+
+  <div class="scene">
+    <div class="layout">
+
+      <!-- ================= LEFT: annotation + Agent Template ================= -->
+      <div class="col-left">
+        <div class="note"><b>The loop.</b> An agent is an LLM in a loop: it senses, reasons, acts — then repeats until the goal is met.</div>
+
+        <div class="tmpl">
+          <svg viewBox="0 0 440 350" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Agent Template">
+            <defs><path id="loopPath" d="M210 103 V279 H106 V103 Z" fill="none"></path></defs>
+
+            <rect x="30" y="30" width="380" height="296" rx="16" fill="#fff" stroke="var(--navy)" stroke-width="2"></rect>
+            <text x="48" y="56" class="mono" font-size="12.5" font-weight="700" fill="var(--navy)">Agent Template</text>
+
+            <!-- loop-back -->
+            <path class="edge" d="M150 279 H106 V103 H150" marker-end="url(#arrN)" stroke="var(--navy2)" stroke-width="2"></path>
+            <text x="93" y="190" class="lbl" font-size="11" font-weight="800" fill="var(--navy2)" letter-spacing="1.5" transform="rotate(-90 93 190)">REPEAT</text>
+
+            <!-- SENSE -->
+            <g class="step" id="step-sense" onclick="toggle(&#39;sense&#39;)">
+              <rect class="frame" x="150" y="80" width="120" height="46" rx="9" fill="var(--amber-bg)" stroke="var(--amber2)" stroke-width="1.6"></rect>
+              <text x="205" y="108" class="lbl" font-size="13" fill="var(--amber)">SENSE</text>
+              <circle cx="258" cy="92" r="9" fill="#fff" stroke="var(--amber2)" stroke-width="1.4"></circle>
+              <text x="258" y="96" class="lbl plus" font-size="12" fill="var(--amber)">+</text>
+              <rect class="hit" x="150" y="80" width="120" height="46"></rect>
+            </g>
+
+            <!-- REASON -->
+            <g class="step" id="step-reason" onclick="toggle(&#39;reason&#39;)">
+              <rect class="frame" x="138" y="156" width="144" height="66" rx="10" fill="var(--navy-bg)" stroke="var(--navy)" stroke-width="1.8"></rect>
+              <text x="210" y="180" class="lbl" font-size="13" fill="var(--navy)">REASON</text>
+              <rect x="172" y="188" width="76" height="20" rx="10" fill="var(--navy)"></rect>
+              <text x="210" y="202" class="lbl mono" font-size="10.5" fill="#fff">LLM</text>
+              <circle cx="270" cy="168" r="9" fill="#fff" stroke="var(--navy)" stroke-width="1.4"></circle>
+              <text x="270" y="172" class="lbl plus" font-size="12" fill="var(--navy)">+</text>
+              <rect class="hit" x="138" y="156" width="144" height="66"></rect>
+            </g>
+
+            <!-- ACT -->
+            <g class="step" id="step-act" onclick="toggle(&#39;act&#39;)">
+              <rect class="frame" x="150" y="256" width="120" height="46" rx="9" fill="var(--teal-bg)" stroke="var(--teal2)" stroke-width="1.6"></rect>
+              <text x="205" y="284" class="lbl" font-size="13" fill="var(--teal)">ACT</text>
+              <circle cx="258" cy="268" r="9" fill="#fff" stroke="var(--teal2)" stroke-width="1.4"></circle>
+              <text x="258" y="272" class="lbl plus" font-size="12" fill="var(--teal)">+</text>
+              <rect class="hit" x="150" y="256" width="120" height="46"></rect>
+            </g>
+
+            <path class="edge" d="M210 126 V156" marker-end="url(#arr)"></path>
+            <path class="edge" d="M210 222 V256" marker-end="url(#arr)"></path>
+
+            <circle class="packet" r="5"><animatemotion dur="5s" repeatCount="indefinite"><mpath href="#loopPath"></mpath></animatemotion></circle>
+          </svg>
+        </div>
+      </div>
+
+      <!-- ================= RIGHT: collapsible step animations ================= -->
+      <div class="col-right">
+
+        <!-- SENSE CARD -->
+        <div class="acard s" id="card-sense">
+          <div class="ahead" onclick="toggle(&#39;sense&#39;)"><span class="dot"></span> SENSE <span class="role">· gather the world into context</span> <span class="chev">›</span></div>
+          <div class="abody"><div class="inner">
+            <div class="cap"><b>It gathers, it doesn't think.</b></div>
+            <svg viewBox="0 0 900 310" xmlns="http://www.w3.org/2000/svg">
+              <!-- GOAL -->
+              <rect x="30" y="22" width="440" height="78" rx="10" fill="var(--navy-bg)" stroke="var(--navy2)" stroke-width="1.5"></rect>
+              <text x="48" y="46" font-size="12.5" font-weight="700" fill="var(--navy)">The goal <tspan class="mono" font-size="10" font-weight="400" fill="var(--navy2)">→ system</tspan></text>
+              <text x="48" y="66" font-size="10.5" fill="var(--gray)">what you want achieved — the request + role</text>
+              <text x="48" y="87" font-size="10" class="mono" fill="var(--gray)">“Goa · 5★ · 5 nights · ≤ $5,000”</text>
+
+              <!-- MEMORY -->
+              <rect x="30" y="116" width="440" height="84" rx="10" fill="var(--purple-bg)" stroke="var(--purple)" stroke-width="1.5"></rect>
+              <text x="48" y="140" font-size="12.5" font-weight="700" fill="var(--purple)">Memory — the story so far <tspan class="mono" font-size="10" font-weight="400" fill="#9466b5">→ messages</tspan></text>
+              <text x="48" y="160" font-size="10.5" fill="var(--gray)">the <tspan font-weight="700" fill="#6a4080">whole</tspan> history, re-sent every turn</text>
+              <text x="48" y="177" font-size="10" class="mono" fill="var(--gray)">newest line = last tool result · empty on turn 1</text>
+              <text x="48" y="192" font-size="10" class="mono" fill="var(--gray)">tool outputs + any RAG chunks / docs live here</text>
+
+              <!-- TOOLS -->
+              <rect x="30" y="216" width="440" height="72" rx="10" fill="var(--teal-bg)" stroke="var(--teal2)" stroke-width="1.5"></rect>
+              <text x="48" y="240" font-size="12.5" font-weight="700" fill="var(--teal)">Tools it may call <tspan class="mono" font-size="10" font-weight="400" fill="#1d9e75">→ tools</tspan></text>
+              <text x="48" y="260" font-size="10.5" fill="var(--gray)">the catalog: each tool's name · description · args</text>
+              <text x="48" y="278" font-size="10" class="mono" fill="var(--gray)">search_flights · find_hotels · book_flight · book_hotel</text>
+
+              <path id="se1" class="edge" d="M470 60 C524 60 548 150 600 150" marker-end="url(#arr)"></path>
+              <path id="se2" class="edge" d="M470 158 C524 158 548 168 600 170" marker-end="url(#arr)"></path>
+              <path id="se3" class="edge" d="M470 252 C524 252 548 192 600 190" marker-end="url(#arr)"></path>
+
+              <rect x="600" y="104" width="280" height="132" rx="12" fill="var(--navy)"></rect>
+              <text x="740" y="150" class="lbl" font-size="19" fill="#fff">CONTEXT</text>
+              <text x="740" y="176" class="lbl mono" font-size="11" font-weight="400" fill="#cfe0f1">goal + memory + tools</text>
+              <text x="740" y="196" class="lbl mono" font-size="11" font-weight="400" fill="#cfe0f1">— the one thing the model reads</text>
+
+              <circle class="flow" r="5" fill="var(--navy2)"><animatemotion dur="2.6s" begin="0s" repeatCount="indefinite"><mpath href="#se1"></mpath></animatemotion></circle>
+              <circle class="flow" r="5" fill="var(--purple)"><animatemotion dur="2.6s" begin="0.6s" repeatCount="indefinite"><mpath href="#se2"></mpath></animatemotion></circle>
+              <circle class="flow" r="5" fill="var(--teal2)"><animatemotion dur="2.6s" begin="1.2s" repeatCount="indefinite"><mpath href="#se3"></mpath></animatemotion></circle>
+            </svg>
+
+            <div class="codewrap" id="senseCode">
+              <button class="codetoggle" onclick="toggleCode(&#39;senseCode&#39;)"><span class="cv">›</span> Show the same thing in code</button>
+              <div class="codebox"><pre class="code"><span class="c"># SENSE just gathers the three inputs the model will read. No thinking here.</span>
+GOAL  = <span class="s">"Plan a trip — Goa · 5★ · 5 nights · ≤ $5,000"</span>   <span class="goal"># → system</span>
+MEMORY = history          <span class="amb"># → messages: the WHOLE story so far, re-sent every turn</span>
+                          <span class="c">#   the request + every prior step + every tool result</span>
+                          <span class="c">#   newest entry = result of the last action</span>
+                          <span class="c">#   retrieved docs / RAG chunks get appended here too</span>
+TOOLS = [search_flights, find_hotels, book_flight, book_hotel]   <span class="tool"># → tools (the catalog)</span>
+
+<span class="c"># The model is stateless — it kept nothing from last turn. So we re-send ALL</span>
+<span class="c"># of MEMORY, not just the newest line. More turns → longer history → more tokens → more cost.</span></pre>
+                <div class="cap" style="margin-top:9px">Sense writes <b>no logic of its own</b>. It hands Reason three inputs: the <b>goal</b> (system), the <b>whole history</b> (messages), and the <b>tool catalog</b> (tools). Tool <i>descriptions</i> ride in <b>tools</b>; tool <i>results</i> and any retrieved chunks ride in <b>messages</b>.</div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+
+        <!-- REASON CARD -->
+        <div class="acard r" id="card-reason">
+          <div class="ahead" onclick="toggle(&#39;reason&#39;)"><span class="dot"></span> REASON <span class="role">· weigh options, pick one move</span> <span class="chev">›</span></div>
+          <div class="abody"><div class="inner">
+            <div class="cap"><b>The only place a decision happens.</b> Goal, Memory and Tools aren't extra inputs sitting beside the context — they <b>are</b> the context, handed to one stateless call.</div>
+            <svg id="reasonSvg" viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
+              <!-- the three inputs — they ARE the context -->
+              <rect x="18" y="92" width="158" height="42" rx="9" fill="#fff" stroke="var(--navy)" stroke-width="1.6"></rect>
+              <text x="34" y="112" font-size="12" font-weight="800" fill="var(--navy)">GOAL</text>
+              <text x="34" y="127" class="mono" font-size="9" fill="var(--gray)">system</text>
+              <rect x="18" y="146" width="158" height="42" rx="9" fill="#fff" stroke="var(--purple)" stroke-width="1.6"></rect>
+              <text x="34" y="166" font-size="12" font-weight="800" fill="var(--purple)">MEMORY</text>
+              <text x="34" y="181" class="mono" font-size="9" fill="var(--gray)">messages · whole history</text>
+              <rect x="18" y="200" width="158" height="42" rx="9" fill="#fff" stroke="var(--teal)" stroke-width="1.6"></rect>
+              <text x="34" y="220" font-size="12" font-weight="800" fill="var(--teal)">TOOLS</text>
+              <text x="34" y="235" class="mono" font-size="9" fill="var(--gray)">tools · the catalog</text>
+
+              <path class="edge" d="M176 113 C232 113 244 160 300 162" marker-end="url(#arr)"></path>
+              <path id="re0" class="edge" d="M176 167 H300" marker-end="url(#arr)"></path>
+              <path class="edge" d="M176 221 C232 221 244 176 300 172" marker-end="url(#arr)"></path>
+
+              <!-- one stateless call -->
+              <rect x="300" y="120" width="280" height="96" rx="12" fill="var(--navy-bg)" stroke="var(--navy)" stroke-width="2"></rect>
+              <rect x="384" y="132" width="112" height="28" rx="14" fill="var(--navy)"></rect>
+              <text x="440" y="151" class="lbl mono" font-size="12.5" fill="#fff">ONE LLM CALL</text>
+              <text x="440" y="180" class="lbl mono" font-size="10" font-weight="400" fill="var(--navy2)">client.messages.create(…)</text>
+              <text x="440" y="199" class="lbl" font-size="10.5" font-weight="600" fill="var(--navy)">“the single best next move?”</text>
+
+              <text x="770" y="103" class="lbl" font-size="10.5" font-style="italic" fill="var(--gray)">enough to answer yet?</text>
+              <path id="reA" class="br-tool" d="M580 168 C620 168 622 138 660 138"></path>
+              <path id="reB" class="br-ans" d="M580 168 C620 168 622 208 660 208"></path>
+              <text x="628" y="143" class="lbl lbl-no" font-size="9.5">no</text>
+              <text x="628" y="207" class="lbl lbl-yes" font-size="9.5">yes</text>
+
+              <rect class="box-tool" x="660" y="116" width="220" height="44" rx="9"></rect>
+              <text x="770" y="137" class="lbl tool-lbl" font-size="12">CALL A TOOL</text>
+              <text x="770" y="153" class="lbl mono tool-sub" font-size="9.5" font-weight="400">search_flights("GOI", next month)</text>
+              <rect class="box-ans" x="660" y="186" width="220" height="44" rx="9"></rect>
+              <text x="770" y="207" class="lbl ans-lbl" font-size="12">FINAL ANSWER</text>
+              <text x="770" y="223" class="lbl mono ans-sub now" font-size="9.5" font-weight="400">…not yet — needs the result first</text>
+              <text x="770" y="223" class="lbl mono ans-sub later" font-size="9.5" font-weight="400">flights + hotel booked · confirmed</text>
+
+              <text x="440" y="262" class="lbl state-now" font-size="11" fill="var(--teal)">this turn → not enough yet, so it calls a tool</text>
+              <text x="440" y="262" class="lbl state-later" font-size="11" fill="var(--navy)">a later turn → enough now, so it answers · loop ends</text>
+
+              <circle class="flow" r="5" fill="var(--navy2)"><animatemotion dur="2.4s" repeatCount="indefinite"><mpath href="#re0"></mpath></animatemotion></circle>
+              <circle class="flow flow-tool" r="5" fill="var(--teal2)"><animatemotion dur="2.2s" begin="1.1s" repeatCount="indefinite"><mpath href="#reA"></mpath></animatemotion></circle>
+            </svg>
+            <button class="flipbtn" onclick="flipReason()">⇄ <span id="flipLabel">See a later turn</span></button>
+
+            <div class="codewrap" id="reasonCode">
+              <button class="codetoggle" onclick="toggleCode(&#39;reasonCode&#39;)"><span class="cv">›</span> Show the same thing in code</button>
+              <div class="codebox"><pre class="code"><span class="c"># Goal, Memory, Tools aren't extra things beside the context — they ARE the</span>
+<span class="c"># context, handed to ONE stateless call as three inputs:</span>
+GOAL  = <span class="s">"You plan trips and book within budget."</span>             <span class="goal"># ← Goal   (system)</span>
+TOOLS = [search_flights, find_hotels, book_flight, book_hotel]   <span class="tool"># ← Tools  (tools)</span>
+
+<span class="banner"># ───────── THIS ONE CALL IS THE REASON BOX ─────────</span>
+response = client.messages.create(
+    model    = <span class="s">"claude-..."</span>,
+    system   = GOAL,       <span class="goal"># ← the Goal</span>
+    messages = MEMORY,     <span class="goal"># ← the Memory: the whole history, from Sense</span>
+    tools    = TOOLS,      <span class="tool"># ← the Tools it may call</span>
+)   <span class="c"># reads all three → returns ONE move</span>
+<span class="banner"># ────────────────────────────────────────────────────</span>
+
+<span class="c"># Branch on the one decision:</span>
+<span class="k">if</span> response.stop_reason == <span class="s">"tool_use"</span>:
+    call = response.content[-1]        <span class="c"># { name: "search_flights", input: {...} }</span>
+    <span class="tool"># → CALL A TOOL — hand it to Act.</span>
+<span class="k">else</span>:
+    answer = response.content[0].text  <span class="gray"># → FINAL ANSWER — loop ends.</span></pre>
+                <div class="cap" style="margin-top:9px">There's <b>no separate memory variable</b> — memory is the <b>history</b> portion of <b>messages</b> that you re-send every turn. The model is stateless; the harness keeps the history.</div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+
+        <!-- ACT CARD -->
+        <div class="acard a" id="card-act">
+          <div class="ahead" onclick="toggle(&#39;act&#39;)"><span class="dot"></span> ACT <span class="role">· run the tool, catch the result</span> <span class="chev">›</span></div>
+          <div class="abody"><div class="inner">
+            <div class="cap"><b>Where a decision becomes a real action.</b></div>
+            <svg viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg">
+              <rect x="24" y="86" width="200" height="64" rx="10" fill="var(--teal-bg)" stroke="var(--teal)" stroke-width="1.6"></rect>
+              <text x="124" y="113" class="lbl" font-size="12" fill="var(--teal)">THE CALL</text>
+              <text x="124" y="133" class="lbl mono" font-size="10.5" font-weight="400" fill="#0c5a46">search_flights("GOI", dates)</text>
+              <path id="ac1" class="edge" d="M224 118 H324" marker-end="url(#arr)"></path>
+
+              <rect x="324" y="72" width="230" height="120" rx="12" fill="#fff" stroke="var(--gray)" stroke-width="1.8"></rect>
+              <text x="439" y="106" class="lbl" font-size="13" fill="#333">THE TOOL</text>
+              <text x="439" y="130" class="lbl mono" font-size="10" font-weight="400" fill="var(--gray)">web search · DB query</text>
+              <text x="439" y="146" class="lbl mono" font-size="10" font-weight="400" fill="var(--gray)">run code · move a robot</text>
+              <g transform="translate(439,170)">
+                <g>
+                  <animatetransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="3.6s" repeatCount="indefinite"></animatetransform>
+                  <g stroke="var(--teal2)" stroke-width="2.6" stroke-linecap="round">
+                    <line x1="0" y1="-9" x2="0" y2="-13.5"></line><line x1="0" y1="9" x2="0" y2="13.5"></line>
+                    <line x1="-9" y1="0" x2="-13.5" y2="0"></line><line x1="9" y1="0" x2="13.5" y2="0"></line>
+                    <line x1="-6.4" y1="-6.4" x2="-9.6" y2="-9.6"></line><line x1="6.4" y1="6.4" x2="9.6" y2="9.6"></line>
+                    <line x1="-6.4" y1="6.4" x2="-9.6" y2="9.6"></line><line x1="6.4" y1="-6.4" x2="9.6" y2="-9.6"></line>
+                  </g>
+                  <circle r="8.5" fill="#fff" stroke="var(--teal2)" stroke-width="2.6"></circle>
+                  <circle r="3" fill="var(--teal)"></circle>
+                </g>
+              </g>
+              <path id="ac2" class="edge" d="M554 118 H654" marker-end="url(#arr)"></path>
+
+              <rect x="654" y="86" width="220" height="64" rx="10" fill="var(--amber-bg)" stroke="var(--amber2)" stroke-width="1.6"></rect>
+              <text x="764" y="113" class="lbl" font-size="12" fill="var(--amber)">RESULT</text>
+              <text x="764" y="133" class="lbl mono" font-size="10.5" font-weight="400" fill="#7a4a0a">“12 flights · cheapest $1,180”</text>
+
+              <rect x="24" y="232" width="150" height="42" rx="9" fill="var(--amber-bg)" stroke="var(--amber2)" stroke-width="1.5" stroke-dasharray="6 5"></rect>
+              <text x="99" y="258" class="lbl" font-size="11.5" fill="var(--amber)">next turn's SENSE</text>
+              <path id="ac3" class="edge" d="M764 150 V253 H174" marker-end="url(#arrA)" stroke="var(--amber2)" stroke-width="1.8" stroke-dasharray="6 5"></path>
+              <text x="470" y="245" class="lbl mono" font-size="10" font-weight="400" fill="var(--amber)">the result feeds the next turn</text>
+
+              <circle class="flow" r="5" fill="var(--teal2)"><animatemotion dur="1.3s" begin="0s" repeatCount="indefinite"><mpath href="#ac1"></mpath></animatemotion></circle>
+              <circle class="flow" r="5" fill="var(--amber2)"><animatemotion dur="1.3s" begin="1.4s" repeatCount="indefinite"><mpath href="#ac2"></mpath></animatemotion></circle>
+              <circle class="flow" r="5" fill="var(--amber2)"><animatemotion dur="2.6s" begin="2.7s" repeatCount="indefinite"><mpath href="#ac3"></mpath></animatemotion></circle>
+            </svg>
+
+            <div class="codewrap" id="actCode">
+              <button class="codetoggle" onclick="toggleCode(&#39;actCode&#39;)"><span class="cv">›</span> Show the same thing in code</button>
+              <div class="codebox"><pre class="code"><span class="c"># Reason returned a tool_use. ACT runs it for real.</span>
+name = call.name                 <span class="tool"># "search_flights"  ← THE CALL</span>
+args = call.input                <span class="tool"># {"from": "GOI", "when": "next month"}</span>
+
+result = TOOLS[name](**args)     <span class="c"># actually run it: search_flights(from="GOI", when="next month")</span>
+                                 <span class="amb"># → "12 flights · cheapest $1,180"  ← RESULT</span>
+
+<span class="c"># feed the result back so it becomes the next turn's Sense:</span>
+messages = messages + [
+    {<span class="s">"role"</span>: <span class="s">"assistant"</span>, <span class="s">"content"</span>: [call]},
+    {<span class="s">"role"</span>: <span class="s">"tool"</span>, <span class="s">"content"</span>: result},   <span class="amb"># ← appended to history → next SENSE</span>
+]</pre>
+                <div class="cap" style="margin-top:9px">Reason only <i>named</i> the tool; <b>Act executes it</b> — <b>TOOLS[name](**args)</b> — and appends both the call and its result to <b>messages</b>. That growing list is the memory the next turn re-reads.</div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="bar">
+      <span class="hint"></span>
+      <div class="btns">
+        <button id="allBtn" class="go">Expand all</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const cards={sense:document.getElementById('card-sense'),
+               reason:document.getElementById('card-reason'),
+               act:document.getElementById('card-act')};
+  const steps={sense:document.getElementById('step-sense'),
+               reason:document.getElementById('step-reason'),
+               act:document.getElementById('step-act')};
+  const allBtn=document.getElementById('allBtn');
+
+  function sync(){
+    const openCount=Object.values(cards).filter(c=>c.classList.contains('open')).length;
+    allBtn.textContent = openCount===3 ? 'Collapse all' : 'Expand all';
+  }
+  function setOpen(which,on){
+    cards[which].classList.toggle('open',on);
+    steps[which].classList.toggle('active',on);
+    sync();
+  }
+  window.toggle=function(which){
+    setOpen(which, !cards[which].classList.contains('open'));
+  };
+  window.toggleCode=function(id){
+    document.getElementById(id).classList.toggle('open');
+  };
+  window.flipReason=function(){
+    var s=document.getElementById('reasonSvg');
+    s.classList.toggle('flip');
+    document.getElementById('flipLabel').textContent = s.classList.contains('flip') ? 'Back to this turn' : 'See a later turn';
+  };
+  allBtn.addEventListener('click',()=>{
+    const openCount=Object.values(cards).filter(c=>c.classList.contains('open')).length;
+    const target = openCount<3;
+    Object.keys(cards).forEach(k=>setOpen(k,target));
+  });
+  window.addEventListener('keydown',e=>{
+    if(e.key==='1') toggle('sense');
+    else if(e.key==='2') toggle('reason');
+    else if(e.key==='3') toggle('act');
+  });
+  sync();
+})();
+</script>
+
+
+</body></html>
