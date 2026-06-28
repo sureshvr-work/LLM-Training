@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Agent Loop · live anatomy</title>
+<style>
+  :root{
+    --navy:#1d3a5f;--navy2:#185FA5;--navyBg:#E6EEF7;
+    --teal:#0F6E56;--teal2:#1D9E75;--tealBg:#E1F5EE;
+    --amber:#854F0B;--amber2:#EF9F27;--amberBg:#FAEEDA;
+    --purple:#7B3FA0;--purpleBg:#F0E8F8;
+    --red:#C0392B;--ink:#23211c;--gray:#6b6960;--faint:#9a968b;--line:#e4e0d6;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100vh;overflow:hidden}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);
+       background:radial-gradient(1200px 600px at 50% -10%,#eef5fb,transparent),
+                  linear-gradient(160deg,#f3f6fb,#f4eefb 55%,#fdf2e9);
+       display:grid;grid-template-rows:auto 1fr auto;height:100vh;font-size:13px}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+
+  header{padding:9px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+         background:rgba(255,255,255,.62);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+  .brand .t{font-size:15.5px;font-weight:800;color:var(--navy)}
+  .brand .v{font-size:10px;font-weight:700;color:var(--faint);margin-left:6px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap}
+  .lg{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--gray)}
+  .lg i{width:11px;height:11px;border-radius:4px;display:inline-block}
+  .spacer{flex:1}
+  .seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff}
+  .seg button{font:inherit;border:0;border-right:1px solid var(--line);padding:6px 13px;font-weight:700;color:var(--gray);cursor:pointer;background:#fff}
+  .seg button:last-child{border-right:0}
+  .seg .oai[aria-pressed=true]{background:var(--teal);color:#fff}
+  .seg .ant[aria-pressed=true]{background:var(--amber);color:#fff}
+  .status{font-family:ui-monospace,monospace;font-size:10.5px;font-weight:700;color:var(--gray);
+          background:#fff;border:1px solid var(--line);border-radius:20px;padding:4px 11px;display:flex;align-items:center;gap:6px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+  .dot.live{background:var(--teal2);animation:pulse 1.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(29,158,117,.5)}70%{box-shadow:0 0 0 7px rgba(29,158,117,0)}100%{box-shadow:0 0 0 0 rgba(29,158,117,0)}}
+
+  main{min-height:0;display:grid;grid-template-columns:255px 1fr 315px;gap:14px;padding:14px 18px}
+  .col{min-height:0;display:flex;flex-direction:column;gap:12px}
+  .panel{background:rgba(255,255,255,.82);border:1px solid var(--line);border-radius:14px;
+          box-shadow:0 1px 3px rgba(40,40,70,.04);display:flex;flex-direction:column;min-height:0}
+  .ph{padding:8px 13px;border-bottom:1px solid #efece4;font-size:9px;font-weight:800;letter-spacing:.11em;
+      text-transform:uppercase;color:var(--faint);display:flex;align-items:center;gap:7px;flex-shrink:0}
+  .pb{padding:11px 13px;overflow-y:auto;min-height:0}
+
+  .goalcard .pb{font-size:13.5px;line-height:1.5}
+  .goalcard.sensing{outline:2px solid var(--amber2);outline-offset:-1px}
+  .chips{display:flex;flex-direction:column;gap:7px}
+  .chip{display:flex;align-items:center;gap:8px;font-size:11.5px;border:1px solid var(--line);
+        border-radius:9px;padding:6px 9px;background:#fdfcf9;opacity:0;transform:translateX(-6px);animation:slidein .35s forwards}
+  @keyframes slidein{to{opacity:1;transform:none}}
+  .chip .e{font-size:14px}.chip .k{font-weight:700;color:var(--navy)}.chip .d{color:var(--gray);margin-left:auto;font-family:ui-monospace,monospace;font-size:10px}
+  .chip.gap{border-style:dashed;border-color:#e2b873;background:#fdf6ea}
+  .chip.gap .k{color:var(--amber)}.chip.gap .d{color:var(--amber)}
+  .ctxempty{color:var(--faint);font-size:11.5px;font-style:italic}
+  .statrow{display:flex;gap:7px;margin-bottom:9px}
+  .ministat{flex:1;text-align:center;background:#fcfbf8;border:1px solid var(--line);border-radius:9px;padding:6px 3px}
+  .ministat .ml{font-size:7.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .ministat .mn{font-size:16px;font-weight:800;color:var(--navy);font-family:ui-monospace,monospace;line-height:1.1;margin-top:2px;display:inline-block}
+  .ministat .mn small{font-size:8.5px;color:var(--faint);font-weight:700}
+  .mn.pop{animation:statpop .4s}
+  @keyframes statpop{0%{transform:scale(1)}40%{transform:scale(1.22);color:var(--teal)}100%{transform:scale(1)}}
+  .tcalls{display:flex;flex-direction:column;gap:2px}
+  .tcall{display:flex;justify-content:space-between;font-size:10.5px;font-family:ui-monospace,monospace;color:var(--gray);padding:2px 7px;border-radius:5px}
+  .tcall:nth-child(odd){background:#faf8f3}
+  .tcall .c{font-weight:800;color:var(--teal)}
+  .tcalls .none{color:var(--faint);font-style:italic;font-size:10.5px}
+
+  .center{flex:1;min-height:0;display:flex;flex-direction:column}
+  .stage{flex:0 0 auto;display:flex;align-items:center;justify-content:center;padding-top:4px}
+  .stage svg{width:100%;height:300px}
+  .ring{fill:none;stroke:#e7e3da;stroke-width:2}
+  .arc{fill:none;stroke-width:5;stroke-linecap:round}
+  .arc.fwd{stroke:#d8d3c8}.arc.loop{stroke:#e4d3ef}
+  .node circle{stroke-width:2.5;transition:r .35s, filter .35s}
+  .node text{font-weight:800;text-anchor:middle;font-size:14px;fill:#fff}
+  .node .sub{font-size:9px;font-weight:700;letter-spacing:.05em}
+  .nSense circle{fill:var(--amber2);stroke:var(--amber)}
+  .nReason circle{fill:var(--navy2);stroke:var(--navy)}
+  .nAct circle{fill:var(--teal2);stroke:var(--teal)}
+  .node.active circle{r:52;filter:drop-shadow(0 0 13px currentColor)}
+  .nSense.active{color:var(--amber2)}.nReason.active{color:var(--navy2)}.nAct.active{color:var(--teal2)}
+  .nSense.idle circle{animation:idlepulse 1.9s ease-in-out infinite}
+  @keyframes idlepulse{0%,100%{filter:drop-shadow(0 0 4px var(--amber2))}50%{filter:drop-shadow(0 0 16px var(--amber2))}}
+  .marker{fill:#fff;stroke:#23211c;stroke-width:2;transition:cx .6s cubic-bezier(.5,0,.3,1),cy .6s cubic-bezier(.5,0,.3,1)}
+  .world{fill:#f6f3ec;stroke:var(--line);stroke-width:1.5}
+  .worldlbl{font-size:9px;font-weight:800;letter-spacing:.06em;fill:var(--gray);text-anchor:middle}
+  .packet{fill:var(--teal2);opacity:0}
+  .packet.fire{animation:fly 1.6s ease-in-out}
+  @keyframes fly{0%{opacity:0;transform:translate(0,0)}15%{opacity:1}50%{opacity:1;transform:translate(168px,0)}85%{opacity:1}100%{opacity:0;transform:translate(168px,0)}}
+  .arc.flash{animation:flash 1.4s}
+  @keyframes flash{0%,100%{stroke:#e4d3ef}40%{stroke:var(--purple);stroke-width:7}}
+
+  .caption{flex-shrink:0;text-align:center;padding:2px 10px 0}
+  .cstage{font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+  .cstage.sense{color:var(--amber)}.cstage.reason{color:var(--navy)}.cstage.act{color:var(--teal)}.cstage.loop{color:var(--purple)}.cstage.final{color:var(--purple)}.cstage.await{color:var(--amber)}.cstage.loading{color:var(--teal)}
+  .ctext{font-size:14.5px;color:var(--ink);margin-top:3px;min-height:20px}
+  .timerwrap{height:5px;background:#ece9e1;border-radius:3px;margin:8px auto 0;max-width:440px;overflow:hidden}
+  .timerbar{height:100%;width:0;background:var(--navy);border-radius:3px}
+  .timerbar.sense{background:var(--amber2)}.timerbar.reason{background:var(--navy2)}.timerbar.act{background:var(--teal2)}.timerbar.loop{background:var(--purple)}.timerbar.final{background:var(--purple)}.timerbar.await{background:var(--amber2)}
+
+  .readout{flex:1;min-height:0;margin-top:10px;border-radius:14px;border:1px solid var(--line);
+           background:#fff;display:flex;flex-direction:column;overflow:hidden;transition:border-color .3s}
+  .readout.sense{border-color:#ecd9b6}.readout.reason{border-color:#cfdcec}.readout.act{border-color:#bfe6d7}.readout.loop{border-color:#e4d3ef}.readout.final{border-color:#e4d3ef}
+  .rlabel{font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:9px 16px;border-bottom:1px solid #f0ede5;display:flex;align-items:center;gap:8px}
+  .rlabel.sense{color:var(--amber);background:var(--amberBg)}.rlabel.reason{color:var(--navy);background:var(--navyBg)}
+  .rlabel.act{color:var(--teal);background:var(--tealBg)}.rlabel.loop{color:var(--purple);background:var(--purpleBg)}.rlabel.final{color:var(--purple);background:var(--purpleBg)}
+  .rlabel .ms{margin-left:auto;font-family:ui-monospace,monospace;font-weight:700;color:var(--faint);letter-spacing:0}
+  .rbody{padding:16px 18px;overflow-y:auto;min-height:0}
+  .rbig{font-size:21px;font-weight:800;color:var(--navy)}
+  .rsub{font-size:13px;color:var(--gray);margin-top:3px}
+  .rthought{font-size:17px;line-height:1.5;color:var(--ink);font-style:italic}
+  .rcall{font-family:ui-monospace,monospace;font-size:14px;color:var(--navy);font-weight:700;
+         background:var(--navyBg);border:1px solid #cfdcec;border-radius:10px;padding:10px 13px;margin-top:13px;display:inline-block}
+  .rcall .args{color:var(--gray);font-weight:400}
+  .seq{font-size:11px;color:var(--faint);margin-top:11px}
+  .wxgrid{display:flex;gap:9px;flex-wrap:wrap}
+  .wx{border:1px solid var(--line);border-radius:11px;padding:10px 13px;background:#fcfbf8;min-width:104px}
+  .wx .dt{font-size:11px;color:var(--gray);font-family:ui-monospace,monospace}
+  .wx .tp{font-size:17px;font-weight:800;color:var(--navy);margin-top:3px}
+  .wx .rn{font-size:12px;color:var(--teal);margin-top:2px}
+  .rlist{display:flex;flex-direction:column;gap:8px}
+  .ritem{display:flex;align-items:center;gap:10px;font-size:14px;border:1px solid var(--line);border-radius:10px;padding:9px 13px;background:#fcfbf8}
+  .ritem .pv{margin-left:auto;font-family:ui-monospace,monospace;font-size:12px;color:var(--teal);font-weight:700}
+  .ranswer{font-size:14.5px;line-height:1.55;background:var(--purpleBg);border:1px solid #e4d3ef;border-radius:10px;padding:11px 14px;margin-bottom:11px}
+  .rempty{font-size:14px;color:var(--red);background:#FBEAE7;border:1px solid #eecfca;border-radius:10px;padding:11px 14px}
+  .rempty b{color:var(--red)}
+  .planbig{white-space:pre-wrap;font-size:13.6px;line-height:1.62}
+  .awaitribbon{display:inline-flex;align-items:center;gap:8px;background:var(--amberBg);border:1px solid #ecd9b6;color:var(--amber);font-weight:800;border-radius:20px;padding:6px 13px;font-size:12.5px;margin-bottom:13px}
+
+  .tool{display:flex;align-items:center;gap:8px;font-size:11.5px;padding:5px 7px;border-radius:8px;transition:.25s}
+  .tool i{width:8px;height:8px;border-radius:50%}
+  .tool .nm{font-weight:700}.tool .api{margin-left:auto;color:var(--faint);font-size:9.5px;font-family:ui-monospace,monospace}
+  .tool.active{background:var(--tealBg);outline:1px solid #bfe6d7}.tool.active .nm{color:var(--teal)}
+  .tool.done .nm{color:var(--gray)}.tool.done::after{content:"✓";color:var(--teal2);font-weight:800;margin-left:4px}
+  .planhead{display:flex;align-items:center;gap:7px;color:var(--purple);font-weight:800;font-size:12px;margin-bottom:7px}
+  .plan{white-space:pre-wrap;font-size:12.6px;line-height:1.62}
+  .planwait{color:var(--faint);font-style:italic;font-size:12px}
+
+  footer{padding:10px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+         background:rgba(255,255,255,.62);backdrop-filter:blur(6px);border-top:1px solid var(--line)}
+  footer input.goal{flex:1;min-width:200px;font:inherit;font-size:13.5px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  footer input.email{flex:0 0 210px;min-width:140px;font:inherit;font-size:13.5px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  footer input.goal:focus,footer input.email:focus{outline:2px solid var(--navy2);outline-offset:-1px}
+  .btn{font:inherit;font-weight:800;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 16px;cursor:pointer}
+  .btn.play{background:var(--navy);color:#fff;border-color:var(--navy)}.btn.play:hover:not(:disabled){background:var(--navy2)}
+  .btn:disabled{opacity:.45;cursor:default}
+  .speed{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff}
+  .speed button{font:inherit;border:0;border-right:1px solid var(--line);padding:8px 12px;font-weight:700;color:var(--gray);cursor:pointer;background:#fff}
+  .speed button:last-child{border-right:0}
+  .speed button[aria-pressed=true]{background:var(--purpleBg);color:var(--purple)}
+  .prog{font-family:ui-monospace,monospace;font-size:11px;color:var(--faint);font-weight:700}
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="t">The Agent Loop</span><span class="v mono">· live anatomy</span></div>
+    <div class="legend">
+      <span class="lg"><i style="background:var(--amber2)"></i>SENSE</span>
+      <span class="lg"><i style="background:var(--navy2)"></i>REASON</span>
+      <span class="lg"><i style="background:var(--teal2)"></i>ACT</span>
+      <span class="lg"><i style="background:var(--purple)"></i>↻ loop</span>
+    </div>
+    <div class="spacer"></div>
+    <div class="seg" id="engine">
+      <button class="oai" data-e="openai" aria-pressed="true">OpenAI</button>
+      <button class="ant" data-e="anthropic" aria-pressed="false">Anthropic</button>
+    </div>
+    <div class="status"><span class="dot" id="dot"></span><span id="statusTxt">offline · sample</span></div>
+  </header>
+
+  <main>
+    <div class="col">
+      <div class="panel goalcard" id="goalCard" style="flex:0 0 auto">
+        <div class="ph">🎯 Goal</div>
+        <div class="pb" id="goalText">Plan a 5-day trip to Goa, flying from Bangalore.</div>
+      </div>
+      <div class="panel" style="flex:1">
+        <div class="ph">🧠 Context window <span style="margin-left:auto;font-weight:700;color:var(--faint)" id="ctxCount"></span></div>
+        <div class="pb"><div class="chips" id="chips"><div class="ctxempty">empty — fills as the agent senses results</div></div></div>
+      </div>
+      <div class="panel" style="flex:0 0 auto">
+        <div class="ph">📊 Run stats <span style="margin-left:auto;font-weight:700;color:var(--faint)">live</span></div>
+        <div class="pb" style="padding-top:10px">
+          <div class="statrow">
+            <div class="ministat"><div class="ml">Turns</div><div class="mn" id="st-turns">0</div></div>
+            <div class="ministat"><div class="ml">Latency</div><div class="mn" id="st-lat">0<small>ms</small></div></div>
+            <div class="ministat"><div class="ml">Tokens</div><div class="mn" id="st-tok">0</div></div>
+          </div>
+          <div class="tcalls" id="st-calls"><div class="none">no tool calls yet</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="panel center">
+        <div class="stage">
+          <svg viewBox="0 0 470 300" id="svg">
+            <circle class="ring" cx="210" cy="150" r="95"/>
+            <path class="arc fwd" id="arcSR" d="M210,55 A95,95 0 0 1 292.3,197.5"/>
+            <path class="arc fwd" id="arcRA" d="M292.3,197.5 A95,95 0 0 1 127.7,197.5"/>
+            <path class="arc loop" id="arcAS" d="M127.7,197.5 A95,95 0 0 1 210,55"/>
+            <rect class="world" x="392" y="120" width="58" height="60" rx="10"/>
+            <text class="worldlbl" x="421" y="146">LIVE</text><text class="worldlbl" x="421" y="158">WEB</text><text class="worldlbl" x="421" y="170">· APIs</text>
+            <g class="node nSense" id="nSense" transform="translate(210,55)"><circle r="44"/><text y="-2">SENSE</text><text class="sub" y="14">perceive</text></g>
+            <g class="node nReason" id="nReason" transform="translate(292.3,197.5)"><circle r="44"/><text y="-2">REASON</text><text class="sub" y="14">decide</text></g>
+            <g class="node nAct" id="nAct" transform="translate(127.7,197.5)"><circle r="44"/><text y="-2">ACT</text><text class="sub" y="14">do</text></g>
+            <circle class="packet" id="packet" r="7" cx="127.7" cy="197.5"/>
+            <circle class="marker" id="marker" r="9" cx="210" cy="55"/>
+          </svg>
+        </div>
+        <div class="caption">
+          <div class="cstage" id="capStage">ready</div>
+          <div class="ctext" id="capText">Press <b>Play</b> to watch the agent work — one beat at a time.</div>
+          <div class="timerwrap"><div class="timerbar" id="timerbar"></div></div>
+        </div>
+        <div class="readout" id="readout">
+          <div class="rlabel" id="rlabel">live readout</div>
+          <div class="rbody" id="rbody"><div class="ctxempty">The current beat's data appears here — big enough to read aloud.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="panel" style="flex:0 0 auto">
+        <div class="ph">🛠️ Real tools <span style="margin-left:auto;font-weight:700;color:var(--faint)">sequential · one per turn</span></div>
+        <div class="pb" style="padding-top:7px;padding-bottom:7px">
+          <div class="tool" data-t="geocode_place"><i style="background:#185FA5"></i><span class="nm">geocode_place</span><span class="api">Geoapify</span></div>
+          <div class="tool" data-t="get_weather"><i style="background:#1D9E75"></i><span class="nm">get_weather</span><span class="api">Open-Meteo</span></div>
+          <div class="tool" data-t="find_places"><i style="background:#EF9F27"></i><span class="nm">find_places</span><span class="api">Geoapify</span></div>
+          <div class="tool" data-t="web_search"><i style="background:#7B3FA0"></i><span class="nm">web_search</span><span class="api">Tavily</span></div>
+          <div class="tool" data-t="search_flights"><i style="background:#C0392B"></i><span class="nm">search_flights</span><span class="api">AviationStack</span></div>
+        </div>
+      </div>
+      <div class="panel" style="flex:1">
+        <div class="ph">📋 Final plan</div>
+        <div class="pb" id="plan"><div class="planwait">composed after the agent finishes sensing & reasoning…</div></div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <input class="goal" id="goal" spellcheck="false" value="Plan a 5-day trip to Goa, flying from Bangalore.">
+    <input class="email" id="email" type="email" spellcheck="false" placeholder="email me the plan (optional)">
+    <button class="btn play" id="play">▶ Play</button>
+    <button class="btn" id="next" disabled>Next ▸</button>
+    <button class="btn" id="replay" disabled>↻ Replay</button>
+    <div class="speed" id="speed">
+      <button data-s="1.7" aria-pressed="false">Lecture</button>
+      <button data-s="1" aria-pressed="true">Calm</button>
+      <button data-s="0.55" aria-pressed="false">Brisk</button>
+    </div>
+    <div class="prog" id="prog"></div>
+  </footer>
+
+<script>
+const $=id=>document.getElementById(id);
+const NODE={sense:[210,55],reason:[292.3,197.5],act:[127.7,197.5]};
+const EMOJI={geocode_place:"📍",get_weather:"☔",find_places:"📌",web_search:"🔎",search_flights:"✈️"};
+let engine="openai", speed=1, OFFLINE=(location.protocol==="file:");
+let beats=[], bi=0, timer=null, playing=false;
+let curIdx=0, prevStats={turns:0,lat:0,tok:0};
+
+$("engine").onclick=e=>{const b=e.target.closest("button");if(!b)return;engine=b.dataset.e;
+  [...$("engine").children].forEach(x=>x.setAttribute("aria-pressed",String(x===b)));};
+$("speed").onclick=e=>{const b=e.target.closest("button");if(!b)return;speed=parseFloat(b.dataset.s);
+  [...$("speed").children].forEach(x=>x.setAttribute("aria-pressed",String(x===b)));};
+
+function setActiveNode(stage){
+  ["nSense","nReason","nAct"].forEach(n=>$(n).classList.remove("active"));
+  $("nSense").classList.remove("idle");
+  const map={sense:"nSense",reason:"nReason",act:"nAct"};
+  if(map[stage])$(map[stage]).classList.add("active");
+  const pos=NODE[stage]||((stage==="loop"||stage==="await")?NODE.sense:stage==="final"?NODE.reason:null);
+  if(pos){$("marker").setAttribute("cx",pos[0]);$("marker").setAttribute("cy",pos[1]);}
+}
+function caption(stage,text){
+  const names={sense:"SENSE · perceive",reason:"REASON · decide",act:"ACT · do",loop:"↻ loop · the result feeds back",final:"REASON · compose the answer",await:"SENSE · idle · awaiting next goal",loading:"⏳ live · agent running"};
+  $("capStage").className="cstage "+stage;$("capStage").textContent=names[stage]||stage;$("capText").innerHTML=text;
+}
+function highlightTool(name){document.querySelectorAll(".tool").forEach(t=>t.classList.toggle("active",t.dataset.t===name));}
+function markToolDone(name){const el=document.querySelector(`.tool[data-t="${name}"]`);if(el){el.classList.remove("active");el.classList.add("done");}}
+function clearTool(){document.querySelectorAll(".tool").forEach(t=>t.classList.remove("active"));}
+function addChip(emoji,key,detail,gap){const empty=$("chips").querySelector(".ctxempty");if(empty)empty.remove();
+  const d=document.createElement("div");d.className="chip"+(gap?" gap":"");
+  d.innerHTML=`<span class="e">${emoji}</span><span class="k">${key}</span><span class="d">${detail||""}</span>`;
+  $("chips").appendChild(d);$("ctxCount").textContent=$("chips").querySelectorAll(".chip").length+" items";}
+
+/* run stats — recomputed cumulatively each beat, so it's immune to pause/resume re-shows */
+function computeStats(upto){
+  let turns=0,lat=0,tok=0,calls={};
+  for(let i=0;i<=upto && i<beats.length;i++){const b=beats[i];
+    if(b.stage==="reason"){turns++;lat+=b.latency||0;if(b.usage)tok+=(b.usage.prompt||0)+(b.usage.completion||0);}
+    if(b.stage==="act"){lat+=b.latency||0;calls[b.name]=(calls[b.name]||0)+1;}}
+  return {turns,lat,tok,calls};
+}
+function popset(el,html,changed){el.innerHTML=html;if(changed){el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop");}}
+function renderStats(s){
+  popset($("st-turns"),String(s.turns),s.turns!==prevStats.turns);
+  popset($("st-lat"),s.lat.toLocaleString()+"<small>ms</small>",s.lat!==prevStats.lat);
+  popset($("st-tok"),s.tok.toLocaleString(),s.tok!==prevStats.tok);
+  const names=Object.keys(s.calls);
+  $("st-calls").innerHTML=names.length?names.map(n=>`<div class="tcall"><span>${n}</span><span class="c">${s.calls[n]}</span></div>`).join(""):'<div class="none">no tool calls yet</div>';
+  prevStats={turns:s.turns,lat:s.lat,tok:s.tok};
+}
+
+function rlabel(stage,txt,ms){$("rlabel").className="rlabel "+stage;
+  $("rlabel").innerHTML=txt+(ms!=null?`<span class="ms">${ms} ms</span>`:"");}
+function bigData(name,r){
+  if(r&&r.error)return `<div class="rempty">⚠ <b>${r.error}</b><br><span style="color:var(--gray)">The agent will sense this and adapt — try another tool or argument.</span></div>`;
+  if(name==="geocode_place")return `<div class="rbig">${r.name||"?"}</div><div class="rsub mono">lat ${(r.lat||0).toFixed(4)}, lon ${(r.lon||0).toFixed(4)} · ${r.country||""}</div>`;
+  if(name==="get_weather")return `<div class="wxgrid">`+(r.days||[]).slice(0,6).map(d=>`<div class="wx"><div class="dt">${d.date}</div><div class="tp">${d.lo}–${d.hi}°</div><div class="rn">${d.rain_pct}% rain</div></div>`).join("")+`</div>`;
+  if(name==="find_places"){const ps=r.places||[];return ps.length?`<div class="rlist">`+ps.slice(0,6).map(p=>`<div class="ritem">${p.name}</div>`).join("")+`</div>`:`<div class="rempty">No <b>${r.category}</b> returned near these coordinates.<br><span style="color:var(--gray)">A real, honest gap — the agent will pivot (e.g. try attractions, or web search).</span></div>`;}
+  if(name==="web_search")return (r.answer?`<div class="ranswer">${r.answer}</div>`:"")+`<div class="rlist">`+(r.results||[]).slice(0,4).map(x=>`<div class="ritem">🔗 ${x.title}</div>`).join("")+`</div>`;
+  if(name==="search_flights")return `<div class="rlist">`+(r.flights||[]).slice(0,6).map(f=>`<div class="ritem">${f.airline||"?"} <span class="mono" style="color:var(--gray)">${f.flight||""}</span><span class="pv">${f.status||""}</span></div>`).join("")+`</div>`;
+  return `<div class="mono">${JSON.stringify(r).slice(0,240)}</div>`;
+}
+function chipFor(name,r){
+  if(name==="geocode_place")return [EMOJI[name],(r.name||"place").split(",")[0],`${(r.lat||0).toFixed(1)},${(r.lon||0).toFixed(1)}`];
+  if(name==="get_weather")return [EMOJI[name],"weather",`${(r.days||[]).length}d`];
+  if(name==="find_places")return [EMOJI[name],r.category||"places",`${(r.places||[]).length}`];
+  if(name==="web_search")return [EMOJI[name],"web tips",`${(r.results||[]).length}`];
+  if(name==="search_flights")return [EMOJI[name],"flights",`${(r.flights||[]).length}`];
+  return ["•",name,""];
+}
+
+function showBeat(b){
+  setActiveNode(b.stage);
+  $("readout").className="readout "+b.stage;
+  if(b.stage==="sense"){
+    clearTool();$("goalCard").classList.toggle("sensing",b.obs.kind==="goal");
+    const what=b.obs.kind==="goal"?"the goal":`the result from <b>${b.obs.kind}</b>`;
+    caption("sense",`The agent takes in ${what} — this is what it now knows.`);
+    if(b.obs.kind==="goal"){rlabel("sense","SENSE · the starting context");$("rbody").innerHTML=`<div class="rbig" style="color:var(--amber)">${b.obs.label}</div><div class="rsub">Everything the agent does flows from this one line.</div>`;}
+    else{rlabel("sense","SENSE · fresh data enters the context window");$("rbody").innerHTML=bigData(b.obs.kind,b.obs.result);}
+  }
+  else if(b.stage==="reason"){
+    $("goalCard").classList.remove("sensing");clearTool();
+    const retry=b.tool && b.tool.name==="find_places" && (b.tool.args||{}).radius_m && (b.tool.args.radius_m>5000);
+    caption("reason",retry?`Last search came back empty — the model <b>re-plans</b>: widen the radius and try again.`:(b.tool?`The model thinks, then chooses ONE tool to call.`:`The model decides it has enough — time to write the plan.`));
+    rlabel("reason", retry?"REASON · re-plan after an empty result":"REASON · the model's decision", b.usage?((b.usage.prompt||0)+(b.usage.completion||0)):null);
+    let html=`<div class="rthought">“${b.thought||"…"}”</div>`;
+    if(b.tool)html+=`<div class="rcall">▸ ${b.tool.name}<span class="args">(${Object.entries(b.tool.args||{}).map(([k,v])=>k+": "+JSON.stringify(v)).join(", ")})</span></div>`;
+    html+= retry?`<div class="seq" style="color:var(--amber)">↻ This is the loop earning its place: an empty result becomes a smarter retry, not a dead end.</div>`:`<div class="seq">One tool per turn — calls are <b>sequential</b>, so the loop stays legible.</div>`;
+    $("rbody").innerHTML=html;
+  }
+  else if(b.stage==="act"){
+    highlightTool(b.name);firePacket();
+    caption("act",`It calls <b>${b.name}</b> for real — reaching out to the live web.`);
+    rlabel("act",`ACT · live output from ${b.name}`, b.latency);
+    $("rbody").innerHTML=bigData(b.name,b.result);
+    if(b.ok!==false){const c=chipFor(b.name,b.result);
+      const gap=(b.name==="find_places" && ((b.result.places||[]).length===0));
+      addChip(c[0],c[1], gap?("none @"+Math.round((b.result.radius_m||5000)/1000)+"km"):c[2], gap);}
+  }
+  else if(b.stage==="loop"){
+    flashLoop();markToolDone(b.name);setActiveNode("sense");
+    caption("loop",`That result loops back to <b>SENSE</b> — context grows, and the agent goes again.`);
+    rlabel("loop","↻ loop · result folded into context");
+    $("rbody").innerHTML=`<div style="font-size:15px;color:var(--purple);line-height:1.5">The <b>${b.name}</b> result is now part of what the agent knows.<br>It returns to <b>SENSE</b> and reasons again — that's the loop turning.</div>`;
+  }
+  else if(b.stage==="final"){
+    clearTool();$("goalCard").classList.remove("sensing");
+    caption("final",`Enough sensed and reasoned — the agent composes the final plan.`);
+    rlabel("final","REASON · the final plan");
+    $("rbody").innerHTML=`<div class="planbig">${b.text}</div>`;
+    $("plan").innerHTML=`<div class="planhead">📋 Plan ready</div><div class="plan">${b.text}</div>`;
+  }
+  else if(b.stage==="await"){
+    $("nSense").classList.add("idle");
+    caption("await",`✓ Plan ready. The loop comes to rest at <b>SENSE</b>, idle until you give it a new goal.`);
+    rlabel("sense","✓ done · waiting for the next goal");
+    $("rbody").innerHTML=`<div class="awaitribbon">✓ Plan ready · waiting for the next goal</div><div class="planbig">${b.text}</div>`;
+  }
+  $("prog").textContent=`beat ${Math.min(bi+1,beats.length)} / ${beats.length}`;
+  renderStats(computeStats(curIdx));
+}
+function firePacket(){const p=$("packet");p.classList.remove("fire");void p.offsetWidth;p.classList.add("fire");}
+function flashLoop(){const a=$("arcAS");a.classList.remove("flash");void a.offsetWidth;a.classList.add("flash");}
+
+function dwellFor(b){
+  const base={sense:3200,reason:4200,act:4400,loop:2400,final:1600,await:3000};
+  let d=base[b.stage]||2800;
+  if(b.stage==="act"){let r=b.result||{};let rows=(r.days||r.places||r.flights||r.results||[]).length;if(r.error)rows=2;d+=Math.min(rows,6)*500;}
+  if(b.stage==="sense" && b.obs && b.obs.kind!=="goal"){let r=b.obs.result||{};d+=Math.min((r.days||r.places||r.flights||r.results||[]).length,6)*300;}
+  if(b.stage==="reason" && b.thought) d+=Math.min(b.thought.length,260)*5;
+  return Math.round(d*speed);
+}
+function runTimer(ms){const t=$("timerbar");t.className="timerbar "+(beats[bi]?beats[bi].stage:"");
+  t.style.transition="none";t.style.width="0%";void t.offsetWidth;
+  t.style.transition=`width ${ms}ms linear`;t.style.width="100%";}
+function freezeTimer(){const t=$("timerbar");const w=getComputedStyle(t).width;t.style.transition="none";t.style.width=w;}
+
+function step(){ if(bi>=beats.length){stop(true);return;} const b=beats[bi]; curIdx=bi; showBeat(b);
+  if(playing){const d=dwellFor(b);runTimer(d);timer=setTimeout(()=>{bi++;step();},d);} }
+function play(){ if(!beats.length)return; playing=true; $("play").textContent="⏸ Pause"; $("next").disabled=true; step(); }
+function pause(){ playing=false; clearTimeout(timer); freezeTimer(); $("play").textContent="▶ Resume"; $("next").disabled=false; }
+function stop(done){ playing=false; clearTimeout(timer); $("play").textContent="▶ Play again"; $("next").disabled=true; $("replay").disabled=false; }
+function manualNext(){ if(bi<beats.length){curIdx=bi;showBeat(beats[bi]);bi++;$("prog").textContent=`beat ${Math.min(bi,beats.length)} / ${beats.length}`;} if(bi>=beats.length)$("next").disabled=true; }
+
+$("play").onclick=async ()=>{
+  if(playing){pause();return;}
+  if(bi>0 && bi<beats.length){playing=true;$("play").textContent="⏸ Pause";$("next").disabled=true;step();return;}
+  $("play").disabled=true;$("play").textContent="⏳ Running…";
+  try{ await buildBeats(); } finally { $("play").disabled=false; }
+  bi=0; $("replay").disabled=false; play();
+};
+$("next").onclick=manualNext;
+$("replay").onclick=async ()=>{
+  clearTimeout(timer); resetScene();
+  $("replay").disabled=true;$("play").disabled=true;
+  try{ await buildBeats(); } finally { $("replay").disabled=false; $("play").disabled=false; }
+  bi=0; playing=false; $("play").textContent="▶ Play"; manualNext();
+};
+
+function resetScene(){
+  bi=0;playing=false;clearTimeout(timer);
+  $("chips").innerHTML='<div class="ctxempty">empty — fills as the agent senses results</div>';$("ctxCount").textContent="";
+  document.querySelectorAll(".tool").forEach(t=>t.classList.remove("active","done"));
+  ["nSense","nReason","nAct"].forEach(n=>$(n).classList.remove("active"));$("nSense").classList.remove("idle");
+  $("marker").setAttribute("cx",210);$("marker").setAttribute("cy",55);
+  $("readout").className="readout";$("rlabel").className="rlabel";$("rlabel").textContent="live readout";
+  $("rbody").innerHTML='<div class="ctxempty">The current beat\'s data appears here — big enough to read aloud.</div>';
+  $("plan").innerHTML='<div class="planwait">composed after the agent finishes sensing & reasoning…</div>';
+  caption("ready","");$("capStage").className="cstage";$("capStage").textContent="ready";
+  $("capText").innerHTML="Press <b>Play</b> to watch the agent work — one beat at a time.";
+  $("timerbar").className="timerbar";$("timerbar").style.width="0%";$("prog").textContent="";
+  prevStats={turns:0,lat:0,tok:0};$("st-turns").textContent="0";$("st-lat").innerHTML="0<small>ms</small>";$("st-tok").textContent="0";
+  $("st-calls").innerHTML='<div class="none">no tool calls yet</div>';
+}
+
+function eventsToBeats(events){
+  const out=[]; let lastObs={kind:"goal",label:$("goal").value.trim()};
+  for(const ev of events){
+    if(ev.type==="start"){lastObs={kind:"goal",label:ev.goal||lastObs.label};$("goalText").textContent=lastObs.label;}
+    else if(ev.type==="reason"){
+      out.push({stage:"sense",obs:lastObs.kind==="goal"?lastObs:{kind:lastObs.kind,result:lastObs.result}});
+      out.push({stage:"reason",thought:ev.thought,tool:ev.tool,usage:ev.usage,latency:ev.latency_ms});
+    }
+    else if(ev.type==="tool_result"){
+      out.push({stage:"act",name:ev.name,ok:ev.ok,result:ev.result,latency:ev.latency_ms});
+      out.push({stage:"loop",name:ev.name});
+      lastObs={kind:ev.name,result:ev.result};
+    }
+    else if(ev.type==="final"){const t=mdToText(ev.text);out.push({stage:"final",text:t});out.push({stage:"await",text:t});}
+    else if(ev.type==="error"){out.push({stage:"final",text:"⚠ "+ev.message});}
+  }
+  return out;
+}
+function mdToText(t){return (t||"").replace(/^###\s?/gm,"").replace(/\*\*(.+?)\*\*/g,"$1");}
+
+async function buildBeats(){
+  resetScene();$("goalText").textContent=$("goal").value.trim();
+  if(OFFLINE){beats=eventsToBeats(SAMPLE);status(false,"offline · sample · "+engine);return;}
+  caption("loading","Calling the real APIs and the model, turn by turn — this can take several seconds depending on how many tools it needs.");
+  try{
+    status(true,"live · receiving "+engine+"…");
+    const resp=await fetch("/run",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({goal:$("goal").value.trim(),engine,notify_email:$("email").value.trim()})});
+    const reader=resp.body.getReader(),dec=new TextDecoder();let buf="",evs=[];
+    while(true){const {done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});
+      let i;while((i=buf.indexOf("\n\n"))>=0){const c=buf.slice(0,i);buf=buf.slice(i+2);
+        const line=c.split("\n").find(l=>l.startsWith("data:"));if(line)evs.push(JSON.parse(line.slice(5).trim()));}}
+    beats=eventsToBeats(evs);status(false,"live · "+engine+" · ready to step");
+  }catch(e){OFFLINE=true;beats=eventsToBeats(SAMPLE);status(false,"offline · sample (backend not reachable)");}
+}
+function status(live,txt){$("dot").className="dot"+(live?" live":"");$("statusTxt").textContent=txt;}
+
+const SAMPLE=[
+ {type:"start",goal:"Plan a 5-day trip to Goa, flying from Bangalore.",engine:"openai"},
+ {type:"reason",turn:1,thought:"First I need Goa's coordinates.",tool:{name:"geocode_place",args:{query:"Goa, India"}},latency_ms:826,usage:{prompt:210,completion:22}},
+ {type:"tool_result",turn:1,name:"geocode_place",ok:true,latency_ms:408,result:{name:"Goa, India",lat:15.3004,lon:74.0855,country:"India"}},
+ {type:"reason",turn:2,thought:"Check the weather for the travel window before committing to outdoor plans.",tool:{name:"get_weather",args:{lat:15.3004,lon:74.0855}},latency_ms:2048,usage:{prompt:260,completion:25}},
+ {type:"tool_result",turn:2,name:"get_weather",ok:true,latency_ms:451,result:{days:[{date:"2026-06-25",hi:29.7,lo:23.7,rain_pct:100},{date:"2026-06-26",hi:30.1,lo:23.7,rain_pct:100},{date:"2026-06-27",hi:28.3,lo:23.5,rain_pct:100},{date:"2026-06-28",hi:27.1,lo:23.4,rain_pct:100},{date:"2026-06-29",hi:25.6,lo:23.4,rain_pct:100}]}},
+ {type:"reason",turn:3,thought:"Find hotels near the centre (5 km).",tool:{name:"find_places",args:{category:"hotels",lat:15.3004,lon:74.0855,radius_m:5000}},latency_ms:1574,usage:{prompt:300,completion:28}},
+ {type:"tool_result",turn:3,name:"find_places",ok:true,latency_ms:530,result:{category:"hotels",radius_m:5000,places:[]}},
+ {type:"reason",turn:4,thought:"Nothing within 5 km — that radius is likely too tight for this point. Retry wider, at 15 km, before giving up.",tool:{name:"find_places",args:{category:"hotels",lat:15.3004,lon:74.0855,radius_m:15000}},latency_ms:980,usage:{prompt:330,completion:36}},
+ {type:"tool_result",turn:4,name:"find_places",ok:true,latency_ms:470,result:{category:"hotels",radius_m:15000,places:[{name:"Goa Marriott Resort & Spa"},{name:"Vivanta Goa, Panaji"},{name:"The Crown Goa"}]}},
+ {type:"reason",turn:5,thought:"Hotels found at 15 km. Now attractions at the same wider radius.",tool:{name:"find_places",args:{category:"attractions",lat:15.3004,lon:74.0855,radius_m:15000}},latency_ms:818,usage:{prompt:360,completion:26}},
+ {type:"tool_result",turn:5,name:"find_places",ok:true,latency_ms:251,result:{category:"attractions",radius_m:15000,places:[{name:"Basilica de Bom Jesus"},{name:"Se Cathedral"},{name:"Fort Aguada"}]}},
+ {type:"reason",turn:6,thought:"Search the web for current things to do in Goa.",tool:{name:"web_search",args:{query:"things to do in Goa 2026"}},latency_ms:670,usage:{prompt:380,completion:28}},
+ {type:"tool_result",turn:6,name:"web_search",ok:true,latency_ms:1317,result:{answer:"In 2026, visit Baga Beach, the Basilica de Bom Jesus, and North Goa nightlife. For quiet: Palolem Beach and local markets.",results:[{title:"THE 15 BEST Things to Do in Goa (2026)"},{title:"Goa Travel Guide 2026: Places & Tips"},{title:"Top 10 Places to Visit in Goa 2026"}]}},
+ {type:"reason",turn:7,thought:"Look up real flights BLR → GOI.",tool:{name:"search_flights",args:{dep_iata:"BLR",arr_iata:"GOI"}},latency_ms:626,usage:{prompt:420,completion:30}},
+ {type:"tool_result",turn:7,name:"search_flights",ok:true,latency_ms:213,result:{flights:[{airline:"IndiGo",flight:"6E6753",status:"scheduled"},{airline:"Air India Express",flight:"IX1386",status:"scheduled"},{airline:"Air India",flight:"AI9520",status:"scheduled"}]}},
+ {type:"reason",turn:8,thought:"I have coordinates, weather, hotels (after widening), attractions, web tips and flights — enough to plan honestly.",tool:null,latency_ms:4393,usage:{prompt:600,completion:210}},
+ {type:"final",turn:8,text:"Goa · 5 days (flying from Bangalore)\n\nWeather note: forecast is 100% rain every day (monsoon). This plan favours covered & indoor options — beach time is kept short and flexible.\n\nFlights (real, BLR→GOI): IndiGo 6E6753 or Air India Express IX1386 — both scheduled.\nHotels (found only after widening the search to 15 km): Goa Marriott Resort & Spa, Vivanta Goa Panaji, or The Crown Goa.\n\nDay 1 — Arrival\n  • Fly BLR→GOI; check in; covered dinner near the hotel\n\nDay 2 — Historic Goa (mostly indoor)\n  • Basilica de Bom Jesus (UNESCO) + Se Cathedral\n  • Old Goa churches & museums; long lunch out of the rain\n\nDay 3 — Fort & markets\n  • Fort Aguada between showers; covered local markets for spices & crafts\n\nDay 4 — Sheltered culture\n  • Spice plantation tour (mostly covered); live-music dinner\n\nDay 5 — Departure\n  • Short beach stop only if dry, else a café morning; return flight to Bangalore\n\nHonest gaps: restaurants weren't searched live, so no specific dining is named; all hotels/sights above came from the tools, not invented.\nPack: rain jacket, quick-dry layers, waterproof bag."}
+];
+
+resetScene();
+</script>
+</body>
+</html>

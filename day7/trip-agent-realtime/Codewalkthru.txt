@@ -1,0 +1,91 @@
+                User
+                  │
+                  ▼
+            FastAPI Endpoint
+                  │
+                  ▼
+             Agent Loop
+                  │
+         ┌────────┴────────┐
+         ▼                 ▼
+    LLM Provider      Tool Registry
+         │                 │
+         ▼                 ▼
+      OpenAI        Weather
+      Claude        Flights
+                    Places
+                    Search
+
+------------------------------------------------------------------------------------
+                           User
+                             │
+                             ▼
+                    FastAPI Endpoint
+                       (app.py)
+                             │
+                             ▼
+                    Agent Execution Loop
+                        (loop.py)
+                             │
+          ┌──────────────────┴──────────────────┐
+          ▼                                     ▼
+   LLM Provider Layer                  Tool Registry
+      (engine.py)                     (registry.py)
+          │                                     │
+     ┌────┴────┐                ┌───────────────┼─────────────────────────┐
+     ▼         ▼                ▼               ▼            ▼             ▼
+ OpenAI   Anthropic        Weather       Flights      Places      Geocode
+                               │             │            │             │
+                         weather.py    flights.py   places.py   geocode.py
+                                                     │
+                                                     ▼
+                                                Web Search
+                                              (websearch.py)
+                             │
+                             ▼
+                    Shared HTTP Client
+                     (http_client.py)
+                             │
+                             ▼
+                    External REST APIs
+      (Open-Meteo, Geoapify, Tavily, AviationStack, etc.)
+
+────────────────────────────────────────────────────────────────────────────
+
+             Configuration / Infrastructure (Used by all layers)
+
+                    config.py
+                       │
+                 Environment Variables
+                 API Keys / Model Names
+
+                    Dockerfile
+                       │
+             Containerized Deployment
+
+  ------------------------------------------------------------------------------------
+  How toold gets populated
+
+             uvicorn app:app
+                   │
+                   ▼
+             loads app.py
+                   │
+                   ▼
+             app.py imports loop.py
+                   │
+                   ▼
+             loop.py imports: from tools import registry
+                   │
+                   ▼
+             Python loads tools package
+                   │
+                   ▼
+             tools/__init__.py imports weather/geocode/places/flights/websearch
+                   │
+                   ▼
+             Each file runs @tool(...)
+                   │
+                   ▼
+             TOOLS gets populated
+  ------------------------------------------------------------------------------------
