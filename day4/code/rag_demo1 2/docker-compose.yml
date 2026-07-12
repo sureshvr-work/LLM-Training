@@ -1,0 +1,24 @@
+# Two containers:
+#   frontend — nginx; serves the wizard + sample PDF, proxies /api/* to the backend
+#   backend  — FastAPI; the stateful RAG pipeline, imports the shared llm/ package
+#
+# Setup:
+#   1. cp .env.example .env   then paste your OPENAI_API_KEY
+#   2. docker compose up --build
+#   3. open http://localhost:8080
+services:
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+  backend:
+    # Context is the repo root so the image can copy backend/ AND llm/.
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: .env            # OPENAI_API_KEY
+    ports:
+      - "8000:8000"           # exposed so you can curl the API directly in class
