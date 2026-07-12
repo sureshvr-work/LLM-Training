@@ -1,0 +1,9 @@
+# Core (needed to serve the API + UI):
+fastapi
+uvicorn[standard]
+pydantic
+
+# Stage 3 — live engines. Only needed when you pick OpenAI or Anthropic.
+# The "No model" (mock) engine runs fully offline without these.
+openai
+anthropic

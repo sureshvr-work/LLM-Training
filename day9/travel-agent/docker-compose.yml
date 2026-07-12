@@ -1,0 +1,13 @@
+# One service for now: the backend, which also serves the static UI.
+# (When we go multi-agent for the loan pipeline, each agent becomes its own
+#  service here and they talk over A2A. For a single agent, one container is it.)
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env          # OPENAI_API_KEY / ANTHROPIC_API_KEY — only for live engines
+    # The mock engine needs no keys and runs fully offline.
