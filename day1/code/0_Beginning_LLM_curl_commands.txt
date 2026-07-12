@@ -21,7 +21,7 @@ for i in $(seq 1 20); do
   echo "Call $i"
   curl -s https://api.openai.com/v1/chat/completions \
     -H "Content-Type: application/json" \
-    -H "Authorization: Bearer sk-proj-juqVQgYkiWd6O3UnkJXcVtrhN6m0xfugmoA" \
+    -H "Authorization: Bearer sk-proj-..." \
     -d '{
       "model": "gpt-4o-mini",
       "messages": [{"role": "user", "content": "say hi"}],
@@ -41,7 +41,7 @@ BIGPROMPT=$(python3 -c "print('Tell me about banking. ' * 500)")
 
 curl -s https://api.openai.com/v1/chat/completions \
   -H "Content-Type: application/json" \
-    -H "Authorization: Bearer sk-proj-juqVQgYkiWd6O3UnkJXcVtrhN6m0xfugmoA" \
+    -H "Authorization: Bearer sk-proj-..." \
   -d "{
     \"model\": \"gpt-4o-mini\",
     \"messages\": [{\"role\": \"user\", \"content\": \"$BIGPROMPT\"}],
