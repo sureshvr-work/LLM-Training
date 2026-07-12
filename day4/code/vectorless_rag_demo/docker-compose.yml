@@ -1,0 +1,27 @@
+# Vectorless RAG Demo
+#
+# Retrieval using BM25 keyword scoring — no embedding model, no vector DB.
+# Two containers, same pattern as rag_demo1:
+#   frontend — nginx; serves the wizard + sample PDF, proxies /api/* to backend
+#   backend  — FastAPI; BM25 index + LLM answer, pure Python retrieval
+#
+# Setup:
+#   1. cp .env.example .env   then paste your OPENAI_API_KEY
+#   2. docker compose up --build
+#   3. open http://localhost:8085
+
+services:
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8085:80"      # host:8085 (avoids clash with rag_demo1 on 8080)
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: .env
+    ports:
+      - "8001:8000"    # exposed so you can curl the API directly

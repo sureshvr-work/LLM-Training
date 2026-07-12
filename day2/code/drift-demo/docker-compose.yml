@@ -1,0 +1,35 @@
+# Drift & Hallucination Control Demo
+#
+# Two containers, same pattern as B1-B7-demo:
+#   gateway  — intercepts every LLM call, measures drift, guards hallucination
+#   app      — asks questions; has no API key; calls gateway only
+#
+# Usage:
+#   1. Copy .env.example to .env and fill in your OpenAI key.
+#   2. docker compose up --build
+#   3. Read the gateway log — every request shows drift_score + confidence.
+#   4. cat reports/drift_report.jsonl   (on your host, after the run)
+#
+# Tuning knobs (override in .env or inline):
+#   DRIFT_THRESHOLD      default 0.70  — flag when similarity drops below this
+#   CONFIDENCE_THRESHOLD default 6     — flag when model says confidence < 6/10
+#   CONSISTENCY_CALLS    default 3     — how many times to repeat for consistency check
+
+services:
+  gateway:
+    build: gateway
+    ports:
+      - "8002:8000"      # host:8002 -> container:8000 (use 8002 to avoid clash with B1-B7)
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DRIFT_THRESHOLD=${DRIFT_THRESHOLD:-0.70}
+      - CONFIDENCE_THRESHOLD=${CONFIDENCE_THRESHOLD:-6}
+      - CONSISTENCY_CALLS=${CONSISTENCY_CALLS:-3}
+    volumes:
+      - ./reports:/app/reports
+
+  app:
+    build: app
+    depends_on:
+      - gateway
+    # app.py polls /health so it waits until uvicorn is actually ready

@@ -1,0 +1,81 @@
+%pip install -q python-dotenv openai anthropic google-genai
+----------------
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # reads the .env file into environment variables
+
+# The SAME question goes to every vendor, so the comparison is fair.
+QUESTION = "In one short sentence, what is an API?"
+
+# Quick check: which keys did we find? (We never print the key itself.)
+for name in ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GOOGLE_API_KEY"]:
+    status = "found" if os.getenv(name) else "MISSING"
+    print(f"{name:20s}: {status}")
+
+----------------
+
+# Vendor -  OpenAI (makers of ChatGPT)
+def ask_openai():
+    from openai import OpenAI
+    client = OpenAI()
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": QUESTION}],
+    )
+
+    return response.choices[0].message.content
+
+try:
+    print("OpenAI says:")
+    print(" ", ask_openai())
+except Exception as error:
+    print("OpenAI skipped:", error)
+
+----------------
+# Vendor 2 - Anthropic (makers of Claude)
+def ask_anthropic():
+    
+    from anthropic import Anthropic
+
+    client = Anthropic()
+
+    # DIFFERENCE -- the method is  messages.create  (NOT chat.completions),
+    #                  AND Anthropic FORCES you to set max_tokens. OpenAI did not.
+    response = client.messages.create(
+        model="claude-haiku-4-5",
+        max_tokens=300,
+        messages=[{"role": "user", "content": QUESTION}],
+    )
+   
+    return response.content[0].text
+
+try:
+    print("Anthropic says:")
+    print(" ", ask_anthropic())
+except Exception as error:
+    print("Anthropic skipped:", error)
+----------------
+# Vendor 3 -  Google (makers of Gemini)
+def ask_google():
+    
+    from google import genai
+    client = genai.Client()
+
+    # DIFFERENCE  -- the method is  models.generate_content  and the prompt
+    #                  goes in a plain "contents" argument -- NO messages list.
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=QUESTION,
+    )
+
+    return response.text
+
+try:
+    print("Google says:")
+    print(" ", ask_google())
+except Exception as error:
+    print("Google skipped:", error)
+----------------

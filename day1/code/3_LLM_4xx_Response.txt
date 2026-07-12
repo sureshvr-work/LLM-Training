@@ -1,0 +1,117 @@
+from dotenv import load_dotenv
+load_dotenv()
+
+from google import genai
+from openai import OpenAI
+from anthropic import Anthropic
+from groq import Groq
+
+google_client    = genai.Client()
+openai_client    = OpenAI()
+anthropic_client = Anthropic()
+groq_client      = Groq()
+
+def make_text(approx_tokens):
+    return "banking " * max(1, approx_tokens * 4 // 8)
+
+# Assignment — change this ONE number and re-run
+# Try: 40 / 10_000 / 150_000 / 300_000 / 1_500_000
+TARGET_TOKENS = 300_000
+
+text = make_text(TARGET_TOKENS)
+print(f"Sending ~{TARGET_TOKENS:,} tokens ({len(text):,} chars) to each vendor")
+print()
+
+def status_of(error):
+    code = getattr(error, "status_code", None)
+    if code:
+        return str(code)
+    grpc_code = getattr(error, "code", None)
+    if grpc_code is not None:
+        grpc_str = str(grpc_code).upper()
+        grpc_map = {
+            "INVALID_ARGUMENT":   "400",
+            "UNAUTHENTICATED":    "401",
+            "RESOURCE_EXHAUSTED": "429",
+            "INTERNAL":           "500",
+            "UNAVAILABLE":        "503",
+        }
+        for name, http in grpc_map.items():
+            if name in grpc_str:
+                return http
+    text = str(error)
+    for guess in ("400", "401", "413", "429", "500", "503"):
+        if guess in text:
+            return guess
+    return "err"
+
+GATE_MEANING = {
+    "200": "passed all gates — model ran",
+    "400": "model rejected — over context window",
+    "401": "gate 1 — invalid API key",
+    "413": "gate 1 — payload too big for HTTP gateway",
+    "429": "gate 2 — rate limit exceeded",
+    "500": "gate 5 — server error",
+    "503": "gate 5 — service unavailable",
+}
+
+tests = [
+    ("OpenAI",    lambda t: openai_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": t}],
+        max_tokens=5)),
+    ("Anthropic", lambda t: anthropic_client.messages.create(
+        model="claude-haiku-4-5",
+        max_tokens=5,
+        messages=[{"role": "user", "content": t}])),
+    ("Google",    lambda t: google_client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=t)),
+    ("Groq",      lambda t: groq_client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": t}],
+        max_tokens=5)),
+]
+
+for vendor, fn in tests:
+    try:
+        fn(text)
+        code = "200"
+    except Exception as e:
+        code = status_of(e)
+    meaning = GATE_MEANING.get(code, "unknown")
+    print(f"  {vendor:12s}  {code}  —  {meaning}")
+
+----------------------------------------------------------
+
+VENDOR_COUNTERS = {
+    "OpenAI":    count_openai,
+    "Anthropic": count_anthropic,
+    "Google":    count_google,
+    "Groq":      count_groq,
+}
+
+vendor_counts = {}   # name → token count, reused in Demo 2 and 3
+
+print(f"Sentence : {SENTENCE!r}")
+print()
+print(f"{'VENDOR':12s}  {'TOKENS':6s}  VISUAL")
+print("-" * 55)
+
+for name, counter in VENDOR_COUNTERS.items():
+    try:
+        n = counter(SENTENCE)
+        vendor_counts[name] = n
+        bar = "█" * n
+        print(f"  {name:12s}  {n:<6d}  {bar}")
+    except Exception as e:
+        print(f"  {name:12s}  skipped — {e}")
+
+print()
+print("The numbers are NOT all the same.")
+print("Each vendor has its own tokenizer — its own way of splitting text.")
+print("Same words, different rulers.")
+print()
+
+------------------------
+

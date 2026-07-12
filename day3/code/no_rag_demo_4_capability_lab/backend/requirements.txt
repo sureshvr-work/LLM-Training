@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+httpx
+langchain
+langchain-openai
+langchain-anthropic
+langchain-google-genai

@@ -1,0 +1,55 @@
+# ---------------------------------------------------------------------------
+# A2A Fire-and-Forget — PUSH (webhook) and PULL (poll/cancel) side by side
+#
+#   research-agent  ─┐                                       (PUSH · webhook)
+#                     ├─ a2a-net ─►  orchestrator  ─►  ui  (http://localhost:8090)
+#   long-task-agent ─┘                                       (PULL · tasks/get + tasks/cancel)
+#
+#   1. cp .env.example .env   and fill in your keys
+#   2. docker compose up -d --build
+#   3. open http://localhost:8090
+# ---------------------------------------------------------------------------
+services:
+
+  research-agent:
+    build: ./research-agent
+    container_name: research-agent
+    networks: [a2a-net]
+    ports: ["8101:8101"]
+    environment:
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-3-5-sonnet-latest}
+      - RESEARCH_SECONDS=${RESEARCH_SECONDS:-12}
+
+  long-task-agent:
+    build: ./long-task-agent
+    container_name: long-task-agent
+    networks: [a2a-net]
+    ports: ["8102:8102"]
+
+  orchestrator:
+    build: ./orchestrator
+    container_name: orchestrator
+    depends_on: [research-agent, long-task-agent]
+    networks: [a2a-net]
+    ports: ["8103:8103"]
+    environment:
+      - RESEARCH_URL=http://research-agent:8101
+      - LONG_URL=http://long-task-agent:8102
+      - SELF_URL=http://orchestrator:8103
+
+  ui:
+    build: ./ui
+    container_name: fire-and-forget-ui
+    depends_on: [orchestrator]
+    networks: [a2a-net]
+    ports: ["8090:8090"]
+    environment:
+      - ORCH_URL=http://orchestrator:8103
+
+networks:
+  a2a-net:
+    driver: bridge

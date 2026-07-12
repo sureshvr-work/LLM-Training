@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<!-- saved from url=(0054)file:///Users/ramji/Downloads/keyword_search_tabs.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keyword (sparse) search — hit one, hit many, or miss</title>
+<style>
+  :root{
+    --navy:#1d3a5f; --navy2:#185FA5; --teal:#0F6E56; --teal2:#1D9E75; --teal-bg:#E1F5EE;
+    --amber:#854F0B; --amber2:#EF9F27; --amber-bg:#FAEEDA; --red:#C0392B; --red-bg:#FBEAE7;
+    --gray:#5F5E5A; --line:#e3e0d9; --bg:#f5f6f8;
+  }
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:var(--bg);color:#222;}
+  .wrap{max-width:980px;margin:0 auto;padding:24px 20px 60px;}
+  h1{color:var(--navy);font-size:21px;margin:0 0 3px;}
+  .sub{color:var(--gray);font-size:13px;margin:0 0 14px;line-height:1.5;}
+  .nokey{background:#fff;border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:9px;
+         padding:9px 13px;font-size:12.5px;color:#33485f;margin:0 0 16px;line-height:1.5;}
+  .nokey b{color:var(--teal);}
+
+  .bar{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
+  .radios{display:flex;gap:6px;align-items:center;}
+  .radios .lbl{font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.04em;margin-right:4px;}
+  .radios label{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:#333;
+                border:1.5px solid var(--line);border-radius:20px;padding:6px 12px;cursor:pointer;background:#fff;}
+  .radios label.on{border-color:var(--navy);background:#eef3f9;color:var(--navy);}
+  .radios input{accent-color:var(--navy);}
+
+  .tabs{display:inline-flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;}
+  .tabs button{border:0;background:#fff;padding:9px 15px;font-size:13px;cursor:pointer;color:var(--gray);font-weight:600;border-right:1px solid var(--line);}
+  .tabs button:last-child{border-right:0;}
+  .tabs button.on[data-tab=one]{background:var(--teal);color:#fff;}
+  .tabs button.on[data-tab=many]{background:var(--navy);color:#fff;}
+  .tabs button.on[data-tab=miss]{background:var(--red);color:#fff;}
+
+  button.go{background:var(--navy);color:#fff;border:0;border-radius:9px;padding:10px 20px;font-size:13.5px;font-weight:700;cursor:pointer;}
+  button.go:disabled{opacity:.45;cursor:default;}
+  .note{font-size:13px;color:var(--gray);margin:8px 0 6px;min-height:20px;}
+  .note b{color:var(--navy);}
+  .scene{background:#fff;border:1px solid var(--line);border-radius:13px;padding:6px;}
+  .punch{margin-top:14px;font-size:13.5px;line-height:1.55;border-radius:9px;padding:11px 14px;min-height:18px;}
+  .punch.ok{background:var(--teal-bg);border-left:4px solid var(--teal);color:#0c5a46;}
+  .punch.bad{background:var(--red-bg);border-left:4px solid var(--red);color:#8c2a1c;}
+  .punch.idle{background:#eef3f9;border-left:4px solid var(--navy);color:#33485f;}
+  .punch b{font-weight:800;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Keyword (sparse) search — hit one chunk, hit many, or miss entirely</h1>
+  <p class="sub">Break the question into words, then ask each document one yes/no question: <b>“do you contain this exact word?”</b>
+     Pick a knowledge base and a scenario, then press Run.</p>
+  <div class="nokey">
+    <b>No embedding model anywhere in this demo.</b> Keyword search never vectorizes the documents and never vectorizes the query —
+    it only compares strings. That’s why it’s cheap and instant, and also why it can go blind (the red tab).
+  </div>
+
+  <div class="bar">
+    <div class="radios" id="domains">
+      <span class="lbl">Knowledge base</span>
+      <label class="on"><input type="radio" name="dom" value="healthcare" checked=""> Healthcare</label>
+      <label class=""><input type="radio" name="dom" value="banking"> Banking</label>
+      <label class=""><input type="radio" name="dom" value="solar"> Solar system</label>
+    </div>
+    <div class="tabs" id="tabs">
+      <button data-tab="one" class="">Hit one chunk</button>
+      <button data-tab="many" class="">Hit many chunks</button>
+      <button data-tab="miss" class="on">Miss everything</button>
+    </div>
+    <button class="go" id="playBtn">▶ Run keyword search</button>
+  </div>
+
+  <div class="note" id="note">This query means the same as a chunk, but uses <b>different words</b>. Press Run.</div>
+
+  <div class="scene">
+    <svg width="100%" viewBox="0 0 940 440" xmlns="http://www.w3.org/2000/svg">
+      <defs><style>.mono{font-family:ui-monospace,Menlo,Consolas,monospace;}</style></defs>
+      <!-- LEFT: question + keyword chips -->
+      <text x="160" y="28" text-anchor="middle" font-size="12" font-weight="700" fill="#1d3a5f">THE QUESTION</text>
+      <rect x="40" y="40" width="240" height="50" rx="10" fill="#eef3f9" stroke="#185FA5" stroke-width="1.6"></rect>
+      <text id="qText" x="160" y="71" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1d3a5f" class="mono">"heart attack"</text>
+      <text x="160" y="120" text-anchor="middle" font-size="11" fill="#5F5E5A">split into keywords ↓</text>
+      <g id="chips"><g><rect x="84" y="127" width="152" height="30" rx="15" fill="#fff" stroke="#185FA5" stroke-width="1.5"></rect>
+        <text x="160" y="147" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1d3a5f" class="mono">heart</text></g><g><rect x="84" y="167" width="152" height="30" rx="15" fill="#fff" stroke="#185FA5" stroke-width="1.5"></rect>
+        <text x="160" y="187" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1d3a5f" class="mono">attack</text></g></g>
+      <text x="160" y="408" text-anchor="middle" font-size="10.5" fill="#5F5E5A">exact string match — no meaning, no vectors</text>
+
+      <!-- RIGHT: documents -->
+      <text x="685" y="28" text-anchor="middle" font-size="12" font-weight="700" fill="#1d3a5f">THE DOCUMENTS (chunks)</text>
+      <g id="cards">
+      <rect id="card_H1" x="460" y="42" width="450" height="78" rx="10" fill="#fff" stroke="var(--line)" stroke-width="1.5"></rect>
+      <circle id="lamp_H1" cx="482" cy="64" r="7" fill="#e3e0d9"></circle>
+      <text id="x_H1" x="482" y="68" text-anchor="middle" font-size="12" font-weight="800" fill="#fff" opacity="0">✕</text>
+      <text x="498" y="68" font-size="12" font-weight="700" fill="#1d3a5f" class="mono">H1</text>
+      <text id="cnt_H1" x="898" y="68" text-anchor="end" font-size="11" fill="#5F5E5A" opacity="1">0 matches</text>
+      <text id="badge_H1" x="898" y="68" text-anchor="end" font-size="12" font-weight="800" fill="#0F6E56" opacity="0">✓ RETRIEVED</text><text x="476" y="88" font-size="12.5" fill="#333" class="mono"><tspan id="w_H1_0_0" dx="0" fill="#333" font-weight="normal">Take</tspan><tspan id="w_H1_0_1" dx="5" fill="#333" font-weight="normal">acetaminophen</tspan><tspan id="w_H1_0_2" dx="5" fill="#333" font-weight="normal">to</tspan><tspan id="w_H1_0_3" dx="5" fill="#333" font-weight="normal">reduce</tspan><tspan id="w_H1_0_4" dx="5" fill="#333" font-weight="normal">fever</tspan><tspan id="w_H1_0_5" dx="5" fill="#333" font-weight="normal">and</tspan></text><text x="476" y="105" font-size="12.5" fill="#333" class="mono"><tspan id="w_H1_1_0" dx="0" fill="#333" font-weight="normal">relieve</tspan><tspan id="w_H1_1_1" dx="5" fill="#333" font-weight="normal">mild</tspan><tspan id="w_H1_1_2" dx="5" fill="#333" font-weight="normal">pain.</tspan></text>
+      <rect id="card_H2" x="460" y="132" width="450" height="78" rx="10" fill="#fff" stroke="var(--line)" stroke-width="1.5"></rect>
+      <circle id="lamp_H2" cx="482" cy="154" r="7" fill="#e3e0d9"></circle>
+      <text id="x_H2" x="482" y="158" text-anchor="middle" font-size="12" font-weight="800" fill="#fff" opacity="0">✕</text>
+      <text x="498" y="158" font-size="12" font-weight="700" fill="#1d3a5f" class="mono">H2</text>
+      <text id="cnt_H2" x="898" y="158" text-anchor="end" font-size="11" fill="#5F5E5A" opacity="1">0 matches</text>
+      <text id="badge_H2" x="898" y="158" text-anchor="end" font-size="12" font-weight="800" fill="#0F6E56" opacity="0">✓ RETRIEVED</text><text x="476" y="178" font-size="12.5" fill="#333" class="mono"><tspan id="w_H2_0_0" dx="0" fill="#333" font-weight="normal">A</tspan><tspan id="w_H2_0_1" dx="5" fill="#333" font-weight="normal">myocardial</tspan><tspan id="w_H2_0_2" dx="5" fill="#333" font-weight="normal">infarction</tspan><tspan id="w_H2_0_3" dx="5" fill="#333" font-weight="normal">is</tspan><tspan id="w_H2_0_4" dx="5" fill="#333" font-weight="normal">caused</tspan><tspan id="w_H2_0_5" dx="5" fill="#333" font-weight="normal">by</tspan><tspan id="w_H2_0_6" dx="5" fill="#333" font-weight="normal">a</tspan></text><text x="476" y="195" font-size="12.5" fill="#333" class="mono"><tspan id="w_H2_1_0" dx="0" fill="#333" font-weight="normal">blocked</tspan><tspan id="w_H2_1_1" dx="5" fill="#333" font-weight="normal">coronary</tspan><tspan id="w_H2_1_2" dx="5" fill="#333" font-weight="normal">artery.</tspan></text>
+      <rect id="card_H3" x="460" y="222" width="450" height="78" rx="10" fill="#fff" stroke="var(--line)" stroke-width="1.5"></rect>
+      <circle id="lamp_H3" cx="482" cy="244" r="7" fill="#e3e0d9"></circle>
+      <text id="x_H3" x="482" y="248" text-anchor="middle" font-size="12" font-weight="800" fill="#fff" opacity="0">✕</text>
+      <text x="498" y="248" font-size="12" font-weight="700" fill="#1d3a5f" class="mono">H3</text>
+      <text id="cnt_H3" x="898" y="248" text-anchor="end" font-size="11" fill="#5F5E5A" opacity="1">0 matches</text>
+      <text id="badge_H3" x="898" y="248" text-anchor="end" font-size="12" font-weight="800" fill="#0F6E56" opacity="0">✓ RETRIEVED</text><text x="476" y="268" font-size="12.5" fill="#333" class="mono"><tspan id="w_H3_0_0" dx="0" fill="#333" font-weight="normal">Check</tspan><tspan id="w_H3_0_1" dx="5" fill="#333" font-weight="normal">the</tspan><tspan id="w_H3_0_2" dx="5" fill="#333" font-weight="normal">patient</tspan><tspan id="w_H3_0_3" dx="5" fill="#333" font-weight="normal">blood</tspan><tspan id="w_H3_0_4" dx="5" fill="#333" font-weight="normal">pressure</tspan><tspan id="w_H3_0_5" dx="5" fill="#333" font-weight="normal">before</tspan></text><text x="476" y="285" font-size="12.5" fill="#333" class="mono"><tspan id="w_H3_1_0" dx="0" fill="#333" font-weight="normal">giving</tspan><tspan id="w_H3_1_1" dx="5" fill="#333" font-weight="normal">medication.</tspan></text>
+      <rect id="card_H4" x="460" y="312" width="450" height="78" rx="10" fill="#fff" stroke="var(--line)" stroke-width="1.5"></rect>
+      <circle id="lamp_H4" cx="482" cy="334" r="7" fill="#e3e0d9"></circle>
+      <text id="x_H4" x="482" y="338" text-anchor="middle" font-size="12" font-weight="800" fill="#fff" opacity="0">✕</text>
+      <text x="498" y="338" font-size="12" font-weight="700" fill="#1d3a5f" class="mono">H4</text>
+      <text id="cnt_H4" x="898" y="338" text-anchor="end" font-size="11" fill="#5F5E5A" opacity="1">0 matches</text>
+      <text id="badge_H4" x="898" y="338" text-anchor="end" font-size="12" font-weight="800" fill="#0F6E56" opacity="0">✓ RETRIEVED</text><text x="476" y="358" font-size="12.5" fill="#333" class="mono"><tspan id="w_H4_0_0" dx="0" fill="#333" font-weight="normal">Warfarin</tspan><tspan id="w_H4_0_1" dx="5" fill="#333" font-weight="normal">is</tspan><tspan id="w_H4_0_2" dx="5" fill="#333" font-weight="normal">a</tspan><tspan id="w_H4_0_3" dx="5" fill="#333" font-weight="normal">blood</tspan><tspan id="w_H4_0_4" dx="5" fill="#333" font-weight="normal">thinner</tspan><tspan id="w_H4_0_5" dx="5" fill="#333" font-weight="normal">that</tspan><tspan id="w_H4_0_6" dx="5" fill="#333" font-weight="normal">prevents</tspan></text><text x="476" y="375" font-size="12.5" fill="#333" class="mono"><tspan id="w_H4_1_0" dx="0" fill="#333" font-weight="normal">dangerous</tspan><tspan id="w_H4_1_1" dx="5" fill="#333" font-weight="normal">clots.</tspan></text></g>
+
+      <g id="ghost" opacity="0"></g>
+      <g id="packets"></g>
+    </svg>
+  </div>
+
+  <div class="punch idle" id="punch">Green packet = the word was found. Red probe = the word is checked against each chunk and not found.</div>
+</div>
+
+<script>
+/* ============================================================================
+   Keyword (sparse) retrieval — one idea, three scenarios, three knowledge bases.
+
+   For every query word we ask each document a single yes/no question:
+   "do you contain this exact string?"  No embedding model touches the data or
+   the query — indexing and searching are pure string operations. That is the
+   whole point the user asked about: keyword search needs no vectors at all.
+   ========================================================================== */
+const NS = "http://www.w3.org/2000/svg";
+const $  = id => document.getElementById(id);
+const norm = w => w.toLowerCase().replace(/[^a-z0-9]/g, "");   // strip punctuation for matching
+
+/* ---- three knowledge bases, 4 chunks each, with 3 queries each ------------ */
+const DOMAINS = {
+  healthcare: {
+    chunks: [
+      { id:"H1", text:"Take acetaminophen to reduce fever and relieve mild pain." },
+      { id:"H2", text:"A myocardial infarction is caused by a blocked coronary artery." },
+      { id:"H3", text:"Check the patient blood pressure before giving medication." },
+      { id:"H4", text:"Warfarin is a blood thinner that prevents dangerous clots." },
+    ],
+    queries: {
+      one:  { text:"acetaminophen fever", terms:["acetaminophen","fever"] },
+      many: { text:"blood pressure",      terms:["blood","pressure"] },
+      miss: { text:"heart attack",        terms:["heart","attack"], answer:"H2",
+              ghost:'H2 is a heart attack — it says “myocardial infarction”, not “heart attack”' },
+    },
+  },
+  banking: {
+    chunks: [
+      { id:"B1", text:"Transfer funds between accounts using the online portal." },
+      { id:"B2", text:"A wire transfer to an international bank may take three days." },
+      { id:"B3", text:"Report a lost or stolen card immediately to prevent fraud." },
+      { id:"B4", text:"Your monthly statement lists every transaction and the balance." },
+    ],
+    queries: {
+      one:  { text:"online portal",   terms:["online","portal"] },
+      many: { text:"transfer funds",  terms:["transfer","funds"] },
+      miss: { text:"overseas payment",terms:["overseas","payment"], answer:"B2",
+              ghost:'B2 is an overseas payment — it says “international” and “wire transfer”' },
+    },
+  },
+  solar: {
+    chunks: [
+      { id:"S1", text:"Mercury is the smallest planet and the closest to the Sun." },
+      { id:"S2", text:"Jupiter is the largest planet, a giant ball of gas." },
+      { id:"S3", text:"Saturn is famous for its bright rings of ice and rock." },
+      { id:"S4", text:"Mars appears red because of iron oxide on its surface." },
+    ],
+    queries: {
+      one:  { text:"Saturn rings",    terms:["Saturn","rings"] },
+      many: { text:"largest planet",  terms:["largest","planet"] },
+      miss: { text:"biggest world",   terms:["biggest","world"], answer:"S2",
+              ghost:'S2 is the biggest world — it says “largest planet”, not “biggest world”' },
+    },
+  },
+};
+
+/* ---- card geometry (4 chunks, evenly stacked on the right) ---------------- */
+const CARD = { x:460, w:450, h:78, gap:12, y0:42 };
+const cardY = i => CARD.y0 + i*(CARD.h + CARD.gap);
+
+let DOM = "healthcare", TAB = "one", PLAYING = false;
+const wordEls = {};        // wordEls[cid] = [{el, norm}]
+const chipPos = {};        // chipPos[term] = {x,y}
+
+/* ---- simple 2-line word-wrap so each word is its own tspan ----------------- */
+function wrap(text, maxChars){
+  const words = text.split(/\s+/); const lines = [[]]; let len = 0;
+  for(const w of words){
+    if(len + w.length + 1 > maxChars && lines[lines.length-1].length){ lines.push([]); len = 0; }
+    lines[lines.length-1].push(w); len += w.length + 1;
+  }
+  return lines;
+}
+
+/* ---- build the document cards for the current domain ---------------------- */
+function buildCards(){
+  const g = $("cards"); g.innerHTML = "";
+  DOMAINS[DOM].chunks.forEach((c, i) => {
+    const y = cardY(i); wordEls[c.id] = [];
+    let svg = `
+      <rect id="card_${c.id}" x="${CARD.x}" y="${y}" width="${CARD.w}" height="${CARD.h}" rx="10"
+            fill="#fff" stroke="var(--line)" stroke-width="1.5"/>
+      <circle id="lamp_${c.id}" cx="${CARD.x+22}" cy="${y+22}" r="7" fill="#e3e0d9"/>
+      <text id="x_${c.id}" x="${CARD.x+22}" y="${y+26}" text-anchor="middle" font-size="12" font-weight="800" fill="#fff" opacity="0">✕</text>
+      <text x="${CARD.x+38}" y="${y+26}" font-size="12" font-weight="700" fill="#1d3a5f" class="mono">${c.id}</text>
+      <text id="cnt_${c.id}" x="${CARD.x+CARD.w-12}" y="${y+26}" text-anchor="end" font-size="11" fill="#5F5E5A">0 matches</text>
+      <text id="badge_${c.id}" x="${CARD.x+CARD.w-12}" y="${y+26}" text-anchor="end" font-size="12" font-weight="800" fill="#0F6E56" opacity="0">✓ RETRIEVED</text>`;
+    const lines = wrap(c.text, 44);
+    lines.forEach((line, li) => {
+      const ty = y + 46 + li*17;
+      svg += `<text x="${CARD.x+16}" y="${ty}" font-size="12.5" fill="#333" class="mono">`;
+      line.forEach((w, wi) => { svg += `<tspan id="w_${c.id}_${li}_${wi}" dx="${wi===0?0:5}">${w}</tspan>`; });
+      svg += `</text>`;
+    });
+    g.insertAdjacentHTML("beforeend", svg);
+    lines.forEach((line, li) => line.forEach((w, wi) =>
+      wordEls[c.id].push({ el: $(`w_${c.id}_${li}_${wi}`), norm: norm(w) })));
+  });
+}
+
+/* ---- build the keyword chips (vertical stack on the left) ----------------- */
+function buildChips(){
+  const g = $("chips"); g.innerHTML = "";
+  const terms = DOMAINS[DOM].queries[TAB].terms;
+  const top = 142;
+  terms.forEach((t, i) => {
+    const y = top + i*40, x = 160;
+    chipPos[t] = { x: x+76, y };          // launch from the chip's right edge
+    g.insertAdjacentHTML("beforeend",
+      `<g><rect x="${x-76}" y="${y-15}" width="152" height="30" rx="15" fill="#fff" stroke="#185FA5" stroke-width="1.5"/>
+        <text x="${x}" y="${y+5}" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1d3a5f" class="mono">${t}</text></g>`);
+  });
+}
+
+/* ---- animation helpers ---------------------------------------------------- */
+const lerp = (a,b,t) => a + (b-a)*t;
+function travel(el, x0,y0, x1,y1, dur, done){
+  const start = performance.now();
+  (function f(now){
+    let t = Math.min(1,(now-start)/dur), e = t*t*(3-2*t);
+    el.setAttribute("transform", `translate(${lerp(x0,x1,e)},${lerp(y0,y1,e)})`);
+    if(t<1) requestAnimationFrame(f); else done && done();
+  })(performance.now());
+}
+function packet(color, square){
+  const g = document.createElementNS(NS,"g");
+  const s = document.createElementNS(NS, square ? "rect":"rect");
+  s.setAttribute("x",-7); s.setAttribute("y",-7); s.setAttribute("width",14); s.setAttribute("height",14);
+  s.setAttribute("rx",3); s.setAttribute("fill",color); s.setAttribute("stroke","#fff"); s.setAttribute("stroke-width","1.5");
+  g.appendChild(s); $("packets").appendChild(g); return g;
+}
+
+/* ---- reset to start state for current domain + tab ------------------------ */
+function reset(){
+  $("packets").innerHTML = ""; $("ghost").innerHTML = ""; $("ghost").setAttribute("opacity",0);
+  $("qText").textContent = '"' + DOMAINS[DOM].queries[TAB].text + '"';
+  DOMAINS[DOM].chunks.forEach(c => {
+    $(`lamp_${c.id}`).setAttribute("fill","#e3e0d9");
+    $(`x_${c.id}`).setAttribute("opacity",0);
+    $(`card_${c.id}`).setAttribute("stroke","var(--line)");
+    $(`card_${c.id}`).setAttribute("stroke-width","1.5");
+    $(`cnt_${c.id}`).textContent = "0 matches"; $(`cnt_${c.id}`).setAttribute("opacity",1);
+    $(`badge_${c.id}`).setAttribute("opacity",0);
+    wordEls[c.id].forEach(w => { w.el.setAttribute("fill","#333"); w.el.setAttribute("font-weight","normal"); });
+  });
+  buildChips();
+  const NOTE = {
+    one:  'This query’s words appear in <b>exactly one</b> chunk. Press Run.',
+    many: 'This query’s words appear in <b>more than one</b> chunk. Press Run.',
+    miss: 'This query means the same as a chunk, but uses <b>different words</b>. Press Run.',
+  };
+  $("note").innerHTML = NOTE[TAB];
+  $("punch").className = "punch idle";
+  $("punch").innerHTML = 'Green packet = the word was found. Red probe = the word is checked against each chunk and not found.';
+}
+
+/* ---- HIT scenarios (one / many): packets fly to every matching chunk ------ */
+function runHit(){
+  const Q = DOMAINS[DOM].queries[TAB];
+  const counts = {}; DOMAINS[DOM].chunks.forEach(c => counts[c.id]=0);
+  const plan = Q.terms.map(t => ({ t,
+    hits: DOMAINS[DOM].chunks.filter(c => wordEls[c.id].some(w => w.norm===norm(t))).map(c=>c.id) }));
+  const expected = plan.reduce((s,p)=> s + Math.max(1,p.hits.length), 0);
+  let fired = 0, landed = 0;
+
+  plan.forEach((p, qi) => setTimeout(() => {
+    const from = chipPos[p.t];
+    if(p.hits.length === 0){                          // shouldn't happen here, but stay safe
+      const pk = packet("#C0392B"); travel(pk, from.x,from.y, 360,230, 900, ()=>{ pk.remove(); done(); });
+    } else p.hits.forEach(cid => {
+      const ci = DOMAINS[DOM].chunks.findIndex(c=>c.id===cid);
+      const pk = packet("#0F6E56");
+      travel(pk, from.x,from.y, CARD.x+10, cardY(ci)+22, 1100, () => {
+        pk.remove(); counts[cid]++; landed++;
+        $(`lamp_${cid}`).setAttribute("fill","#1D9E75");
+        $(`cnt_${cid}`).textContent = counts[cid] + (counts[cid]===1?" match":" matches");
+        wordEls[cid].forEach(w => { if(w.norm===norm(p.t)){ w.el.setAttribute("fill","#0F6E56"); w.el.setAttribute("font-weight","700"); } });
+        done();
+      });
+    });
+  }, qi*850));
+
+  function done(){
+    if(++fired < expected) return;
+    setTimeout(() => {
+      const wins = DOMAINS[DOM].chunks.filter(c => counts[c.id] > 0).map(c=>c.id);
+      wins.forEach(cid => {
+        $(`card_${cid}`).setAttribute("stroke","#1D9E75"); $(`card_${cid}`).setAttribute("stroke-width","2.4");
+        $(`cnt_${cid}`).setAttribute("opacity",0); $(`badge_${cid}`).setAttribute("opacity",1);
+      });
+      $("note").innerHTML = `<b>${wins.length===1?"One match.":wins.length+" matches."}</b> ${wins.join(", ")} contained the query words.`;
+      $("punch").className = "punch ok";
+      $("punch").innerHTML = wins.length===1
+        ? `<b>HIT — one chunk.</b> Both words appear verbatim in <b>${wins[0]}</b>, so it is retrieved. When the question and the answer use the <b>same words</b>, keyword search is fast, cheap, and exact — and no embedding model is involved.`
+        : `<b>HIT — ${wins.length} chunks.</b> The query words appear in more than one chunk (<b>${wins.join(" and ")}</b>), so all of them are retrieved; the one with more matched words ranks higher. A single common word can pull several chunks at once.`;
+      finish();
+    }, 300);
+  }
+}
+
+/* ---- MISS scenario: a red probe visits each chunk and is rejected --------- */
+function runMiss(){
+  const Q = DOMAINS[DOM].queries[TAB];
+  const term = Q.terms[0];                            // probe with the first keyword
+  const from = chipPos[term];
+  const chunks = DOMAINS[DOM].chunks;
+  const pk = packet("#C0392B");
+  let px = from.x, py = from.y;
+  pk.setAttribute("transform", `translate(${px},${py})`);
+
+  let i = 0;
+  (function visit(){
+    if(i >= chunks.length){                            // scanned them all — nothing matched
+      pk.remove();
+      const ci = chunks.findIndex(c => c.id === Q.answer);
+      const gy = cardY(ci) + CARD.h/2;
+      $("ghost").innerHTML =
+        `<line x1="285" y1="65" x2="${CARD.x}" y2="${gy}" stroke="#C0392B" stroke-width="1.6" stroke-dasharray="6 5"/>
+         <text x="${(285+CARD.x)/2}" y="${(65+gy)/2 - 7}" text-anchor="middle" font-size="11" font-weight="700" fill="#C0392B">means the same —</text>
+         <text x="${(285+CARD.x)/2}" y="${(65+gy)/2 + 7}" text-anchor="middle" font-size="11" fill="#C0392B">but no shared word</text>`;
+      $("ghost").setAttribute("opacity",1);
+      $(`card_${Q.answer}`).setAttribute("stroke","#e3a89e");
+      $("note").innerHTML = `<b>0 matches in any chunk.</b> Every chunk was checked and rejected.`;
+      $("punch").className = "punch bad";
+      $("punch").innerHTML =
+        `<b>MISS — nothing retrieved.</b> The word “${term}” is not present in any chunk, and neither is the rest of the query. ` +
+        `${Q.ghost}. Keyword search compares strings only, so the right chunk is invisible. <i>This is the gap that semantic / embedding search fills.</i>`;
+      finish(); return;
+    }
+    const ci = i, ty = cardY(ci) + 22;
+    travel(pk, px, py, CARD.x+10, ty, 650, () => {
+      px = CARD.x+10; py = ty;                          // remember where the probe now sits
+      // flash a red ✕ on this chunk, then move on
+      $(`lamp_${chunks[ci].id}`).setAttribute("fill","#C0392B");
+      $(`x_${chunks[ci].id}`).setAttribute("opacity",1);
+      $(`cnt_${chunks[ci].id}`).textContent = "no match";
+      setTimeout(() => {
+        $(`lamp_${chunks[ci].id}`).setAttribute("fill","#e3e0d9");
+        $(`x_${chunks[ci].id}`).setAttribute("opacity",0);
+        i++; visit();
+      }, 420);
+    });
+  })();
+}
+
+function run(){
+  if(PLAYING) return; PLAYING = true; $("playBtn").disabled = true;
+  reset();
+  if(TAB === "miss") runMiss(); else runHit();
+}
+function finish(){ PLAYING = false; $("playBtn").disabled = false; }
+
+/* ---- wiring --------------------------------------------------------------- */
+$("domains").addEventListener("change", e => {
+  if(PLAYING) return; DOM = e.target.value;
+  [...$("domains").querySelectorAll("label")].forEach(l => l.classList.toggle("on", l.querySelector("input").checked));
+  buildCards(); reset();
+});
+$("tabs").addEventListener("click", e => {
+  const t = e.target.dataset.tab; if(!t || PLAYING) return; TAB = t;
+  [...$("tabs").children].forEach(b => b.classList.toggle("on", b.dataset.tab===t));
+  reset();
+});
+$("playBtn").addEventListener("click", run);
+
+buildCards();
+reset();
+</script>
+
+
+</body></html>

@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fire &amp; Forget · A2A</title>
+<style>
+  :root{
+    --ink:#12151c; --gray:#5b6270; --faint:#9aa1b0; --line:#e7e9f0; --bg:#eef1f7;
+    --card:#ffffff; --navy:#1f5fb0; --teal:#0e8f6f; --purple:#7b3fa0; --amber:#9a5a08;
+    --fire:#c1440e; --wire:#a24bd8;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(900px 500px at 90% -10%,rgba(123,63,160,.06),transparent 60%),
+      radial-gradient(900px 500px at -5% 110%,rgba(31,95,176,.06),transparent 60%),
+      linear-gradient(180deg,#f3f5fa,#eef1f7);min-height:100vh}
+  .wrap{max-width:900px;margin:0 auto;padding:28px 22px 64px}
+  .kick{font-family:ui-monospace,monospace;font-size:11px;font-weight:800;letter-spacing:2.4px;
+    text-transform:uppercase;color:var(--fire)}
+  h1{font-size:30px;margin:6px 0 4px;letter-spacing:-.6px}
+  .sub{color:var(--gray);font-size:14px;max-width:70ch;line-height:1.5}
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-top:22px;
+    background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;
+    box-shadow:0 8px 30px rgba(20,30,60,.06)}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:10.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--faint)}
+  .field input{font-family:inherit;font-size:15px;padding:10px 12px;border:1.5px solid var(--line);
+    border-radius:10px;background:#fff;min-width:150px}
+  .field input:focus{outline:3px solid #f7e3d8;border-color:var(--fire)}
+  .btn{font-family:inherit;font-weight:800;font-size:15px;color:#fff;border:0;cursor:pointer;
+    background:linear-gradient(135deg,#d1550f,#a13c0a);border-radius:11px;padding:12px 22px;
+    box-shadow:0 6px 16px rgba(193,68,14,.25)}
+  .btn:hover{filter:brightness(1.07)} .btn:disabled{opacity:.5;cursor:default}
+  .go-wrap{margin-left:auto}
+
+  .timeline{margin-top:26px;display:none}
+  .timeline.on{display:block}
+  .tl-row{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:14px 16px;box-shadow:0 8px 30px rgba(20,30,60,.06);margin-bottom:12px;
+    opacity:0;transform:translateY(6px);transition:.35s}
+  .tl-row.in{opacity:1;transform:none}
+  .tl-dot{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;
+    font-size:16px;color:#fff}
+  .tl-dot.a{background:linear-gradient(135deg,var(--navy),#124a83)}
+  .tl-dot.b{background:linear-gradient(135deg,var(--fire),#7c2c07)}
+  .tl-dot.c{background:linear-gradient(135deg,var(--faint),#7b8296)}
+  .tl-dot.d{background:linear-gradient(135deg,var(--wire),#5a2c78)}
+  .tl-dot.pulse{animation:pulse 1.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(162,75,216,.45)}70%{box-shadow:0 0 0 14px rgba(162,75,216,0)}100%{box-shadow:0 0 0 0 rgba(162,75,216,0)}}
+  .tl-body{flex:1;min-width:0}
+  .tl-title{font-weight:800;font-size:14.5px}
+  .tl-detail{font-size:12.5px;color:var(--gray);margin-top:2px;word-break:break-word}
+  .tl-time{font-family:ui-monospace,monospace;font-size:11px;color:var(--faint);white-space:nowrap}
+
+  .gap-callout{margin:8px 0 18px;padding:12px 16px;border-radius:12px;background:#fff7ee;
+    border:1.5px dashed #e7b183;color:#7c3f0a;font-size:12.5px;display:none}
+  .gap-callout.on{display:block}
+  .gap-callout b{color:var(--fire)}
+
+  .result{display:none;margin-top:8px;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:18px 20px;box-shadow:0 8px 30px rgba(20,30,60,.06)}
+  .result.on{display:block}
+  .result h3{margin:0 0 8px;font-size:15px}
+  .itin{font-size:14px;line-height:1.6;color:var(--ink)}
+  .notes{margin-top:12px;font-family:ui-monospace,monospace;font-size:12px;color:var(--gray);
+    background:#f7f8fb;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .notes div{margin:2px 0}
+  .badge{font-family:ui-monospace,monospace;font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;
+    border:1px solid var(--line);color:var(--gray);background:#f7f8fb;display:inline-block;margin-top:10px}
+
+  .err{color:#a13c0a;font-size:13px;margin-top:14px}
+
+  .divider{margin:48px 0 26px;border:0;border-top:1.5px dashed var(--line)}
+  .btn.pull{background:linear-gradient(135deg,var(--wire),#5a2c78);box-shadow:0 6px 16px rgba(162,75,216,.25)}
+  .btn.cancel{background:#fff;color:var(--fire);border:1.5px solid #f0c4ad;box-shadow:none}
+  .state-pill{font-family:ui-monospace,monospace;font-size:11px;font-weight:800;padding:4px 10px;
+    border-radius:999px;display:inline-flex;align-items:center;gap:6px;margin-left:10px}
+  .state-pill .dot{width:7px;height:7px;border-radius:50%}
+  .state-submitted{background:#f0f1f5;color:var(--gray)} .state-submitted .dot{background:var(--faint)}
+  .state-working{background:#f4ecfb;color:var(--wire)} .state-working .dot{background:var(--wire);animation:pulse 1.4s infinite}
+  .state-completed{background:#e1f5ee;color:var(--teal)} .state-completed .dot{background:var(--teal)}
+  .state-canceled{background:#fdecec;color:var(--fire)} .state-canceled .dot{background:var(--fire)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kick">A2A · push notifications</div>
+  <h1>Fire &amp; forget, over a webhook</h1>
+  <p class="sub">The Orchestrator sends the Research Agent a non-blocking A2A message and gets its HTTP
+    response back almost instantly. The agent keeps working after that response — there's no
+    connection left open. When it's done, it <b>POSTs the result to a webhook</b> the orchestrator gave it.
+    Watch the gap between the two.</p>
+
+  <div class="toolbar">
+    <div class="field"><label>Destination</label><input id="dest" value="Kyoto" /></div>
+    <div class="field"><label>Days</label><input id="days" type="number" min="1" max="10" value="4" /></div>
+    <div class="go-wrap"><button class="btn" id="go">Send (fire and forget)</button></div>
+  </div>
+
+  <div class="gap-callout" id="gap"></div>
+  <div class="timeline" id="timeline"></div>
+
+  <div class="result" id="result">
+    <h3>📦 Delivered by webhook</h3>
+    <div class="itin" id="itinText"></div>
+    <div class="notes" id="itinNotes"></div>
+    <div class="badge" id="provider"></div>
+  </div>
+
+  <div class="err" id="err"></div>
+
+  <hr class="divider" />
+
+  <div class="kick">A2A · tasks/get + tasks/cancel</div>
+  <h1>The other half: poll it, or cancel it</h1>
+  <p class="sub">The Long-Task Agent doesn't call anyone back. It's non-blocking the same way, but this
+    time it's on <b>us</b> to check in with <code>tasks/get</code> — and we can change our mind mid-flight
+    with <code>tasks/cancel</code>.</p>
+
+  <div class="toolbar">
+    <div class="field"><label>Sleep seconds</label><input id="secs" type="number" min="3" max="120" value="20" /></div>
+    <div class="go-wrap" style="display:flex;gap:10px">
+      <button class="btn pull" id="longGo">Start (non-blocking)</button>
+      <button class="btn cancel" id="longCancel" disabled>Cancel</button>
+    </div>
+    <span class="state-pill state-submitted" id="longState" style="display:none"><span class="dot"></span><span id="longStateText">—</span></span>
+  </div>
+
+  <div class="timeline" id="longTimeline"></div>
+  <div class="err" id="longErr"></div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let t0 = 0;
+
+function row(cls, icon, title, detail, when, targetId) {
+  const el = document.createElement('div');
+  el.className = 'tl-row';
+  el.innerHTML = `<div class="tl-dot ${cls}">${icon}</div>
+    <div class="tl-body"><div class="tl-title">${title}</div>
+    <div class="tl-detail">${detail || ''}</div></div>
+    <div class="tl-time">${when}</div>`;
+  $(targetId || 'timeline').appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('in')));
+  return el;
+}
+
+function elapsed() { return ((performance.now() - t0) / 1000).toFixed(1) + 's'; }
+
+$('go').addEventListener('click', async () => {
+  $('timeline').innerHTML = '';
+  $('timeline').classList.add('on');
+  $('result').classList.remove('on');
+  $('gap').classList.remove('on');
+  $('err').textContent = '';
+  $('go').disabled = true;
+  t0 = performance.now();
+
+  const destination = $('dest').value.trim() || 'Kyoto';
+  const days = parseInt($('days').value, 10) || 4;
+
+  row('a', '1', 'UI → Orchestrator', `POST /api/research/start · {destination: "${destination}", days: ${days}}`, 'T+' + elapsed());
+
+  let ackResp;
+  try {
+    const r = await fetch('/api/research/start', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({destination, days}),
+    });
+    ackResp = await r.json();
+  } catch (e) {
+    $('err').textContent = 'Could not reach the UI backend: ' + e;
+    $('go').disabled = false;
+    return;
+  }
+
+  if (ackResp.error) {
+    $('err').textContent = ackResp.error;
+    $('go').disabled = false;
+    return;
+  }
+
+  row('b', '⚡', 'Orchestrator → Research Agent (non-blocking)',
+      `message/send · configuration.blocking=false · pushNotificationConfig.url=…/webhook/tasks`,
+      'T+' + elapsed());
+  row('c', '✓', `Ack received — state "submitted" in ${ackResp.ackMs}ms`,
+      'The HTTP request/response cycle for that call is now OVER. Nothing is polling.',
+      'T+' + elapsed());
+
+  $('gap').classList.add('on');
+  $('gap').innerHTML = `<b>Fire-and-forget gap:</b> the sub-agent is now working in the background with
+    no connection to the orchestrator at all. Whatever arrives next arrives as a fresh, unsolicited
+    inbound POST to <code>/webhook/tasks</code> — could be seconds from now, could be longer.`;
+
+  const taskId = ackResp.taskId;
+  const es = new EventSource('/api/research/' + taskId + '/stream');
+  let sawWaiting = false;
+  es.onmessage = (ev) => {
+    const msg = JSON.parse(ev.data);
+    if (msg.kind === 'heartbeat') {
+      if (!sawWaiting) {
+        row('d', '…', 'Waiting for the webhook…', 'No polling of the sub-agent — just listening for its callback.', 'T+' + elapsed());
+        sawWaiting = true;
+      }
+      return;
+    }
+    if (msg.kind === 'webhook-delivered') {
+      row('d', '📨', 'Research Agent → Orchestrator', `POST /webhook/tasks · X-A2A-Notification-Token verified`, 'T+' + elapsed());
+      $('itinText').textContent = msg.text || '(no text)';
+      const notes = (msg.data && msg.data.researchNotes) || [];
+      $('itinNotes').innerHTML = notes.map(n => `<div>· ${n}</div>`).join('');
+      $('provider').textContent = msg.provider || '';
+      $('result').classList.add('on');
+      es.close();
+      $('go').disabled = false;
+    }
+    if (msg.kind === 'error') {
+      $('err').textContent = msg.message;
+      es.close();
+      $('go').disabled = false;
+    }
+  };
+  es.onerror = () => { /* EventSource auto-retries; nothing to do */ };
+});
+
+// ---- PULL panel: Long-Task Agent — tasks/get (poll) + tasks/cancel --------
+let longT0 = 0, longTaskId = null, pollTimer = null;
+const longElapsed = () => ((performance.now() - longT0) / 1000).toFixed(1) + 's';
+
+function setLongState(state) {
+  const pill = $('longState');
+  pill.style.display = 'inline-flex';
+  pill.className = 'state-pill state-' + state;
+  $('longStateText').textContent = state;
+}
+
+function stopPolling() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = null;
+  $('longGo').disabled = false;
+  $('longCancel').disabled = true;
+}
+
+function startPolling() {
+  pollTimer = setInterval(async () => {
+    if (!longTaskId) return;
+    const r = await fetch('/api/long/' + longTaskId);
+    const data = await r.json();
+    if (data.error) { $('longErr').textContent = JSON.stringify(data.error); stopPolling(); return; }
+    row('c', '↻', 'UI → Orchestrator → Long-Task Agent (poll)',
+        `GET /api/long/${longTaskId} → tasks/get → state now "${data.state}"`, 'T+' + longElapsed(), 'longTimeline');
+    setLongState(data.state);
+    if (['completed', 'canceled', 'failed'].includes(data.state)) {
+      if (data.text) row('d', '📋', 'Final state reached', data.text, 'T+' + longElapsed(), 'longTimeline');
+      stopPolling();
+    }
+  }, 2000);
+}
+
+$('longGo').addEventListener('click', async () => {
+  $('longTimeline').innerHTML = '';
+  $('longTimeline').classList.add('on');
+  $('longErr').textContent = '';
+  $('longGo').disabled = true;
+  $('longCancel').disabled = true;
+  longT0 = performance.now();
+  longTaskId = null;
+
+  const seconds = parseInt($('secs').value, 10) || 20;
+  row('a', '1', 'UI → Orchestrator', `POST /api/long/start · {seconds: ${seconds}}`, 'T+' + longElapsed(), 'longTimeline');
+
+  let ackResp;
+  try {
+    const r = await fetch('/api/long/start', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({seconds}),
+    });
+    ackResp = await r.json();
+  } catch (e) {
+    $('longErr').textContent = 'Could not reach the UI backend: ' + e;
+    $('longGo').disabled = false;
+    return;
+  }
+  if (ackResp.error) {
+    $('longErr').textContent = ackResp.error;
+    $('longGo').disabled = false;
+    return;
+  }
+
+  longTaskId = ackResp.taskId;
+  row('b', '⚡', 'Orchestrator → Long-Task Agent (non-blocking)',
+      'message/send · configuration.blocking=false · no pushNotificationConfig', 'T+' + longElapsed(), 'longTimeline');
+  row('c', '✓', `Ack received — state "${ackResp.state}"`,
+      'That request/response is over too. This time nothing calls us back — WE have to ask.',
+      'T+' + longElapsed(), 'longTimeline');
+  setLongState(ackResp.state || 'submitted');
+  $('longCancel').disabled = false;
+  startPolling();
+});
+
+$('longCancel').addEventListener('click', async () => {
+  if (!longTaskId) return;
+  $('longCancel').disabled = true;
+  row('b', '✋', 'UI → Orchestrator → Long-Task Agent', `POST /api/long/${longTaskId}/cancel → tasks/cancel`,
+      'T+' + longElapsed(), 'longTimeline');
+  const r = await fetch('/api/long/' + longTaskId + '/cancel', {method: 'POST'});
+  const data = await r.json();
+  if (data.error) {
+    $('longErr').textContent = JSON.stringify(data.error);
+    $('longCancel').disabled = false;
+    return;
+  }
+  setLongState(data.state);
+  row('d', '🛑', 'Canceled', `tasks/cancel → state now "${data.state}"`, 'T+' + longElapsed(), 'longTimeline');
+  stopPolling();
+});
+</script>
+</body>
+</html>

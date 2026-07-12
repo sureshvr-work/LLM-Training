@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<!-- saved from url=(0053)file:///Users/ramji/Downloads/kw_pipeline_full_3.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keyword pipeline — analyze, index, retrieve</title>
+<style>
+  :root{
+    --navy:#1d3a5f; --navy2:#185FA5; --navy-bg:#E6EEF7;
+    --teal:#0F6E56; --teal2:#1D9E75; --teal-bg:#E1F5EE;
+    --amber:#854F0B; --amber2:#EF9F27; --amber-bg:#FAEEDA;
+    --purple:#7B3FA0; --purple-bg:#F0E8F8; --red:#C0392B; --red-bg:#FBEAE7;
+    --gray:#5F5E5A; --line:#e3e0d9; --bg:#f5f6f8;
+  }
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:var(--bg);color:#222;}
+  .wrap{max-width:990px;margin:0 auto;padding:24px 20px 60px;}
+  h1{color:var(--navy);font-size:21px;margin:0 0 3px;}
+  .sub{color:var(--gray);font-size:13px;margin:0 0 14px;}
+  .controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
+  button.act{border:1.5px solid var(--line);background:#fff;color:var(--navy);border-radius:9px;padding:9px 15px;font-size:12.5px;font-weight:700;cursor:pointer;}
+  button.act.run{background:var(--amber2);color:#3a2606;border-color:var(--amber2);}
+  button.act:disabled{opacity:.4;cursor:default;}
+  .scene{background:#fff;border:1px solid var(--line);border-radius:13px;padding:6px;}
+  .note{font-size:12.5px;color:#222;background:#eef3f9;border-left:4px solid var(--navy);border-radius:8px;padding:10px 13px;margin-top:12px;min-height:20px;line-height:1.5;}
+  .note b{color:var(--navy);}
+  .legend{font-size:11px;color:var(--gray);margin-top:9px;}
+  .sw{display:inline-block;width:16px;height:11px;border-radius:2px;vertical-align:-1px;margin:0 4px 0 12px;}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;}
+
+  .tabs{display:flex;gap:8px;margin:8px 0 0;flex-wrap:wrap;}
+  .tab{border:1.5px solid var(--line);border-bottom:none;background:#fff;color:var(--gray);border-radius:10px 10px 0 0;padding:9px 15px;font-size:12.5px;font-weight:700;cursor:pointer;}
+  .tab.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .stepsec{display:none;}.stepsec.on{display:block;}
+  .pipehint{font-size:11.5px;color:var(--gray);margin:6px 0 2px;}
+</style></head><body>
+<div class="wrap">
+  <header><h1>Keyword pipeline — Step 1 → 2 → 3</h1>
+  <p class="sub">The whole sparse pipeline, one stage at a time. <b>Analyze</b> (text→terms) · <b>Build the index</b> (terms→postings) · <b>Retrieve</b> (query looks up → score by matched words).</p></header>
+  <div class="tabs">
+    <button class="tab on" data-s="1">Step 1 · Analyze</button>
+    <button class="tab" data-s="2">Step 2 · Build the index</button>
+    <button class="tab" data-s="3">Step 3 · Retrieve</button>
+  </div>
+  <p class="pipehint">Run them in order — each stage uses the previous one's output. Pop-ups wait for your <b>Continue</b> click (no auto-advance).</p>
+  <section class="stepsec on" id="sec1"><div class="controls">
+    <button class="act run" id="runBtn">▶ Analyze</button>
+    <button class="act" id="resetBtn">↺ Reset</button>
+  </div>
+
+  <div class="scene">
+    <svg width="100%" viewBox="0 0 980 612" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="tip" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M1.5 1L8.5 5L1.5 9" fill="none" stroke="#cbc7bb" stroke-width="1.8"></path>
+        </marker>
+      </defs>
+
+      <!-- guide arrows: inputs -> analyzer -> terms -->
+      <line x1="270" y1="300" x2="324" y2="300" stroke="#dcd8ce" stroke-width="2" marker-end="url(#tip)"></line>
+      <line x1="652" y1="300" x2="706" y2="300" stroke="#dcd8ce" stroke-width="2" marker-end="url(#tip)"></line>
+
+      <!-- ===================== LEFT: INPUT ===================== -->
+      <rect x="20" y="44" width="250" height="544" rx="12" fill="#fbfcfd" stroke="#cfd6df" stroke-width="1.4"></rect>
+      <text x="34" y="66" font-size="11.5" font-weight="700" fill="#1d3a5f">INPUT · 3 data chunks + 1 query</text>
+
+      <!-- c1 -->
+      <g id="card_c1"><rect x="34" y="78" width="222" height="72" rx="8" fill="#fff" stroke="#1d3a5f" stroke-width="1.4"></rect>
+        <text x="46" y="96" font-size="9.5" font-weight="700" fill="#1d3a5f">c1 · data chunk</text>
+        <text x="46" y="116" font-size="11" class="mono" fill="#333">AML report filed for</text>
+        <text x="46" y="132" font-size="11" class="mono" fill="#333">cash over $10,000</text></g>
+      <!-- c2 -->
+      <g id="card_c2"><rect x="34" y="162" width="222" height="72" rx="8" fill="#fff" stroke="#1d3a5f" stroke-width="1.4"></rect>
+        <text x="46" y="180" font-size="9.5" font-weight="700" fill="#1d3a5f">c2 · data chunk</text>
+        <text x="46" y="200" font-size="11" class="mono" fill="#333">Wire transfer flagged</text>
+        <text x="46" y="216" font-size="11" class="mono" fill="#333">for AML review</text></g>
+      <!-- c3 -->
+      <g id="card_c3"><rect x="34" y="246" width="222" height="72" rx="8" fill="#fff" stroke="#1d3a5f" stroke-width="1.4"></rect>
+        <text x="46" y="264" font-size="9.5" font-weight="700" fill="#1d3a5f">c3 · data chunk</text>
+        <text x="46" y="284" font-size="11" class="mono" fill="#333">KYC identity check</text>
+        <text x="46" y="300" font-size="11" class="mono" fill="#333">at onboarding</text></g>
+      <!-- query -->
+      <g id="card_q"><rect x="34" y="360" width="222" height="72" rx="8" fill="#fff" stroke="#C0392B" stroke-width="1.5"></rect>
+        <text x="46" y="378" font-size="9.5" font-weight="700" fill="#C0392B">query · the user's question</text>
+        <text x="46" y="398" font-size="11" class="mono" fill="#333">What is the AML</text>
+        <text x="46" y="414" font-size="11" class="mono" fill="#333">threshold over $10,000?</text></g>
+      <text x="46" y="460" font-size="9.5" fill="#9a4034">↑ the query is just another input —</text>
+      <text x="46" y="474" font-size="9.5" fill="#9a4034">it goes through the SAME gate.</text>
+
+      <!-- ===================== CENTER: ANALYZER ===================== -->
+      <rect x="324" y="44" width="328" height="544" rx="12" fill="#FFFDF8" stroke="#EF9F27" stroke-width="1.8" id="analyzerBox"></rect>
+      <text x="340" y="66" font-size="12" font-weight="800" fill="#854F0B">ANALYZER · the gate</text>
+      <text x="340" y="80" font-size="9.5" fill="#9a6a14">every input passes through these SAME policies</text>
+
+      <!-- policy stack (normalize split out from lowercase) -->
+      <g id="pol1a"><rect x="340" y="86" width="296" height="26" rx="7" fill="#fff" stroke="#e7c98c" stroke-width="1.2"></rect>
+        <text x="352" y="98" font-size="10" font-weight="700" fill="#854F0B">1a · normalize</text>
+        <text x="352" y="108" font-size="8" fill="#9a6a14">café→café · ＡＭＬ→AML · Zürich→zurich (fold look-alikes)</text></g>
+      <g id="pol1b"><rect x="340" y="116" width="296" height="26" rx="7" fill="#fff" stroke="#e7c98c" stroke-width="1.2"></rect>
+        <text x="352" y="128" font-size="10" font-weight="700" fill="#854F0B">1b · lowercase</text>
+        <text x="352" y="138" font-size="8" fill="#9a6a14">AML → aml</text></g>
+      <g id="pol2"><rect x="340" y="146" width="296" height="26" rx="7" fill="#fff" stroke="#e7c98c" stroke-width="1.2"></rect>
+        <text x="352" y="158" font-size="10" font-weight="700" fill="#854F0B">2 · split into tokens</text>
+        <text x="352" y="168" font-size="8" fill="#9a6a14">break on spaces / punctuation</text></g>
+      <g id="pol3"><rect x="340" y="176" width="296" height="26" rx="7" fill="#fff" stroke="#e7c98c" stroke-width="1.2"></rect>
+        <text x="352" y="188" font-size="10" font-weight="700" fill="#854F0B">3 · join number separators</text>
+        <text x="352" y="198" font-size="8" fill="#9a6a14">$10,000 → 10000</text></g>
+      <g id="pol4"><rect x="340" y="206" width="296" height="26" rx="7" fill="#fff" stroke="#e7c98c" stroke-width="1.2"></rect>
+        <text x="352" y="218" font-size="10" font-weight="700" fill="#854F0B">4 · drop stopwords</text>
+        <text x="352" y="228" font-size="8" fill="#9a6a14">for · the · is · what · over · at …</text></g>
+      <g id="pol5"><rect x="340" y="236" width="296" height="26" rx="7" fill="#f3f1ec" stroke="#ddd8cc" stroke-width="1.2"></rect>
+        <text x="352" y="248" font-size="10" font-weight="700" fill="#9a968c">5 · stem  (off here, for clarity)</text>
+        <text x="352" y="258" font-size="8" fill="#aaa49a">reports → report (form, never meaning)</text></g>
+
+      <!-- live trace panel -->
+      <rect x="340" y="266" width="296" height="306" rx="9" fill="#fff" stroke="#e7c98c" stroke-width="1.2"></rect>
+      <text x="352" y="284" font-size="10" font-weight="800" fill="#854F0B">live trace · <tspan id="trWho" fill="#1d3a5f">—</tspan></text>
+
+      <text x="352" y="306" font-size="9" fill="#9a6a14">raw</text>
+      <text id="trRaw" x="352" y="320" font-size="10.5" class="mono" fill="#333">—</text>
+
+      <text x="352" y="344" font-size="9" fill="#9a6a14">after normalize + lowercase + join numbers</text>
+      <text id="trLower" x="352" y="358" font-size="10.5" class="mono" fill="#333"></text>
+
+      <text x="352" y="384" font-size="9" fill="#9a6a14">tokens  (grey = stopword, will be dropped)</text>
+      <g id="trTokens"></g>
+
+      <text x="352" y="446" font-size="9" fill="#9a6a14">TERMS out  (what the gate emits)</text>
+      <g id="trTerms"></g>
+
+      <text id="trMsg" x="352" y="556" font-size="9.5" fill="#0F6E56"></text>
+
+      <!-- ===================== RIGHT: TERMS OUT ===================== -->
+      <rect x="706" y="44" width="254" height="544" rx="12" fill="#F6FBF9" stroke="#1D9E75" stroke-width="1.5"></rect>
+      <text x="720" y="66" font-size="11.5" font-weight="700" fill="#0F6E56">TERMS OUT · per input</text>
+      <text id="termsEmpty" x="833" y="300" text-anchor="middle" font-size="11" fill="#bcd9cd">— nothing analyzed yet —</text>
+      <g id="termsRows"></g>
+
+      <!-- fx layer for travelling packets -->
+      <g id="fx"></g>
+    </svg>
+  </div>
+
+  <div class="note" id="note">Click <b>▶ Analyze</b>. Each input slides into the gate, the four policies fire in turn, and its <b>terms</b> drop into the right-hand panel — chunks first, then the query.</div>
+  <div class="legend">
+    <span class="sw" style="background:#1d3a5f"></span> data chunk
+    <span class="sw" style="background:#C0392B"></span> query
+    <span class="sw" style="background:#EF9F27"></span> analyzer / policy
+    <span class="sw" style="background:#1D9E75"></span> terms out
+  </div></section>
+  <section class="stepsec" id="sec2"><div class="controls">
+    <button class="act run" id="runBtn">▶ Build index</button>
+    <button class="act" id="resetBtn">↺ Reset</button>
+  </div>
+
+  <div class="scene">
+    <svg width="100%" viewBox="0 0 980 612" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="tip" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M1.5 1L8.5 5L1.5 9" fill="none" stroke="#cbc7bb" stroke-width="1.8"></path>
+        </marker>
+      </defs>
+      <line x1="272" y1="240" x2="324" y2="240" stroke="#dcd8ce" stroke-width="2" marker-end="url(#tip)"></line>
+      <line x1="664" y1="300" x2="702" y2="300" stroke="#dcd8ce" stroke-width="2" marker-end="url(#tip)"></line>
+
+      <!-- ===================== LEFT: TERMS IN ===================== -->
+      <rect x="20" y="44" width="252" height="544" rx="12" fill="#fbfcfd" stroke="#cfd6df" stroke-width="1.4"></rect>
+      <text x="34" y="66" font-size="11.5" font-weight="700" fill="#1d3a5f">TERMS IN · from Step 1</text>
+
+      <g id="row_c1"><rect x="34" y="78" width="224" height="56" rx="8" fill="#fff" stroke="#1d3a5f" stroke-width="1.4"></rect>
+        <text x="46" y="96" font-size="9.5" font-weight="700" fill="#1d3a5f">c1 · data chunk</text>
+        <text x="46" y="114" font-size="10" class="mono" fill="#333">aml · report · filed ·</text>
+        <text x="46" y="127" font-size="10" class="mono" fill="#333">cash · 10000</text></g>
+      <g id="row_c2"><rect x="34" y="146" width="224" height="56" rx="8" fill="#fff" stroke="#1d3a5f" stroke-width="1.4"></rect>
+        <text x="46" y="164" font-size="9.5" font-weight="700" fill="#1d3a5f">c2 · data chunk</text>
+        <text x="46" y="182" font-size="10" class="mono" fill="#333">wire · transfer ·</text>
+        <text x="46" y="195" font-size="10" class="mono" fill="#333">flagged · aml · review</text></g>
+      <g id="row_c3"><rect x="34" y="214" width="224" height="56" rx="8" fill="#fff" stroke="#1d3a5f" stroke-width="1.4"></rect>
+        <text x="46" y="232" font-size="9.5" font-weight="700" fill="#1d3a5f">c3 · data chunk</text>
+        <text x="46" y="250" font-size="10" class="mono" fill="#333">kyc · identity ·</text>
+        <text x="46" y="263" font-size="10" class="mono" fill="#333">check · onboarding</text></g>
+
+      <g id="row_q" opacity="1"><rect x="34" y="300" width="224" height="58" rx="8" fill="#fff" stroke="#C0392B" stroke-width="1.4" stroke-dasharray="5 4" opacity="1"></rect>
+        <text x="46" y="318" font-size="9.5" font-weight="700" fill="#C0392B">query terms</text>
+        <text x="46" y="336" font-size="10" class="mono" fill="#9a4034">aml · threshold · 10000</text>
+        <text id="qTag" x="46" y="350" font-size="8.5" fill="#9a4034">(waiting…)</text></g>
+      <text x="46" y="392" font-size="9.5" fill="#5F5E5A">↑ from Step 1: 3 chunks + 1 query.</text>
+      <text x="46" y="406" font-size="9.5" fill="#5F5E5A">Only the chunks are indexed →</text>
+
+      <!-- ===================== CENTER: INVERTED INDEX ===================== -->
+      <rect x="324" y="44" width="344" height="544" rx="12" fill="#FFFDF8" stroke="#EF9F27" stroke-width="1.8" id="indexBox"></rect>
+      <text x="338" y="66" font-size="12" font-weight="800" fill="#854F0B">THE INVERTED INDEX</text>
+      <text x="338" y="80" font-size="9.5" fill="#9a6a14">term → postings  (each posting = chunk : tf)</text>
+      <line x1="338" y1="90" x2="654" y2="90" stroke="#e7c98c"></line>
+      <text x="344" y="102" font-size="9" font-weight="700" fill="#9a6a14">term</text>
+      <text x="470" y="102" font-size="9" font-weight="700" fill="#9a6a14">df</text>
+      <text x="508" y="102" font-size="9" font-weight="700" fill="#9a6a14">postings (chunk : tf)</text>
+      <text id="idxEmpty" x="496" y="320" text-anchor="middle" font-size="11" fill="#e0caa0">— empty — click Build index —</text>
+      <g id="idxRows"></g>
+
+      <!-- ===================== RIGHT: STATS / OUTPUT ===================== -->
+      <rect x="702" y="44" width="258" height="544" rx="12" fill="#F6FBF9" stroke="#1D9E75" stroke-width="1.5"></rect>
+      <text x="716" y="66" font-size="11.5" font-weight="700" fill="#0F6E56">BUILD STATS</text>
+      <text x="716" y="92" font-size="10" fill="#5F5E5A">doc_len  (tokens per chunk)</text>
+      <text x="726" y="112" font-size="11" class="mono" fill="#1d3a5f">c1 = <tspan id="dlc1">—</tspan></text>
+      <text x="726" y="130" font-size="11" class="mono" fill="#1d3a5f">c2 = <tspan id="dlc2">—</tspan></text>
+      <text x="726" y="148" font-size="11" class="mono" fill="#1d3a5f">c3 = <tspan id="dlc3">—</tspan></text>
+      <text x="716" y="178" font-size="10" fill="#5F5E5A">avgdl  (average chunk length)</text>
+      <text x="726" y="198" font-size="13" class="mono" font-weight="700" fill="#0F6E56"><tspan id="avgdl">—</tspan></text>
+      <text x="716" y="228" font-size="10" fill="#5F5E5A">unique terms (rows)</text>
+      <text x="726" y="248" font-size="13" class="mono" font-weight="700" fill="#0F6E56"><tspan id="nterms">0</tspan></text>
+
+      <text x="716" y="288" font-size="9.5" fill="#9a6a14">these counts feed BM25 in Step 3 —</text>
+      <text x="716" y="302" font-size="9.5" fill="#9a6a14">no formula runs here, only counting.</text>
+
+      <g id="outBadge" opacity="0">
+        <rect x="716" y="470" width="230" height="100" rx="10" fill="#E1F5EE" stroke="#1D9E75" stroke-width="1.6"></rect>
+        <text x="731" y="492" font-size="11" font-weight="800" fill="#0F6E56">✓ OUTPUT — the inverted index</text>
+        <text x="731" y="512" font-size="9.5" fill="#0F6E56">term → postings + doc_len + avgdl</text>
+        <text x="731" y="528" font-size="9.5" fill="#0F6E56">the whole structure BM25 reads next.</text>
+        <text x="731" y="550" font-size="9.5" fill="#9a4034">the query was never added — it is</text>
+        <text x="731" y="563" font-size="9.5" fill="#9a4034">used to LOOK UP in Step 3.</text>
+      </g>
+
+      <g id="fx"></g>
+    </svg>
+  </div>
+
+  <div class="note" id="note">Click <b>▶ Build index</b>. Each chunk's terms fly into the index — a new term opens a row, a repeat term appends its chunk. Watch <b>aml</b>'s row grow when c2 arrives.</div>
+  <div class="legend">
+    <span class="sw" style="background:#1d3a5f"></span> chunk term (indexed)
+    <span class="sw" style="background:#C0392B"></span> query term (set aside)
+    <span class="sw" style="background:#EF9F27"></span> inverted index
+    <span class="sw" style="background:#1D9E75"></span> build stats / output
+  </div></section>
+  <section class="stepsec" id="sec3"><div class="controls">
+    <button class="act run" id="runBtn">▶ Retrieve</button>
+    <button class="act" id="resetBtn">↺ Reset</button>
+  </div>
+
+  <div class="scene">
+    <svg width="100%" viewBox="0 0 980 612" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="tip" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M1.5 1L8.5 5L1.5 9" fill="none" stroke="#cbc7bb" stroke-width="1.8"></path>
+        </marker>
+      </defs>
+      <line x1="272" y1="200" x2="324" y2="200" stroke="#dcd8ce" stroke-width="2" marker-end="url(#tip)"></line>
+      <line x1="668" y1="300" x2="702" y2="300" stroke="#dcd8ce" stroke-width="2" marker-end="url(#tip)"></line>
+
+      <!-- ===================== LEFT: THE QUERY ===================== -->
+      <rect x="20" y="44" width="252" height="544" rx="12" fill="#fbfcfd" stroke="#cfd6df" stroke-width="1.4"></rect>
+      <text x="34" y="66" font-size="11.5" font-weight="700" fill="#C0392B">THE QUERY · used now</text>
+      <rect x="34" y="78" width="224" height="60" rx="8" fill="#fff" stroke="#C0392B" stroke-width="1.5"></rect>
+      <text x="46" y="96" font-size="9.5" font-weight="700" fill="#C0392B">the user's question</text>
+      <text x="46" y="114" font-size="10.5" class="mono" fill="#333">What is the AML</text>
+      <text x="46" y="128" font-size="10.5" class="mono" fill="#333">threshold over $10,000?</text>
+
+      <text x="46" y="162" font-size="9.5" fill="#9a4034">↓ SAME analyzer as the index (Step 1)</text>
+      <text x="46" y="182" font-size="9.5" fill="#5F5E5A">terms = lookup keys (not stored):</text>
+      <g id="qchips"><rect id="qk_aml" x="46" y="196" width="40.2" height="24" rx="5" fill="#FBEAE7" stroke="#C0392B" stroke-width="1.4"></rect><text x="66.1" y="212" text-anchor="middle" font-size="11" font-weight="700" class="mono" fill="#9a4034">aml</text><rect id="qk_threshold" x="46" y="228" width="84.60000000000001" height="24" rx="5" fill="#fff" stroke="#C0392B" stroke-width="1.4"></rect><text x="88.30000000000001" y="244" text-anchor="middle" font-size="11" font-weight="700" class="mono" fill="#9a4034">threshold</text><rect id="qk_10000" x="46" y="260" width="55" height="24" rx="5" fill="#FBEAE7" stroke="#C0392B" stroke-width="1.4"></rect><text x="73.5" y="276" text-anchor="middle" font-size="11" font-weight="700" class="mono" fill="#9a4034">10000</text></g>
+
+      <text x="46" y="300" font-size="9.5" fill="#5F5E5A">Each key drops onto its row →</text>
+      <text x="46" y="314" font-size="9.5" fill="#5F5E5A">its postings are the candidates.</text>
+      <text x="46" y="334" font-size="9.5" fill="#C0392B">A key with no row (df 0) matches</text>
+      <text x="46" y="348" font-size="9.5" fill="#C0392B">nothing — the vocabulary miss.</text>
+
+      <!-- ===================== CENTER: INVERTED INDEX ===================== -->
+      <rect x="324" y="44" width="344" height="544" rx="12" fill="#FFFDF8" stroke="#EF9F27" stroke-width="1.8" id="indexBox"></rect>
+      <text x="338" y="66" font-size="12" font-weight="800" fill="#854F0B">THE INVERTED INDEX · from Step 2</text>
+      <text x="338" y="80" font-size="9.5" fill="#9a6a14">term → postings (chunk : tf)  ·  we only READ it here</text>
+      <line x1="338" y1="90" x2="654" y2="90" stroke="#e7c98c"></line>
+      <text x="344" y="102" font-size="9" font-weight="700" fill="#9a6a14">term</text>
+      <text x="470" y="102" font-size="9" font-weight="700" fill="#9a6a14">df</text>
+      <text x="508" y="102" font-size="9" font-weight="700" fill="#9a6a14">postings (chunk : tf)</text>
+      <g id="idxRows"><text x="344" y="120" font-size="11" font-weight="700" class="mono" fill="#854F0B">aml</text><text x="470" y="120" font-size="10" class="mono" fill="#C0392B" font-weight="800">2</text><rect x="508" y="107" width="48" height="20" rx="4" fill="#fff" stroke="#e7c98c" stroke-width="1"></rect><text x="532" y="121" text-anchor="middle" font-size="9.5" class="mono" fill="#5a4a2a">c1:1</text><rect x="562" y="107" width="48" height="20" rx="4" fill="#fff" stroke="#e7c98c" stroke-width="1"></rect><text x="586" y="121" text-anchor="middle" font-size="9.5" class="mono" fill="#5a4a2a">c2:1</text><text x="344" y="150" font-size="11" font-weight="700" class="mono" fill="#854F0B">report</text><text x="470" y="150" font-size="10" class="mono" fill="#9a6a14" font-weight="400">1</text><rect x="508" y="137" width="48" height="20" rx="4" fill="#fff" stroke="#e7c98c" stroke-width="1"></rect><text x="532" y="151" text-anchor="middle" font-size="9.5" class="mono" fill="#5a4a2a">c1:1</text><text x="344" y="180" font-size="11" font-weight="700" class="mono" fill="#854F0B">filed</text><text x="470" y="180" font-size="10" class="mono" fill="#9a6a14" font-weight="400">1</text><rect x="508" y="167" width="48" height="20" rx="4" fill="#fff" stroke="#e7c98c" stroke-width="1"></rect><text x="532" y="181" text-anchor="middle" font-size="9.5" class="mono" fill="#5a4a2a">c1:1</text><text x="344" y="210" font-size="11" font-weight="700" class="mono" fill="#854F0B">cash</text><text x="470" y="210" font-size="10" class="mono" fill="#9a6a14" font-weight="400">1</text><rect x="508" y="197" width="48" height="20" rx="4" fill="#fff" stroke="#e7c98c" stroke-width="1"></rect><text x="532" y="211" text-anchor="middle" font-size="9.5" class="mono" fill="#5a4a2a">c1:1</text><text x="344" y="240" font-size="11" font-weight="700" class="mono" fill="#854F0B">10000</text><text x="470" y="240" font-size="10" class="mono" fill="#9a6a14" font-weight="400">1</text><rect x="508" y="227" width="48" height="20" rx="4" fill="#fff" stroke="#e7c98c" stroke-width="1"></rect><text x="532" y="241" text-anchor="middle" font-size="9.5" class="mono" fill="#5a4a2a">c1:1</text><text x="344" y="270" font-size="11" font-weight="700" class="mono" fill="#854F0B">wire</text><text x="470" y="270" font-size="10" class="mono" fill="#9a6a14" font-weight="400">1</text><rect x="508" y="257" width="48" height="20" rx="4" fill="#fff" stroke="#e7c98c" stroke-width="1"></rect><text x="532" y="271" text-anchor="middle" font-size="9.5" class="mono" fill="#5a4a2a">c2:1</text><text x="344" y="300" font-size="11" font-weight="700" class="mono" fill="#854F0B">transfer</text><text x="470" y="300" font-size="10" class="mono" fill="#9a6a14" font-weight="400">1</text><rect x="508" y="287" width="48" height="20" rx="4" fill="#fff" stroke="#e7c98c" stroke-width="1"></rect><text x="532" y="301" text-anchor="middle" font-size="9.5" class="mono" fill="#5a4a2a">c2:1</text><text x="344" y="330" font-size="11" font-weight="700" class="mono" fill="#854F0B">flagged</text><text x="470" y="330" font-size="10" class="mono" fill="#9a6a14" font-weight="400">1</text><rect x="508" y="317" width="48" height="20" rx="4" fill="#fff" stroke="#e7c98c" stroke-width="1"></rect><text x="532" y="331" text-anchor="middle" font-size="9.5" class="mono" fill="#5a4a2a">c2:1</text><text x="344" y="360" font-size="11" font-weight="700" class="mono" fill="#854F0B">review</text><text x="470" y="360" font-size="10" class="mono" fill="#9a6a14" font-weight="400">1</text><rect x="508" y="347" width="48" height="20" rx="4" fill="#fff" stroke="#e7c98c" stroke-width="1"></rect><text x="532" y="361" text-anchor="middle" font-size="9.5" class="mono" fill="#5a4a2a">c2:1</text><text x="344" y="390" font-size="11" font-weight="700" class="mono" fill="#854F0B">kyc</text><text x="470" y="390" font-size="10" class="mono" fill="#9a6a14" font-weight="400">1</text><rect x="508" y="377" width="48" height="20" rx="4" fill="#fff" stroke="#e7c98c" stroke-width="1"></rect><text x="532" y="391" text-anchor="middle" font-size="9.5" class="mono" fill="#5a4a2a">c3:1</text><text x="344" y="420" font-size="11" font-weight="700" class="mono" fill="#854F0B">identity</text><text x="470" y="420" font-size="10" class="mono" fill="#9a6a14" font-weight="400">1</text><rect x="508" y="407" width="48" height="20" rx="4" fill="#fff" stroke="#e7c98c" stroke-width="1"></rect><text x="532" y="421" text-anchor="middle" font-size="9.5" class="mono" fill="#5a4a2a">c3:1</text><text x="344" y="450" font-size="11" font-weight="700" class="mono" fill="#854F0B">check</text><text x="470" y="450" font-size="10" class="mono" fill="#9a6a14" font-weight="400">1</text><rect x="508" y="437" width="48" height="20" rx="4" fill="#fff" stroke="#e7c98c" stroke-width="1"></rect><text x="532" y="451" text-anchor="middle" font-size="9.5" class="mono" fill="#5a4a2a">c3:1</text><text x="344" y="480" font-size="11" font-weight="700" class="mono" fill="#854F0B">onboarding</text><text x="470" y="480" font-size="10" class="mono" fill="#9a6a14" font-weight="400">1</text><rect x="508" y="467" width="48" height="20" rx="4" fill="#fff" stroke="#e7c98c" stroke-width="1"></rect><text x="532" y="481" text-anchor="middle" font-size="9.5" class="mono" fill="#5a4a2a">c3:1</text></g>
+
+      <!-- ===================== RIGHT: RANKED RESULTS ===================== -->
+      <rect x="702" y="44" width="258" height="544" rx="12" fill="#EFF4FB" stroke="#185FA5" stroke-width="1.5"></rect>
+      <text x="716" y="66" font-size="11.5" font-weight="700" fill="#1d3a5f">RANKED RESULTS · BM25</text>
+      <text id="rightEmpty" x="831" y="300" text-anchor="middle" font-size="11" fill="#b9c8de">— run retrieve —</text>
+      <g id="resultRows"></g>
+
+      <g id="fx"></g>
+    </svg>
+  </div>
+
+  <div class="note" id="note">Click <b>▶ Retrieve</b>. Each query term drops onto its row in the index; postings light up as candidates. Then BM25 ranks them — watch <b>10000</b> (rarer) outweigh <b>aml</b>.</div>
+  <div class="legend">
+    <span class="sw" style="background:#C0392B"></span> query key
+    <span class="sw" style="background:#EF9F27"></span> matched row / postings
+    <span class="sw" style="background:#185FA5"></span> ranked result
+    <span class="sw" style="background:#bdbdbd"></span> no match (df 0)
+  </div></section>
+</div>
+<script>
+(function(){
+
+const NS="http://www.w3.org/2000/svg";
+const ROOT=document.getElementById("sec1");const $=id=>ROOT.querySelector("#"+id);
+const PACE=1.8;   // ← global slow-motion dial: raise for slower, lower for faster
+
+/* ---- the analyzer, in JS (mirrors the Python one) ---- */
+const STOP=new Set(["for","over","at","the","is","what","a","an","of","to","and","or","be","by","on","in"]);
+function lowerJoin(s){ return s.toLowerCase().replace(/(\d),(?=\d)/g,"$1"); }
+function tokenize(s){ return (lowerJoin(s).match(/[a-z0-9]+/g))||[]; }
+function isStop(t){ return STOP.has(t); }
+
+/* ---- the four inputs ---- */
+const INPUTS=[
+  {id:"c1", kind:"data",  raw:"AML report filed for cash over $10,000", cx:256, cy:114, color:"#1d3a5f"},
+  {id:"c2", kind:"data",  raw:"Wire transfer flagged for AML review",   cx:256, cy:198, color:"#1d3a5f"},
+  {id:"c3", kind:"data",  raw:"KYC identity check at onboarding",       cx:256, cy:282, color:"#1d3a5f"},
+  {id:"q",  kind:"query", raw:"What is the AML threshold over $10,000?", cx:256, cy:396, color:"#C0392B"},
+];
+const GATE=[490,300];               // centre of the analyzer (trace panel)
+const TERM_ROW_X=720;
+function termRowY(i){ return 86 + i*44 + (i===3?18:0); }   // small gap before the query row
+
+/* ---- motion helpers (same lerp/travel as the reference demo) ---- */
+function lerp(pts,t){ const seg=[]; let tot=0;
+  for(let i=1;i<pts.length;i++){ const L=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]); seg.push(L); tot+=L; }
+  let d=t*tot;
+  for(let i=1;i<pts.length;i++){ if(d<=seg[i-1]||i===pts.length-1){ const f=seg[i-1]?d/seg[i-1]:0;
+    return [pts[i-1][0]+(pts[i][0]-pts[i-1][0])*f, pts[i-1][1]+(pts[i][1]-pts[i-1][1])*f]; } d-=seg[i-1]; }
+  return pts[pts.length-1]; }
+function travel(el,pts,dur){ return new Promise(res=>{ const start=performance.now(); const D=dur*PACE;
+  (function fr(now){ const t=Math.min(1,(now-start)/D), te=t*t*(3-2*t); const [x,y]=lerp(pts,te);
+    el.setAttribute("transform",`translate(${x.toFixed(1)},${y.toFixed(1)})`);
+    if(t<1) requestAnimationFrame(fr); else res(); })(performance.now()); }); }
+const wait=ms=>new Promise(r=>setTimeout(r,ms*PACE));
+function flash(el,sw){ const o=el.getAttribute("stroke-width"); el.setAttribute("stroke-width",sw||"4"); setTimeout(()=>el.setAttribute("stroke-width",o),520); }
+
+/* a small travelling packet: a rounded card with a label */
+function packet(label,color,fill){
+  const g=document.createElementNS(NS,"g");
+  const r=document.createElementNS(NS,"rect");
+  r.setAttribute("x",-46); r.setAttribute("y",-14); r.setAttribute("width",92); r.setAttribute("height",28);
+  r.setAttribute("rx",6); r.setAttribute("fill",fill); r.setAttribute("stroke",color); r.setAttribute("stroke-width","1.6");
+  const t=document.createElementNS(NS,"text"); t.setAttribute("text-anchor","middle"); t.setAttribute("y",4);
+  t.setAttribute("font-size","10"); t.setAttribute("font-weight","700"); t.setAttribute("fill",color); t.textContent=label;
+  g.appendChild(r); g.appendChild(t); $("fx").appendChild(g); return g;
+}
+
+/* lay out chips left-to-right inside the trace panel */
+function chips(groupId, toks, mode){   // mode: "tokens" | "terms"
+  const g=$(groupId); g.innerHTML="";
+  let x=352; const y=(mode==="tokens")?392:454;
+  toks.forEach(tok=>{
+    const stop = mode==="tokens" && isStop(tok.t);
+    const w=Math.max(20, tok.t.length*6.4+12);
+    const rect=document.createElementNS(NS,"rect");
+    rect.setAttribute("x",x); rect.setAttribute("y",y); rect.setAttribute("width",w); rect.setAttribute("height",18); rect.setAttribute("rx",4);
+    rect.setAttribute("fill", stop?"#f0eee8":(mode==="terms"?"#FAEEDA":"#fff7e8"));
+    rect.setAttribute("stroke", stop?"#ddd8cc":(mode==="terms"?"#EF9F27":"#ecd6a8"));
+    rect.setAttribute("stroke-width","1"); rect.setAttribute("opacity","0");
+    const txt=document.createElementNS(NS,"text"); txt.setAttribute("x",x+w/2); txt.setAttribute("y",y+13);
+    txt.setAttribute("text-anchor","middle"); txt.setAttribute("font-size","9.5"); txt.setAttribute("class","mono");
+    txt.setAttribute("fill", stop?"#aaa49a":(mode==="terms"?"#854F0B":"#5a4a2a"));
+    txt.setAttribute("font-weight", mode==="terms"?"700":"400");
+    txt.textContent=tok.t; txt.setAttribute("opacity","0");
+    if(stop){ const ln=document.createElementNS(NS,"line"); ln.setAttribute("x1",x+3); ln.setAttribute("y1",y+9);
+      ln.setAttribute("x2",x+w-3); ln.setAttribute("y2",y+9); ln.setAttribute("stroke","#bdb6a8"); ln.setAttribute("stroke-width","1"); ln.setAttribute("opacity","0"); ln.setAttribute("class","ck");
+      g.appendChild(rect); g.appendChild(txt); g.appendChild(ln); }
+    else { g.appendChild(rect); g.appendChild(txt); }
+    x+=w+5;
+  });
+  return g;
+}
+function reveal(groupId, withStrike){ const g=$(groupId);
+  [...g.children].forEach((el,i)=> setTimeout(()=>{ el.setAttribute("opacity","1"); }, i*95*PACE)); }
+function strikeStops(groupId){ [...$(groupId).querySelectorAll(".ck")].forEach(l=>l.setAttribute("opacity","1")); }
+function activate(polId){ const r=$(polId).querySelector("rect");
+  r.setAttribute("fill","#FAEEDA"); r.setAttribute("stroke","#EF9F27"); r.setAttribute("stroke-width","2");
+  setTimeout(()=>{ r.setAttribute("stroke-width","1.2"); }, 700); }
+
+function note(html){ $("note").innerHTML=html; }
+
+/* ---- one input's full pass through the gate ---- */
+async function analyzeOne(inp, rowIndex){
+  const isQ = inp.kind==="query";
+  $("card_"+inp.id).querySelector("rect").setAttribute("stroke-width","3"); flash($("card_"+inp.id).querySelector("rect"),"3");
+  note(`Analyzing <b>${inp.id}</b>${isQ?" (the query)":""}: the raw text slides into the gate…`);
+
+  // 1) packet travels INTO the gate
+  const pk=packet(inp.id+" · text", inp.color, isQ?"#FBEAE7":"#E6EEF7");
+  pk.setAttribute("transform",`translate(${inp.cx},${inp.cy})`);
+  await travel(pk,[[inp.cx,inp.cy],[GATE[0],GATE[1]]],1400);
+  pk.remove(); flash($("analyzerBox"),"3.2");
+
+  // reset trace panel for this input
+  $("trWho").textContent=inp.id+(isQ?" · query":" · data chunk");
+  $("trRaw").textContent=inp.raw; $("trLower").textContent="";
+  $("trTokens").innerHTML=""; $("trTerms").innerHTML=""; $("trMsg").textContent="";
+
+  // 2) policy 1a: normalize (fold look-alikes) — spotlight the FIRST time it fires
+  activate("pol1a");
+  if(!firstNormalizeShown){ firstNormalizeShown=true; await wait(300); await showNormalizeSpotlight(); }
+  await wait(450);
+  // 2b) policy 1b: lowercase + join numbers shown in the trace
+  activate("pol1b"); await wait(550);
+  $("trLower").textContent=lowerJoin(inp.raw).replace(/\?$/,"");
+  // 3) policy 3 (numbers) note flashes if a comma-number exists
+  if(/\d,\d/.test(inp.raw)){ activate("pol3"); }
+  await wait(650);
+
+  // 4) policy 2: tokenize -> spotlight the FIRST time, then show all token chips
+  activate("pol2");
+  if(!firstTokenizeShown){ firstTokenizeShown=true; await wait(300); await showTokenizeSpotlight(); }
+  const toks=tokenize(inp.raw).map(t=>({t}));
+  chips("trTokens", toks, "tokens"); reveal("trTokens"); await wait(900);
+
+  // 5) policy 4: drop stopwords -> strike the grey ones
+  activate("pol4"); strikeStops("trTokens"); await wait(850);
+
+  // 6) emit TERMS
+  const terms=toks.filter(o=>!isStop(o.t));
+  chips("trTerms", terms, "terms"); reveal("trTerms");
+  $("trMsg").textContent=`→ ${terms.length} terms` + (isQ? "  (query terms — used to LOOK UP, never stored)" : "  (will go on to build postings in Step 2)");
+  await wait(1100);
+
+  // 7) terms packet travels OUT to the right panel
+  const tp=packet(inp.id+" terms","#0F6E56","#E1F5EE");
+  tp.setAttribute("transform",`translate(${GATE[0]},${GATE[1]})`);
+  const ry=termRowY(rowIndex);
+  await travel(tp,[[GATE[0],GATE[1]],[652,300],[TERM_ROW_X+20,ry]],1500);
+  tp.remove();
+
+  // 8) seat the row in the TERMS OUT panel
+  $("termsEmpty").style.display="none";
+  const g=document.createElementNS(NS,"g"); g.setAttribute("opacity","0");
+  const termStr="["+terms.map(o=>o.t).join(", ")+"]";
+  const col=isQ?"#C0392B":"#1d3a5f";
+  g.innerHTML=
+    `<text x="${TERM_ROW_X}" y="${ry}" font-size="11" font-weight="800" fill="${col}">${inp.id}${isQ?" (query)":""}</text>`+
+    `<text x="${TERM_ROW_X}" y="${ry+16}" font-size="10.5" class="mono" fill="#0F6E56">${termStr}</text>`;
+  $("termsRows").appendChild(g);
+  [...Array(6)].forEach((_,k)=> setTimeout(()=>g.setAttribute("opacity", String(Math.min(1,(k+1)/5))), k*60));
+  $("card_"+inp.id).querySelector("rect").setAttribute("stroke-width", isQ?"1.5":"1.4");
+  await wait(700);
+}
+
+/* ====================== one-time NORMALIZE spotlight + closing CONVERGENCE ====================== */
+const SVG=ROOT.querySelector("svg");
+let firstNormalizeShown=false;
+let firstTokenizeShown=false;
+
+function ovChip(x,y,ch,stroke){
+  return `<rect x="${x}" y="${y}" width="30" height="26" rx="4" fill="#fff" stroke="${stroke}" stroke-width="1.3"/>`+
+         `<text x="${x+15}" y="${y+18}" text-anchor="middle" font-size="14" class="mono" fill="${stroke}">${ch}</text>`;
+}
+function ovChipRow(x,y,chars,stroke){ return chars.map((c,i)=>ovChip(x+i*36,y,c,stroke)).join(""); }
+
+function buildOverlay(inner){
+  const g=document.createElementNS(NS,"g"); g.setAttribute("id","overlay");
+  g.innerHTML='<rect x="0" y="0" width="980" height="612" fill="rgba(15,28,46,0.55)"/>'+inner;
+  SVG.appendChild(g);
+  g.querySelectorAll(".rv").forEach(el=>{ const d=+(el.getAttribute("data-d")||0);
+    el.setAttribute("style","opacity:0;transition:opacity .55s ease");
+    setTimeout(()=>{ el.style.opacity="1"; }, (250+d*450)*PACE); });
+  return g;
+}
+function overlayGate(g){ return new Promise(res=>{ let done=false;
+  const fin=()=>{ if(done) return; done=true; if(g.parentNode) g.remove(); res(); };
+  const btn=g.querySelector("#ovBtn"); if(btn) btn.addEventListener("click",fin);
+  g.querySelector("rect").addEventListener("click",fin);     // backdrop click also continues
+  /* auto-advance removed */                                     // or auto-advance (generous reading time)
+}); }
+
+async function showNormalizeSpotlight(){
+  const A=ovChipRow(250,202,["c","a","f","é"],"#1d3a5f");
+  const B=ovChipRow(250,258,["c","a","f","e","´"],"#9a4034");
+  const inner=`
+   <rect x="150" y="92" width="680" height="416" rx="14" fill="#fff" stroke="#EF9F27" stroke-width="2"/>
+   <text x="180" y="126" font-size="17" font-weight="800" fill="#1d3a5f">Normalize — fold look-alikes into ONE term</text>
+   <text x="180" y="146" font-size="11" fill="#5F5E5A">Lowercasing is the part you can see. These equivalences hide in the bytes —</text>
+   <text x="180" y="160" font-size="11" fill="#5F5E5A">they cause silent “the word is right there but search finds nothing” bugs.</text>
+   <text x="180" y="188" font-size="10.5" font-weight="800" fill="#854F0B">the classic trap — two “café”s that look identical on screen:</text>
+   <g class="rv" data-d="1">
+     <text x="180" y="221" font-size="14" class="mono" fill="#1d3a5f">café</text>
+     <text x="226" y="221" font-size="13" fill="#bbb">→</text>${A}
+     <text x="404" y="212" font-size="9.5" fill="#5F5E5A">4 code points</text>
+     <text x="404" y="226" font-size="9.5" fill="#5F5E5A">é is one char · U+00E9</text>
+   </g>
+   <g class="rv" data-d="2">
+     <text x="180" y="277" font-size="14" class="mono" fill="#9a4034">café</text>
+     <text x="226" y="277" font-size="13" fill="#bbb">→</text>${B}
+     <text x="440" y="268" font-size="9.5" fill="#5F5E5A">5 code points</text>
+     <text x="440" y="282" font-size="9.5" fill="#5F5E5A">e (U+0065) + ´ (U+0301)</text>
+   </g>
+   <text class="rv" data-d="3" x="180" y="312" font-size="10.5" fill="#C0392B">Same glyphs on screen — different bytes. As-is, they would NOT match.</text>
+   <g class="rv" data-d="4">
+     <text x="180" y="343" font-size="11" font-weight="700" fill="#0F6E56">↓ NFKC normalize</text>
+     <rect x="320" y="329" width="50" height="22" rx="5" fill="#E1F5EE" stroke="#1D9E75"/>
+     <text x="345" y="344" text-anchor="middle" font-size="12" class="mono" fill="#0F6E56">café</text>
+     <text x="382" y="344" font-size="11" fill="#0F6E56">→ one canonical form → one term ✓</text>
+   </g>
+   <g class="rv" data-d="5">
+     <text x="180" y="384" font-size="11" class="mono" fill="#1d3a5f">AML → aml</text>
+     <text x="180" y="396" font-size="8" fill="#9a6a14">case fold</text>
+     <text x="330" y="384" font-size="11" class="mono" fill="#1d3a5f">ＡＭＬ → AML</text>
+     <text x="330" y="396" font-size="8" fill="#9a6a14">full-width → ASCII</text>
+     <text x="520" y="384" font-size="11" class="mono" fill="#1d3a5f">Zürich → zurich</text>
+     <text x="520" y="396" font-size="8" fill="#9a6a14">accent fold</text>
+   </g>
+   <text class="rv" data-d="6" x="180" y="430" font-size="10" fill="#5F5E5A">All fold to one canonical form — so the same word is always the same term, on documents AND the query.</text>
+   <rect id="ovBtn" x="710" y="462" width="106" height="30" rx="7" fill="#EF9F27" style="cursor:pointer"/>
+   <text x="763" y="482" text-anchor="middle" font-size="12" font-weight="700" fill="#3a2606" style="pointer-events:none">Continue ▶</text>`;
+  note("<b>Normalize</b> — the gate first folds look-alikes (case, Unicode, width, accents) into one canonical form. Watch the “café” trap…");
+  const g=buildOverlay(inner); await overlayGate(g);
+}
+
+async function showTokenizeSpotlight(){
+  // built from c1 AFTER normalize: "aml report filed for cash over $10000"
+  const toks=[["aml",0],["report",1],["filed",2],["for",3],["cash",4],["over",5],["10000",6]];
+  let x=180, chipsSvg="";
+  toks.forEach(([t,p])=>{ const w=t.length*7.2+16; const stop=(t==="for"||t==="over");
+    chipsSvg+=`<rect x="${x}" y="250" width="${w}" height="28" rx="5" fill="${stop?'#fbf7ee':'#fff7e8'}" stroke="#ecd6a8" stroke-width="1.2"/>`+
+              `<text x="${x+w/2}" y="268" text-anchor="middle" font-size="12" class="mono" fill="#5a4a2a">${t}</text>`+
+              `<text x="${x+w/2}" y="292" text-anchor="middle" font-size="9" fill="#9a6a14">pos ${p}</text>`;
+    x+=w+8; });
+  const inner=`
+   <rect x="150" y="92" width="680" height="424" rx="14" fill="#fff" stroke="#EF9F27" stroke-width="2"/>
+   <text x="180" y="126" font-size="17" font-weight="800" fill="#1d3a5f">Split into tokens — find the boundaries</text>
+   <text x="180" y="146" font-size="11" fill="#5F5E5A">The tokenizer cuts the character stream into <b>tokens</b> (the candidate terms) and stamps each</text>
+   <text x="180" y="160" font-size="11" fill="#5F5E5A">with a <b>position</b> and an <b>offset</b>. It only finds boundaries — it judges nothing.</text>
+
+   <text x="180" y="190" font-size="9.5" fill="#9a6a14">c1, after normalize (step 1):</text>
+   <text class="rv" data-d="1" x="180" y="208" font-size="14" class="mono" fill="#1d3a5f">aml report filed for cash over <tspan fill="#C0392B">$</tspan>10000</text>
+   <text class="rv" data-d="2" x="180" y="232" font-size="10.5" fill="#854F0B">↓ cut on spaces &amp; punctuation — the <tspan fill="#C0392B" font-weight="700">$</tspan> is a separator, so it's dropped (not a term)</text>
+
+   <g class="rv" data-d="3">${chipsSvg}</g>
+
+   <g class="rv" data-d="4">
+     <rect x="180" y="312" width="262" height="96" rx="9" fill="#fffdf8" stroke="#EF9F27" stroke-width="1.3"/>
+     <text x="194" y="330" font-size="10" font-weight="800" fill="#854F0B">a token is a RECORD, not a string:</text>
+     <text x="200" y="350" font-size="11" class="mono" fill="#1d3a5f">term:     "10000"</text>
+     <text x="200" y="366" font-size="11" class="mono" fill="#1d3a5f">position: 6</text>
+     <text x="200" y="382" font-size="11" class="mono" fill="#1d3a5f">offset:   32–37</text>
+     <text x="200" y="398" font-size="11" class="mono" fill="#1d3a5f">type:     num</text>
+     <text x="462" y="338" font-size="10.5" fill="#5F5E5A">position + offset travel with every</text>
+     <text x="462" y="353" font-size="10.5" fill="#5F5E5A">token — that's what later lets phrase</text>
+     <text x="462" y="368" font-size="10.5" fill="#5F5E5A">search ask "are these adjacent?",</text>
+     <text x="462" y="383" font-size="10.5" fill="#5F5E5A">and the offset lets you highlight</text>
+     <text x="462" y="398" font-size="10.5" fill="#5F5E5A">the hit in the original text.</text>
+   </g>
+   <text class="rv" data-d="5" x="180" y="436" font-size="10.5" fill="#C0392B">These are TOKENS, not final terms yet: <tspan class="mono">for</tspan> and <tspan class="mono">over</tspan> are still here — the tokenizer never drops stopwords.</text>
+   <text class="rv" data-d="5" x="180" y="452" font-size="10.5" fill="#5F5E5A">Stopwords go in step 4; stemming in step 5. One job per stage.</text>
+   <rect id="ovBtn" x="710" y="470" width="106" height="30" rx="7" fill="#EF9F27" style="cursor:pointer"/>
+   <text x="763" y="490" text-anchor="middle" font-size="12" font-weight="700" fill="#3a2606" style="pointer-events:none">Continue ▶</text>`;
+  note("<b>Split into tokens</b> — the tokenizer finds boundaries and stamps each token with a position + offset. Watch it cut c1…");
+  const g=buildOverlay(inner); await overlayGate(g);
+}
+
+async function showConvergence(){
+  const inner=`
+   <rect x="150" y="120" width="680" height="372" rx="14" fill="#fff" stroke="#1d3a5f" stroke-width="2"/>
+   <text x="180" y="156" font-size="16" font-weight="800" fill="#1d3a5f">Normalize only helps if it runs on BOTH sides</text>
+   <text x="180" y="176" font-size="11" fill="#5F5E5A">The invariant: the same gate on documents AND the query. Break it by accident → silent zero hits.</text>
+   <g class="rv" data-d="1">
+     <rect x="180" y="196" width="620" height="84" rx="9" fill="#F1FBF6" stroke="#1D9E75"/>
+     <text x="196" y="216" font-size="11" font-weight="800" fill="#0F6E56">✓ normalize ON both sides</text>
+     <text x="210" y="240" font-size="11" class="mono" fill="#1d3a5f">chunk: "Café"</text>
+     <text x="316" y="240" font-size="10" fill="#0F6E56">— normalize →</text>
+     <text x="430" y="240" font-size="11" class="mono" fill="#0F6E56">cafe</text>
+     <text x="210" y="262" font-size="11" class="mono" fill="#9a4034">query: "café"</text>
+     <text x="316" y="262" font-size="10" fill="#0F6E56">— normalize →</text>
+     <text x="430" y="262" font-size="11" class="mono" fill="#0F6E56">cafe</text>
+     <rect x="558" y="220" width="160" height="36" rx="8" fill="#E1F5EE" stroke="#1D9E75"/>
+     <text x="638" y="243" text-anchor="middle" font-size="12" font-weight="800" fill="#0F6E56">same term → MATCH</text>
+   </g>
+   <g class="rv" data-d="2">
+     <rect x="180" y="296" width="620" height="84" rx="9" fill="#FCF1EF" stroke="#C0392B"/>
+     <text x="196" y="316" font-size="11" font-weight="800" fill="#C0392B">✗ normalize skipped on the query</text>
+     <text x="210" y="340" font-size="11" class="mono" fill="#1d3a5f">chunk: "Café"</text>
+     <text x="316" y="340" font-size="10" fill="#0F6E56">— normalize →</text>
+     <text x="430" y="340" font-size="11" class="mono" fill="#0F6E56">cafe</text>
+     <text x="210" y="362" font-size="11" class="mono" fill="#9a4034">query: "café"</text>
+     <text x="316" y="362" font-size="10" fill="#C0392B">— skipped —→</text>
+     <text x="430" y="362" font-size="11" class="mono" fill="#C0392B">café</text>
+     <rect x="558" y="320" width="160" height="36" rx="8" fill="#FBEAE7" stroke="#C0392B"/>
+     <text x="638" y="343" text-anchor="middle" font-size="12" font-weight="800" fill="#C0392B">cafe ≠ café → 0 hits</text>
+   </g>
+   <text class="rv" data-d="3" x="180" y="412" font-size="10.5" fill="#5F5E5A">Accidental asymmetry is the #1 silent search bug — no error, no stack trace, just empty results.</text>
+   <rect id="ovBtn" x="694" y="446" width="120" height="32" rx="7" fill="#1d3a5f" style="cursor:pointer"/>
+   <text x="754" y="467" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff" style="pointer-events:none">Got it ✓</text>`;
+  note("One last thing about normalize — it must run on <b>both</b> sides. Here's why…");
+  const g=buildOverlay(inner); await overlayGate(g);
+}
+
+let running=false;
+async function run(){
+  if(running) return; running=true; $("runBtn").disabled=true; reset(true);
+  for(let i=0;i<INPUTS.length;i++){
+    if(i===3) note("Now the <b>query</b> — the same gate, the same four policies. It is just another input.");
+    await analyzeOne(INPUTS[i], i);
+  }
+  await showConvergence();
+  note("Done. <b>Same gate, every input.</b> Each chunk and the query became <b>terms</b>. "+
+       "Next (Step 2): the chunks' terms build the inverted index (postings). "+
+       "The query's terms are used to <b>look up</b> those postings — the query itself is never stored.");
+  running=false; $("runBtn").disabled=false;
+}
+function reset(keepRunningFlag){
+  if(!keepRunningFlag) running=false;
+  const ov=$("overlay"); if(ov) ov.remove();
+  $("fx").innerHTML=""; $("termsRows").innerHTML=""; $("termsEmpty").style.display="";
+  $("trWho").textContent="—"; $("trRaw").textContent="—"; $("trLower").textContent="";
+  $("trTokens").innerHTML=""; $("trTerms").innerHTML=""; $("trMsg").textContent="";
+  if(!keepRunningFlag) note("Click <b>▶ Analyze</b>. Each input slides into the gate, the four policies fire in turn, and its <b>terms</b> drop into the right-hand panel — chunks first, then the query.");
+}
+$("runBtn").addEventListener("click", run);
+$("resetBtn").addEventListener("click", ()=>{ if(!running) reset(false); });
+
+})();
+(function(){
+
+const NS="http://www.w3.org/2000/svg";
+const ROOT=document.getElementById("sec2");const $=id=>ROOT.querySelector("#"+id);
+const PACE=1.5;   // ← global slow-motion dial
+
+/* the term lists Step 1 produced */
+const CHUNKS=[
+  {id:"c1", cy:106, terms:["aml","report","filed","cash","10000"]},
+  {id:"c2", cy:174, terms:["wire","transfer","flagged","aml","review"]},
+  {id:"c3", cy:242, terms:["kyc","identity","check","onboarding"]},
+];
+const GATE=[490,86];               // intake at the top of the index
+
+/* motion helpers (same as Step 1) */
+function lerp(pts,t){ const seg=[]; let tot=0;
+  for(let i=1;i<pts.length;i++){ const L=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]); seg.push(L); tot+=L; }
+  let d=t*tot;
+  for(let i=1;i<pts.length;i++){ if(d<=seg[i-1]||i===pts.length-1){ const f=seg[i-1]?d/seg[i-1]:0;
+    return [pts[i-1][0]+(pts[i][0]-pts[i-1][0])*f, pts[i-1][1]+(pts[i][1]-pts[i-1][1])*f]; } d-=seg[i-1]; }
+  return pts[pts.length-1]; }
+function travel(el,pts,dur){ return new Promise(res=>{ const start=performance.now(); const D=dur*PACE;
+  (function fr(now){ const t=Math.min(1,(now-start)/D), te=t*t*(3-2*t); const [x,y]=lerp(pts,te);
+    el.setAttribute("transform",`translate(${x.toFixed(1)},${y.toFixed(1)})`);
+    if(t<1) requestAnimationFrame(fr); else res(); })(performance.now()); }); }
+const wait=ms=>new Promise(r=>setTimeout(r,ms*PACE));
+function flash(el,sw){ if(!el) return; const o=el.getAttribute("stroke-width"); el.setAttribute("stroke-width",sw||"4"); setTimeout(()=>el.setAttribute("stroke-width",o),520); }
+function note(html){ $("note").innerHTML=html; }
+function termPacket(label,color,fill){
+  const g=document.createElementNS(NS,"g");
+  const w=Math.max(34,label.length*7+16);
+  g.innerHTML=`<rect x="${-w/2}" y="-12" width="${w}" height="24" rx="5" fill="${fill}" stroke="${color}" stroke-width="1.6"/>`+
+    `<text x="0" y="4" text-anchor="middle" font-size="11" font-weight="700" class="mono" fill="${color}">${label}</text>`;
+  $("fx").appendChild(g); return g;
+}
+
+/* ---------- the index model + render ---------- */
+let model={}, order=[], docLen={};
+function renderIndex(flashTerm){
+  const g=$("idxRows");
+  let html="";
+  order.forEach((term,i)=>{
+    const e=model[term], top=120+i*30;
+    let px=508, posts="";
+    Object.keys(e.postings).sort().forEach(cid=>{
+      const isNew = flashTerm===term;
+      posts+=`<rect x="${px}" y="${top-13}" width="48" height="20" rx="4" fill="${isNew?'#FAEEDA':'#fff'}" stroke="#e7c98c" stroke-width="1"/>`+
+             `<text x="${px+24}" y="${top+1}" text-anchor="middle" font-size="9.5" class="mono" fill="#5a4a2a">${cid}:${e.postings[cid]}</text>`;
+      px+=54;
+    });
+    const hl = flashTerm===term;
+    if(hl) html+=`<rect x="338" y="${top-15}" width="316" height="26" rx="5" fill="#fff5e2"/>`;
+    html+=`<text x="344" y="${top}" font-size="11" font-weight="${hl?800:700}" class="mono" fill="#854F0B">${term}</text>`+
+          `<text x="470" y="${top}" font-size="10" class="mono" fill="${e.df>1?'#C0392B':'#9a6a14'}" font-weight="${e.df>1?800:400}">${e.df}</text>`+
+          posts;
+  });
+  g.innerHTML=html;
+}
+function setStats(){
+  ["c1","c2","c3"].forEach(c=> $("dl"+c).textContent = docLen[c]!=null?docLen[c]:"—");
+  const ks=Object.keys(docLen);
+  $("avgdl").textContent = ks.length? (ks.reduce((s,k)=>s+docLen[k],0)/ks.length).toFixed(2) : "—";
+  $("nterms").textContent = order.length;
+}
+
+/* ---------- overlay machinery (same as Step 1) ---------- */
+const SVG=ROOT.querySelector("svg");
+function buildOverlay(inner){
+  const g=document.createElementNS(NS,"g"); g.setAttribute("id","overlay");
+  g.innerHTML='<rect x="0" y="0" width="980" height="612" fill="rgba(15,28,46,0.55)"/>'+inner;
+  SVG.appendChild(g);
+  g.querySelectorAll(".rv").forEach(el=>{ const d=+(el.getAttribute("data-d")||0);
+    el.setAttribute("style","opacity:0;transition:opacity .55s ease");
+    setTimeout(()=>{ el.style.opacity="1"; }, (250+d*450)*PACE); });
+  return g;
+}
+function overlayGate(g){ return new Promise(res=>{ let done=false;
+  const fin=()=>{ if(done) return; done=true; if(g.parentNode) g.remove(); res(); };
+  const btn=g.querySelector("#ovBtn"); if(btn) btn.addEventListener("click",fin);
+  g.querySelector("rect").addEventListener("click",fin);
+  /* auto-advance removed */ }); }
+
+async function showIntro(){
+  const inner=`
+   <rect x="160" y="120" width="660" height="372" rx="14" fill="#fff" stroke="#1d3a5f" stroke-width="2"/>
+   <text x="190" y="156" font-size="16" font-weight="800" fill="#1d3a5f">Index the chunks — set the query aside</text>
+   <text x="190" y="178" font-size="11" fill="#5F5E5A">Step 1 produced terms for the 3 chunks AND the query. Only the CHUNKS' terms build the index.</text>
+   <g class="rv" data-d="1">
+     <rect x="190" y="200" width="280" height="120" rx="9" fill="#E6EEF7" stroke="#1d3a5f"/>
+     <text x="206" y="222" font-size="11" font-weight="800" fill="#1d3a5f">the 3 chunks → INDEXED</text>
+     <text x="206" y="246" font-size="10.5" class="mono" fill="#1d3a5f">c1 · c2 · c3 terms</text>
+     <text x="206" y="266" font-size="10" fill="#5F5E5A">each term becomes a row /</text>
+     <text x="206" y="280" font-size="10" fill="#5F5E5A">joins an existing one (postings)</text>
+     <text x="206" y="304" font-size="10" font-weight="700" fill="#0F6E56">→ they get STORED</text>
+   </g>
+   <g class="rv" data-d="2">
+     <rect x="500" y="200" width="290" height="120" rx="9" fill="#FBEAE7" stroke="#C0392B" stroke-dasharray="5 4"/>
+     <text x="516" y="222" font-size="11" font-weight="800" fill="#C0392B">the query → SET ASIDE</text>
+     <text x="516" y="246" font-size="10.5" class="mono" fill="#9a4034">aml · threshold · 10000</text>
+     <text x="516" y="266" font-size="10" fill="#9a4034">a query has no "document" to</text>
+     <text x="516" y="280" font-size="10" fill="#9a4034">belong to — nothing to store.</text>
+     <text x="516" y="304" font-size="10" font-weight="700" fill="#C0392B">→ used in Step 3 to LOOK UP</text>
+   </g>
+   <text class="rv" data-d="3" x="190" y="356" font-size="10.5" fill="#5F5E5A">Postings only make sense for stored documents. The query is a question you ask OF the index, not a row IN it.</text>
+   <rect id="ovBtn" x="694" y="430" width="126" height="32" rx="7" fill="#1d3a5f" style="cursor:pointer"/>
+   <text x="757" y="451" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff" style="pointer-events:none">Build it ▶</text>`;
+  note("First — <b>only the chunks get indexed.</b> The query is set aside for Step 3…");
+  const g=buildOverlay(inner); await overlayGate(g);
+  $("qTag").textContent="(set aside → Step 3)";
+  $("row_q").querySelector("rect").setAttribute("opacity","0.55");
+}
+
+async function showPostings(){
+  const inner=`
+   <rect x="150" y="100" width="680" height="412" rx="14" fill="#fff" stroke="#EF9F27" stroke-width="2"/>
+   <text x="180" y="134" font-size="17" font-weight="800" fill="#1d3a5f">Postings — count, don't calculate</text>
+   <text x="180" y="154" font-size="11" fill="#5F5E5A">As each term arrives we record which chunk it came from. Two numbers fall out — by counting,</text>
+   <text x="180" y="168" font-size="11" fill="#5F5E5A">not by any formula. Watch <b>aml</b>'s row:</text>
+
+   <g class="rv" data-d="1">
+     <text x="180" y="206" font-size="11" fill="#5F5E5A">c1's <tspan class="mono" font-weight="700" fill="#854F0B">aml</tspan> arrives → new row opens:</text>
+     <text x="430" y="206" font-size="13" class="mono" fill="#854F0B">aml → { c1:1 }</text>
+     <text x="600" y="206" font-size="11" class="mono" fill="#9a6a14">df 1</text>
+   </g>
+   <g class="rv" data-d="2">
+     <text x="180" y="240" font-size="11" fill="#5F5E5A">c2's <tspan class="mono" font-weight="700" fill="#854F0B">aml</tspan> arrives → APPEND c2:</text>
+     <text x="430" y="240" font-size="13" class="mono" fill="#854F0B">aml → { c1:1, <tspan fill="#C0392B" font-weight="800">c2:1</tspan> }</text>
+     <text x="600" y="240" font-size="11" class="mono" fill="#C0392B" font-weight="800">df 2</text>
+   </g>
+
+   <g class="rv" data-d="3">
+     <rect x="180" y="262" width="620" height="86" rx="9" fill="#fffdf8" stroke="#EF9F27"/>
+     <text x="196" y="284" font-size="11" font-weight="800" fill="#854F0B">the two counts (no formula — just bookkeeping):</text>
+     <text x="206" y="306" font-size="11" class="mono" fill="#1d3a5f">tf</text>
+     <text x="240" y="306" font-size="10.5" fill="#333">= times the term appears <b>in that chunk</b> → the <tspan class="mono">:1</tspan> on each posting (incremented on insert)</text>
+     <text x="206" y="328" font-size="11" class="mono" fill="#1d3a5f">df</text>
+     <text x="240" y="328" font-size="10.5" fill="#333">= how many chunks contain it = <b>length of the postings list</b> (here 2) — it just falls out</text>
+   </g>
+   <text class="rv" data-d="4" x="180" y="372" font-size="10.5" fill="#0F6E56">The value <tspan class="mono" font-weight="700">{ c1:1, c2:1 }</tspan> is the <b>cell</b> — this term's postings list.</text>
+   <text class="rv" data-d="5" x="180" y="396" font-size="10.5" fill="#C0392B">No scoring happens here. tf &amp; df are counts. BM25 (Step 3) READS them — it is not run now.</text>
+   <text class="rv" data-d="5" x="180" y="416" font-size="10.5" fill="#5F5E5A">This append — c2 joining aml's existing row — is the whole idea of an <b>inverted</b> index.</text>
+   <rect id="ovBtn" x="710" y="456" width="106" height="30" rx="7" fill="#EF9F27" style="cursor:pointer"/>
+   <text x="763" y="476" text-anchor="middle" font-size="12" font-weight="700" fill="#3a2606" style="pointer-events:none">Continue ▶</text>`;
+  note("<b>aml</b> already has a row — c2 just appends to it. Here's what the two counts mean…");
+  const g=buildOverlay(inner); await overlayGate(g);
+}
+
+async function showOutput(){
+  const inner=`
+   <rect x="170" y="140" width="640" height="332" rx="14" fill="#fff" stroke="#1D9E75" stroke-width="2"/>
+   <text x="200" y="176" font-size="16" font-weight="800" fill="#0F6E56">Output — the inverted index</text>
+   <text x="200" y="198" font-size="11" fill="#5F5E5A">Step 2 is done. What we built is one data structure:</text>
+   <g class="rv" data-d="1">
+     <text x="200" y="228" font-size="12" class="mono" fill="#854F0B">term → postings</text>
+     <text x="420" y="228" font-size="10.5" fill="#5F5E5A">e.g. aml → { c1:1, c2:1 }, df 2</text>
+     <text x="200" y="252" font-size="12" class="mono" fill="#0F6E56">+ doc_len</text>
+     <text x="420" y="252" font-size="10.5" fill="#5F5E5A">c1=5 · c2=5 · c3=4</text>
+     <text x="200" y="276" font-size="12" class="mono" fill="#0F6E56">+ avgdl</text>
+     <text x="420" y="276" font-size="10.5" fill="#5F5E5A">4.67</text>
+   </g>
+   <text class="rv" data-d="2" x="200" y="312" font-size="11" font-weight="700" fill="#1d3a5f">This is the whole structure BM25 reads in Step 3 — nothing else is needed to rank.</text>
+   <g class="rv" data-d="3">
+     <rect x="200" y="328" width="580" height="48" rx="9" fill="#FBEAE7" stroke="#C0392B"/>
+     <text x="216" y="348" font-size="10.5" font-weight="800" fill="#C0392B">the query is NOT in here.</text>
+     <text x="216" y="365" font-size="10" fill="#9a4034">Its terms (Step 1) are held to LOOK UP these postings in Step 3 — a question asked OF the index, never a row in it.</text>
+   </g>
+   <rect id="ovBtn" x="688" y="428" width="106" height="30" rx="7" fill="#1D9E75" style="cursor:pointer"/>
+   <text x="741" y="448" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" style="pointer-events:none">Done ✓</text>`;
+  note("Done. <b>Output = the inverted index</b> — term → postings, plus doc_len &amp; avgdl.");
+  const g=buildOverlay(inner); await overlayGate(g);
+}
+
+/* ---------- the build ---------- */
+let firstPostingsShown=false;
+async function buildChunk(ch){
+  flash($("row_"+ch.id).querySelector("rect"),"3");
+  docLen[ch.id]=ch.terms.length;
+  for(const term of ch.terms){
+    const existed = !!model[term];
+    const isAppend = existed && !model[term].postings[ch.id];
+
+    // teaching beat: the FIRST time a term joins an EXISTING row (c2's aml)
+    if(isAppend && !firstPostingsShown){ firstPostingsShown=true; await showPostings(); }
+
+    note(`<b>${ch.id}</b> · term <span class="mono" style="color:#854F0B;font-weight:700">${term}</span> → `+
+         (existed?`append to its existing row`:`new row`));
+    const pk=termPacket(term, "#1d3a5f", "#E6EEF7");
+    pk.setAttribute("transform",`translate(256,${ch.cy})`);
+    await travel(pk,[[256,ch.cy],[GATE[0],GATE[1]]],620);
+    pk.remove(); $("idxEmpty").style.display="none";
+
+    // record: create row or append; bump tf; df = #postings
+    if(!model[term]){ model[term]={postings:{},df:0}; order.push(term); }
+    model[term].postings[ch.id]=(model[term].postings[ch.id]||0)+1;
+    model[term].df=Object.keys(model[term].postings).length;
+
+    flash($("indexBox"),"2.6");
+    renderIndex(term); setStats();
+    await wait(isAppend?900:180);     // linger on the meaningful append
+    renderIndex(null);                // drop the highlight
+  }
+  setStats();
+  await wait(400);
+}
+
+let running=false;
+async function run(){
+  if(running) return; running=true; $("runBtn").disabled=true; reset(true);
+  await showIntro();
+  for(const ch of CHUNKS){ note(`Indexing <b>${ch.id}</b> — its ${ch.terms.length} terms fly into the index…`); await buildChunk(ch); }
+  $("outBadge").setAttribute("opacity","1");
+  await showOutput();
+  note("Done. The <b>inverted index</b> is built: 13 term rows, <b>aml</b> the only df 2. "+
+       "It holds term→postings + doc_len + avgdl — the structure <b>Step 3 (BM25)</b> reads. The query was never indexed.");
+  running=false; $("runBtn").disabled=false;
+}
+function reset(keepRunningFlag){
+  if(!keepRunningFlag) running=false;
+  const ov=$("overlay"); if(ov) ov.remove();
+  model={}; order=[]; docLen={}; firstPostingsShown=false;
+  $("idxRows").innerHTML=""; $("fx").innerHTML=""; $("idxEmpty").style.display="";
+  $("outBadge").setAttribute("opacity","0"); $("qTag").textContent="(waiting…)";
+  $("row_q").querySelector("rect").setAttribute("opacity","1");
+  setStats();
+  if(!keepRunningFlag) note("Click <b>▶ Build index</b>. Each chunk's terms fly into the index — a new term opens a row, a repeat term appends its chunk. Watch <b>aml</b>'s row grow when c2 arrives.");
+}
+$("runBtn").addEventListener("click", run);
+$("resetBtn").addEventListener("click", ()=>{ if(!running) reset(false); });
+reset(false);
+
+})();
+(function(){
+
+const NS="http://www.w3.org/2000/svg";
+const ROOT=document.getElementById("sec3");const $=id=>ROOT.querySelector("#"+id);
+const PACE=1.6;   // ← global slow-motion dial
+
+/* the index built in Step 2 (term lists per chunk) */
+const CHUNKS=[
+  {id:"c1", terms:["aml","report","filed","cash","10000"]},
+  {id:"c2", terms:["wire","transfer","flagged","aml","review"]},
+  {id:"c3", terms:["kyc","identity","check","onboarding"]},
+];
+/* the query, analyzed by the SAME analyzer → these keys (Step 1) */
+const QKEYS=[
+  {t:"aml",       inIdx:true,  df:2, idf:0.470, postings:["c1","c2"]},
+  {t:"threshold", inIdx:false, df:0, idf:0,     postings:[]},
+  {t:"10000",     inIdx:true,  df:1, idf:0.981, postings:["c1"]},
+];
+/* simple "match points" (primary teaching number) + the exact BM25 (shown small) */
+const PTS ={c1:3, c2:1, c3:0};            // 1 pt per matched query word, rare word = 2
+const BM25={c1:1.41, c2:0.46, c3:0.00};   // the precise scores (kept in the detail)
+
+/* ---- motion helpers ---- */
+function lerp(pts,t){ const seg=[]; let tot=0;
+  for(let i=1;i<pts.length;i++){ const L=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]); seg.push(L); tot+=L; }
+  let d=t*tot;
+  for(let i=1;i<pts.length;i++){ if(d<=seg[i-1]||i===pts.length-1){ const f=seg[i-1]?d/seg[i-1]:0;
+    return [pts[i-1][0]+(pts[i][0]-pts[i-1][0])*f, pts[i-1][1]+(pts[i][1]-pts[i-1][1])*f]; } d-=seg[i-1]; }
+  return pts[pts.length-1]; }
+function travel(el,pts,dur){ return new Promise(res=>{ const start=performance.now(); const D=dur*PACE;
+  (function fr(now){ const t=Math.min(1,(now-start)/D), te=t*t*(3-2*t); const [x,y]=lerp(pts,te);
+    el.setAttribute("transform",`translate(${x.toFixed(1)},${y.toFixed(1)})`);
+    if(t<1) requestAnimationFrame(fr); else res(); })(performance.now()); }); }
+const wait=ms=>new Promise(r=>setTimeout(r,ms*PACE));
+function flash(el,sw){ if(!el) return; const o=el.getAttribute("stroke-width"); el.setAttribute("stroke-width",sw||"4"); setTimeout(()=>el.setAttribute("stroke-width",o),520); }
+function note(html){ $("note").innerHTML=html; }
+
+/* ---- build the index model once + render (read-only) ---- */
+let model={}, order=[], rowY={};
+(function build(){ for(const c of CHUNKS) for(const t of c.terms){
+  if(!model[t]){ model[t]={postings:{},df:0}; order.push(t); }
+  model[t].postings[c.id]=(model[t].postings[c.id]||0)+1; model[t].df=Object.keys(model[t].postings).length; }})();
+
+function renderIndex(matched){
+  matched=matched||new Set();
+  let html="";
+  order.forEach((term,i)=>{
+    const e=model[term], top=120+i*30; rowY[term]=top;
+    const on=matched.has(term);
+    let px=508, posts="";
+    Object.keys(e.postings).sort().forEach(cid=>{
+      posts+=`<rect x="${px}" y="${top-13}" width="48" height="20" rx="4" fill="${on?'#FAEEDA':'#fff'}" stroke="${on?'#EF9F27':'#e7c98c'}" stroke-width="${on?1.6:1}"/>`+
+             `<text x="${px+24}" y="${top+1}" text-anchor="middle" font-size="9.5" class="mono" fill="#5a4a2a">${cid}:${e.postings[cid]}</text>`;
+      px+=54;
+    });
+    if(on) html+=`<rect x="338" y="${top-15}" width="316" height="26" rx="5" fill="#fff2d8"/>`;
+    const dim = matched.size && !on;
+    html+=`<text x="344" y="${top}" font-size="11" font-weight="${on?800:700}" class="mono" fill="${dim?'#cbb99a':'#854F0B'}">${term}</text>`+
+          `<text x="470" y="${top}" font-size="10" class="mono" fill="${dim?'#cbb99a':(e.df>1?'#C0392B':'#9a6a14')}" font-weight="${e.df>1?800:400}">${e.df}</text>`+
+          posts;
+  });
+  $("idxRows").innerHTML=html;
+}
+renderIndex();
+
+/* query key chips on the left (sources that fly) */
+const QPOS={};
+(function chips(){ let y=196, html="";
+  QKEYS.forEach(k=>{ const w=k.t.length*7.4+18;
+    html+=`<rect id="qk_${k.t}" x="46" y="${y}" width="${w}" height="24" rx="5" fill="${k.inIdx?'#FBEAE7':'#fff'}" stroke="#C0392B" stroke-width="1.4"/>`+
+          `<text x="${46+w/2}" y="${y+16}" text-anchor="middle" font-size="11" font-weight="700" class="mono" fill="#9a4034">${k.t}</text>`;
+    QPOS[k.t]=[46+w/2, y+12]; y+=32; });
+  $("qchips").innerHTML=html;
+})();
+
+function keyPacket(label){
+  const g=document.createElementNS(NS,"g"); const w=label.length*7.4+18;
+  g.innerHTML=`<rect x="${-w/2}" y="-12" width="${w}" height="24" rx="5" fill="#FBEAE7" stroke="#C0392B" stroke-width="1.6"/>`+
+    `<text x="0" y="4" text-anchor="middle" font-size="11" font-weight="700" class="mono" fill="#9a4034">${label}</text>`;
+  $("fx").appendChild(g); return g;
+}
+
+/* ---- right results ---- */
+function renderResults(showScores){
+  const rows = showScores
+    ? [["c1",3],["c2",3],["c3",4]].map(([id,pg])=>({id,pg,pts:PTS[id],bm:BM25[id]})).sort((a,b)=>b.pts-a.pts)
+    : [["c1",3],["c2",3],["c3",4]].map(([id,pg])=>({id,pg}));   // candidate phase: fixed order, NOT ranked yet
+  const max=3; let html="";
+  rows.forEach((r,i)=>{
+    const top=92+i*92;
+    if(showScores){
+      const zero=r.pts===0, isTop=i===0&&r.pts>0;
+      const w=Math.max(2, Math.round(r.pts/max*200));
+      html+=`<rect x="716" y="${top}" width="230" height="80" rx="9" fill="${zero?'#f4f4f2':'#fff'}" stroke="${isTop?'#185FA5':(zero?'#ddd':'#cdd9e8')}" stroke-width="${isTop?2:1.2}"/>`+
+        `<text x="730" y="${top+20}" font-size="11" font-weight="800" fill="${zero?'#9a968c':'#1d3a5f'}">#${i+1} · ${r.id} <tspan font-weight="400" fill="#888">· p${r.pg}</tspan>${isTop?' <tspan fill="#185FA5">★ best</tspan>':''}</text>`+
+        `<rect x="730" y="${top+30}" width="200" height="9" rx="4" fill="#e6eaf0"/>`+
+        `<rect x="730" y="${top+30}" width="${w}" height="9" rx="4" fill="${zero?'#c9c7c0':'#185FA5'}"/>`+
+        `<text x="730" y="${top+58}" font-size="13" class="mono" font-weight="800" fill="${zero?'#9a968c':'#185FA5'}">${r.pts} pts</text>`+
+        `<text x="792" y="${top+54}" font-size="9" fill="#5F5E5A">${r.id==='c1'?'aml + 10000 (rare!)':r.id==='c2'?'aml only':'no query words'}</text>`+
+        `<text x="792" y="${top+66}" font-size="8" fill="#9a968c">BM25 ${r.bm.toFixed(2)}</text>`;
+    } else {
+      const isCand=cand.has(r.id);
+      html+=`<rect x="716" y="${top}" width="230" height="80" rx="9" fill="${isCand?'#fff':'#f7f7f5'}" stroke="${isCand?'#cdd9e8':'#e6e3dc'}" stroke-width="1.2"/>`+
+        `<text x="730" y="${top+20}" font-size="11" font-weight="800" fill="${isCand?'#1d3a5f':'#b9b5ac'}">${r.id} <tspan font-weight="400" fill="#888">· p${r.pg}</tspan></text>`+
+        `<text x="730" y="${top+52}" font-size="9.5" fill="${isCand?'#0F6E56':'#b9b5ac'}">${isCand?'candidate — contains a query word':'— no query word (yet)'}</text>`;
+    }
+  });
+  $("resultRows").innerHTML=html;
+}
+
+/* ---- overlay machinery (click to advance; NO auto-close) ---- */
+const SVG=ROOT.querySelector("svg");
+function buildOverlay(inner){
+  const g=document.createElementNS(NS,"g"); g.setAttribute("id","overlay");
+  g.innerHTML='<rect x="0" y="0" width="980" height="612" fill="rgba(15,28,46,0.55)"/>'+inner;
+  SVG.appendChild(g);
+  g.querySelectorAll(".rv").forEach(el=>{ const d=+(el.getAttribute("data-d")||0);
+    el.setAttribute("style","opacity:0;transition:opacity .55s ease");
+    setTimeout(()=>{ el.style.opacity="1"; }, (250+d*450)*PACE); });
+  return g;
+}
+function overlayGate(g){ return new Promise(res=>{ let done=false;
+  const fin=()=>{ if(done) return; done=true; if(g.parentNode) g.remove(); res(); };
+  const btn=g.querySelector("#ovBtn"); if(btn) btn.addEventListener("click",fin);
+  g.querySelector("rect").addEventListener("click",fin);   // backdrop click advances; no timer
+}); }
+
+async function showIntro(){
+  const inner=`
+   <rect x="160" y="120" width="660" height="360" rx="14" fill="#fff" stroke="#185FA5" stroke-width="2"/>
+   <text x="190" y="156" font-size="16" font-weight="800" fill="#1d3a5f">Retrieve — the query is used now</text>
+   <text x="190" y="178" font-size="11" fill="#5F5E5A">In Step 1 the query went through the SAME analyzer as the chunks. Those terms were held aside.</text>
+   <text x="190" y="192" font-size="11" fill="#5F5E5A">Here they finally do their job — as <b>lookup keys</b>.</text>
+   <g class="rv" data-d="1">
+     <rect x="190" y="212" width="600" height="70" rx="9" fill="#FBEAE7" stroke="#C0392B" stroke-dasharray="5 4"/>
+     <text x="206" y="234" font-size="11" font-weight="800" fill="#C0392B">query keys:  <tspan class="mono">aml · threshold · 10000</tspan></text>
+     <text x="206" y="256" font-size="10.5" fill="#9a4034">They are NOT added to the index. A query is a question asked OF the index —</text>
+     <text x="206" y="272" font-size="10.5" fill="#9a4034">each key looks up its row and reads off the chunks (postings) that contain it.</text>
+   </g>
+   <text class="rv" data-d="2" x="190" y="312" font-size="10.5" fill="#5F5E5A">Reading rows is instant — no chunk text is scanned. That's the whole payoff of inverting the index.</text>
+   <text class="rv" data-d="2" x="190" y="332" font-size="10.5" fill="#185FA5">Then BM25 ranks the candidates by READING the counts Step 2 recorded (tf, df, doc_len, avgdl).</text>
+   <rect id="ovBtn" x="694" y="426" width="126" height="32" rx="7" fill="#185FA5" style="cursor:pointer"/>
+   <text x="757" y="447" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff" style="pointer-events:none">Look it up ▶</text>`;
+  note("First — the query is <b>looked up, not stored</b>. Same analyzer made these keys…");
+  const g=buildOverlay(inner); await overlayGate(g);
+}
+
+async function showBM25(){
+  const inner=`
+   <rect x="150" y="72" width="680" height="478" rx="14" fill="#fff" stroke="#185FA5" stroke-width="2"/>
+   <text x="180" y="104" font-size="17" font-weight="800" fill="#1d3a5f">Scoring — count the matched words (rare ones count more)</text>
+   <text x="180" y="124" font-size="11" fill="#5F5E5A">Take chunk <tspan font-weight="700" fill="#854F0B">c1</tspan>. Its score = a point for each query word it contains —</text>
+   <text x="180" y="138" font-size="11" fill="#5F5E5A">and a rarer word (one that sits in fewer chunks) is worth more.</text>
+
+   <g class="rv" data-d="1">
+     <rect x="180" y="154" width="620" height="122" rx="9" fill="#EFF4FB" stroke="#185FA5"/>
+     <text x="196" y="174" font-size="9.5" font-weight="700" fill="#185FA5">query word</text>
+     <text x="320" y="174" font-size="9.5" font-weight="700" fill="#185FA5">in c1?</text>
+     <text x="410" y="174" font-size="9.5" font-weight="700" fill="#185FA5">how common is it?</text>
+     <text x="706" y="174" font-size="9.5" font-weight="700" fill="#185FA5">points</text>
+     <line x1="196" y1="180" x2="784" y2="180" stroke="#cdd9e8"/>
+     <text x="196" y="202" font-size="12" class="mono" fill="#1d3a5f">aml</text>
+     <text x="320" y="202" font-size="11" fill="#0F6E56">✓ yes</text>
+     <text x="410" y="202" font-size="10.5" fill="#5F5E5A">common — in 2 of 3 chunks</text>
+     <text x="714" y="202" font-size="13" font-weight="800" fill="#185FA5">1</text>
+     <text x="196" y="226" font-size="12" class="mono" fill="#9a4034">threshold</text>
+     <text x="320" y="226" font-size="11" fill="#C0392B">✗ no</text>
+     <text x="410" y="226" font-size="10.5" fill="#9a4034">not in the index at all</text>
+     <text x="714" y="226" font-size="13" font-weight="800" fill="#9a968c">0</text>
+     <text x="196" y="250" font-size="12" class="mono" fill="#1d3a5f">10000</text>
+     <text x="320" y="250" font-size="11" fill="#0F6E56">✓ yes</text>
+     <text x="410" y="250" font-size="10.5" fill="#854F0B">rare — in only 1 of 3 chunks</text>
+     <text x="714" y="250" font-size="13" font-weight="800" fill="#185FA5">2</text>
+     <line x1="196" y1="258" x2="784" y2="258" stroke="#185FA5"/>
+     <text x="410" y="272" font-size="11.5" font-weight="800" fill="#1d3a5f">c1 total</text>
+     <text x="710" y="272" font-size="14" font-weight="800" fill="#185FA5">3</text>
+   </g>
+
+   <text class="rv" data-d="2" x="180" y="302" font-size="12" fill="#1d3a5f"><tspan font-weight="800">c1 = 3</tspan>  (aml + the rare 10000)   ·   <tspan font-weight="800">c2 = 1</tspan>  (only aml)   ·   <tspan font-weight="800">c3 = 0</tspan>  (no query words)</text>
+   <text class="rv" data-d="3" x="180" y="326" font-size="11" fill="#0F6E56">That's the whole idea: <tspan font-weight="800">more matched query words, and rare ones weigh more.</tspan> So c1 wins — on <tspan class="mono">10000</tspan>.</text>
+
+   <text id="ovToggle" class="rv" data-d="4" x="180" y="358" font-size="11" font-weight="700" fill="#185FA5" style="cursor:pointer">▾ how the rarity score (idf) is calculated  (click to hide)</text>
+   <g id="ovDetail" class="rv" data-d="5">
+     <rect x="180" y="362" width="620" height="150" rx="9" fill="#fbfcfe" stroke="#cdd9e8"/>
+     <text x="196" y="382" font-size="10" fill="#5F5E5A">The "points" are really <tspan class="mono" font-weight="700" fill="#185FA5">idf</tspan> — <b>inverse document frequency</b>. It turns rarity into a number:</text>
+     <text x="196" y="405" font-size="12.5" class="mono" font-weight="700" fill="#1d3a5f">idf  =  ln( 1 + (N − df + 0.5) / (df + 0.5) )</text>
+     <text x="196" y="423" font-size="9.5" fill="#5F5E5A"><tspan class="mono">N</tspan> = total chunks (here 3)  ·  <tspan class="mono">df</tspan> = how many chunks contain the term  ·  <tspan class="mono">ln</tspan> = natural log  ·  fewer → bigger idf</text>
+     <text x="200" y="446" font-size="10" class="mono" fill="#1d3a5f">aml</text><text x="300" y="446" font-size="10" class="mono" fill="#333">df 2</text><text x="352" y="446" font-size="10" class="mono" fill="#333">→ ln(1 + 1.5/2.5) = ln 1.60 = 0.470</text>
+     <text x="200" y="463" font-size="10" class="mono" font-weight="800" fill="#185FA5">10000</text><text x="300" y="463" font-size="10" class="mono" font-weight="800" fill="#185FA5">df 1</text><text x="352" y="463" font-size="10" class="mono" font-weight="800" fill="#185FA5">→ ln(1 + 2.5/1.5) = ln 2.67 = 0.981  (rarer → higher)</text>
+     <text x="200" y="480" font-size="10" class="mono" fill="#9a4034">threshold</text><text x="300" y="480" font-size="10" class="mono" fill="#9a4034">df 0</text><text x="352" y="480" font-size="10" class="mono" fill="#9a4034">→ not in the index → 0</text>
+     <line x1="196" y1="490" x2="784" y2="490" stroke="#e3e0d9"/>
+     <text x="196" y="506" font-size="10" class="mono" fill="#185FA5">these idf values are the points (BM25 scales them a little by length):  c1 = 0.455 + 0.950 = 1.406</text>
+   </g>
+   <rect id="ovBtn" x="710" y="520" width="106" height="26" rx="7" fill="#185FA5" style="cursor:pointer"/>
+   <text x="763" y="538" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" style="pointer-events:none">Continue ▶</text>`;
+  note("Now the scoring — kept as simple as it gets: count the matched words, rare ones count more…");
+  const g=buildOverlay(inner);
+  const tog=g.querySelector("#ovToggle"), det=g.querySelector("#ovDetail");
+  tog.addEventListener("click", ()=>{ const open=det.style.display!=="none";
+    det.style.display=open?"none":"block";
+    tog.textContent=(open?"▸":"▾")+" how the rarity score (idf) is calculated  ("+(open?"click to show":"click to hide")+")"; });
+  await overlayGate(g);
+}
+
+async function showOutput(){
+  const inner=`
+   <rect x="170" y="140" width="640" height="332" rx="14" fill="#fff" stroke="#1D9E75" stroke-width="2"/>
+   <text x="200" y="176" font-size="16" font-weight="800" fill="#0F6E56">Retrieved — top chunks → the LLM</text>
+   <text x="200" y="198" font-size="11" fill="#5F5E5A">Layer 2 just READ what Layer 1 built — no new data, no model.</text>
+   <g class="rv" data-d="1">
+     <text x="200" y="228" font-size="12" class="mono" fill="#185FA5">rank:  c1 (3 pts)  ›  c2 (1)  ›  c3 (0)</text>
+     <text x="200" y="252" font-size="10.5" fill="#5F5E5A">top-k go to the LLM as context (the demo's final step). Here top-2 = c1, c2.</text>
+   </g>
+   <g class="rv" data-d="2">
+     <rect x="200" y="272" width="580" height="70" rx="9" fill="#E1F5EE" stroke="#1D9E75"/>
+     <text x="216" y="294" font-size="10.5" font-weight="800" fill="#0F6E56">the whole pipeline, end to end:</text>
+     <text x="216" y="314" font-size="10.5" class="mono" fill="#1d3a5f">analyze → terms  ·  terms → inverted index  ·  query → look up → BM25 rank</text>
+     <text x="216" y="332" font-size="10" fill="#0F6E56">No embeddings anywhere — exact-term matching, start to finish.</text>
+   </g>
+   <text class="rv" data-d="3" x="200" y="372" font-size="10.5" fill="#C0392B"><tspan class="mono">threshold</tspan> matched nothing (df 0) — the keyword blind spot a hybrid (BM25 + vectors) would cover.</text>
+   <rect id="ovBtn" x="688" y="428" width="106" height="30" rx="7" fill="#1D9E75" style="cursor:pointer"/>
+   <text x="741" y="448" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" style="pointer-events:none">Done ✓</text>`;
+  note("Done. The query <b>read</b> the index and BM25 ranked the candidates.");
+  const g=buildOverlay(inner); await overlayGate(g);
+}
+
+/* ---- the retrieve run ---- */
+const matched=new Set(); const cand=new Set();
+async function lookupKey(k){
+  flash($("qk_"+k.t),"3");
+  const pk=keyPacket(k.t);
+  const [sx,sy]=QPOS[k.t]; pk.setAttribute("transform",`translate(${sx},${sy})`);
+  if(k.inIdx){
+    note(`key <span class="mono" style="color:#9a4034;font-weight:700">${k.t}</span> → its row exists → read postings <span class="mono">${k.postings.join(", ")}</span>`);
+    const ty=rowY[k.t];
+    await travel(pk,[[sx,sy],[300,ty],[344,ty]],900);
+    pk.remove();
+    matched.add(k.t); renderIndex(matched); flash($("indexBox"),"2.6");
+    k.postings.forEach(c=>cand.add(c));
+    $("rightEmpty").style.display="none"; renderResults(false);
+    await wait(900);
+  } else {
+    note(`key <span class="mono" style="color:#C0392B;font-weight:700">${k.t}</span> → <b>no row (df 0)</b> → matches nothing. The vocabulary miss.`);
+    await travel(pk,[[sx,sy],[400,300],[470,300]],900);
+    const r=pk.querySelector("rect"); r.setAttribute("fill","#f4dad5"); r.setAttribute("stroke","#C0392B");
+    flash(pk.querySelector("rect"),"3");
+    await wait(700);
+    // bounce back & fade
+    await travel(pk,[[470,300],[300,360],[sx,sy]],700); pk.remove();
+    await wait(300);
+  }
+}
+
+let running=false;
+async function run(){
+  if(running) return; running=true; $("runBtn").disabled=true; reset(true);
+  await showIntro();
+  for(const k of QKEYS){ await lookupKey(k); }
+  note(`Candidates gathered: <b>${[...cand].sort().join(", ")||"none"}</b>. Now score them — count matched words, rare ones weigh more…`);
+  await wait(500);
+  await showBM25();
+  note("Scoring… the bars fill by <b>match points</b> (rare words weigh more).");
+  renderResults(true);
+  await wait(900);
+  await showOutput();
+  note("Done. <b>c1 (3 pts) › c2 (1) › c3 (0)</b> — c1 wins on <b>10000</b> (the rare word). "+
+       "Simple rule: count the matched query words, rare ones weigh more. (BM25 is the exact version — top-k → the LLM.)");
+  running=false; $("runBtn").disabled=false;
+}
+function reset(keepRunningFlag){
+  if(!keepRunningFlag) running=false;
+  const ov=$("overlay"); if(ov) ov.remove();
+  matched.clear(); cand.clear();
+  renderIndex(); $("resultRows").innerHTML=""; $("fx").innerHTML=""; $("rightEmpty").style.display="";
+  if(!keepRunningFlag) note("Click <b>▶ Retrieve</b>. Each query term drops onto its row in the index; postings light up as candidates. Then BM25 ranks them — watch <b>10000</b> (rarer) outweigh <b>aml</b>.");
+}
+$("runBtn").addEventListener("click", run);
+$("resetBtn").addEventListener("click", ()=>{ if(!running) reset(false); });
+reset(false);
+
+})();
+
+(function(){ const tabs=[...document.querySelectorAll('.tab')];
+  function show(s){ tabs.forEach(t=>t.classList.toggle('on',t.dataset.s===s));
+    [1,2,3].forEach(i=>document.getElementById('sec'+i).classList.toggle('on', String(i)===s)); }
+  tabs.forEach(t=>t.addEventListener('click',()=>show(t.dataset.s))); show('1'); })();
+
+</script></body></html>

@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Travel Agent · Loop Runner</title>
+<style>
+  :root{
+    --navy:#1d3a5f; --navy2:#185FA5; --navyBg:#E6EEF7;
+    --teal:#0F6E56; --teal2:#1D9E75; --tealBg:#E1F5EE;
+    --amber:#854F0B; --amber2:#EF9F27; --amberBg:#FAEEDA;
+    --purple:#7B3FA0; --purpleBg:#F0E8F8;
+    --red:#C0392B; --redBg:#FBEAE7;
+    --ink:#23211c; --gray:#6b6960; --faint:#9a968b; --line:#e4e0d6;
+    --panel:#fbfaf6; --bg:#f3f1ea;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100vh;overflow:hidden}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg);
+       display:flex;flex-direction:column;font-size:13px}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  button{font:inherit;cursor:pointer;border:1px solid var(--line);background:#fff;border-radius:8px}
+  button:disabled{opacity:.4;cursor:default}
+
+  /* ===== header ===== */
+  header{flex-shrink:0;border-bottom:1px solid var(--line);background:#fff;padding:9px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .brand{display:flex;align-items:baseline;gap:9px}
+  .brand .t{font-size:15px;font-weight:800;color:var(--navy);letter-spacing:-.2px}
+  .brand .v{font-size:10.5px;font-weight:700;color:var(--faint)}
+  .spacer{flex:1}
+
+  /* provider segmented control — the signature element */
+  .engine{display:flex;flex-direction:column;gap:3px}
+  .engine .cap{font-size:8.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff}
+  .seg button{border:0;border-radius:0;background:#fff;padding:7px 13px;font-size:12px;font-weight:700;color:var(--gray);
+              border-right:1px solid var(--line);display:flex;align-items:center;gap:6px}
+  .seg button:last-child{border-right:0}
+  .seg button .d{width:8px;height:8px;border-radius:50%;background:#cfcabd}
+  .seg button[aria-pressed="true"]{color:#fff}
+  .seg button.mock[aria-pressed="true"]{background:var(--gray)}
+  .seg button.oai[aria-pressed="true"]{background:var(--teal)}
+  .seg button.ant[aria-pressed="true"]{background:var(--amber)}
+  .seg button[aria-pressed="true"] .d{background:#fff}
+
+  .badge{display:flex;flex-direction:column;gap:3px;min-width:172px}
+  .badge .cap{font-size:8.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .badge .chip{font-size:12px;font-weight:800;padding:6px 10px;border-radius:8px;border:1px solid;display:flex;align-items:center;gap:7px;white-space:nowrap}
+  .badge .chip .live{font-size:8.5px;font-weight:800;letter-spacing:.06em;padding:1px 6px;border-radius:10px}
+
+  .runs{display:flex;flex-direction:column;gap:3px}
+  .runs .cap{font-size:8.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .runs .btns{display:flex;gap:7px}
+  .runs button{padding:7px 15px;font-weight:700;font-size:12.5px}
+  .runs .run{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .runs .run:hover:not(:disabled){background:var(--navy2)}
+
+  .goal{display:flex;flex-direction:column;gap:3px;flex:1;min-width:220px}
+  .goal .cap{font-size:8.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .goal input{font:inherit;font-size:12.5px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;width:100%}
+  .goal input:focus{outline:2px solid var(--navy2);outline-offset:-1px}
+
+  /* ===== body ===== */
+  .body{flex:1;min-height:0;display:flex;gap:0}
+  .col{min-height:0;display:flex;flex-direction:column}
+  .loopcol{width:182px;flex-shrink:0;border-right:1px solid var(--line);background:var(--panel);padding:14px 12px;gap:14px}
+  .center{flex:1;min-width:0;background:var(--bg)}
+  .statecol{width:312px;flex-shrink:0;border-left:1px solid var(--line);background:var(--panel)}
+
+  .sectlbl{font-size:8.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+
+  /* loop indicator */
+  .loop3{display:flex;flex-direction:column;gap:7px}
+  .lstage{display:flex;align-items:center;gap:9px;padding:8px 9px;border:1px solid var(--line);border-radius:9px;background:#fff;transition:.2s}
+  .lstage .dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+  .lstage .nm{font-size:11.5px;font-weight:800;letter-spacing:.02em}
+  .lstage .sub{font-size:9px;color:var(--faint);margin-left:auto}
+  .lstage[data-on="1"]{box-shadow:0 0 0 2px currentColor inset}
+  .ls-sense{color:var(--amber)} .ls-sense .dot{background:var(--amber2)}
+  .ls-reason{color:var(--navy2)} .ls-reason .dot{background:var(--navy)}
+  .ls-act{color:var(--teal)} .ls-act .dot{background:var(--teal2)}
+  .lstage .nm,.lstage .sub{color:var(--ink)}
+  .lstage[data-on="1"] .nm{color:currentColor}
+
+  .loopnote{font-size:10.5px;line-height:1.5;color:var(--gray)}
+  .loopnote b{color:var(--navy)}
+  .turnpill{font-size:11px;font-weight:800;color:var(--navy);background:var(--navyBg);border:1px solid #cdd9ea;border-radius:8px;padding:6px 9px;text-align:center}
+  .enginepill{font-size:10px;font-weight:700;color:var(--gray);border:1px dashed var(--line);border-radius:8px;padding:7px 9px;line-height:1.45}
+
+  /* transcript */
+  .tstrip{flex-shrink:0;padding:8px 16px;border-bottom:1px solid var(--line);background:#fff;display:flex;align-items:center;gap:10px}
+  .tstrip .h{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .tstrip .mode{margin-left:auto;font-size:10.5px;font-weight:700;font-family:ui-monospace,monospace;padding:3px 9px;border-radius:7px}
+  .feed{flex:1;min-height:0;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+  .empty{margin:auto;text-align:center;color:var(--faint);max-width:330px;font-size:12.5px;line-height:1.6}
+  .empty b{color:var(--gray)}
+
+  .turn{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden;opacity:0;transform:translateY(6px);animation:rise .28s forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .turn .thd{display:flex;align-items:center;gap:9px;padding:7px 12px;border-bottom:1px solid var(--line);background:#fcfbf8}
+  .turn .tn{font-family:ui-monospace,monospace;font-size:11px;font-weight:800;color:#fff;background:var(--navy);border-radius:6px;padding:2px 8px}
+  .turn .tstage{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .turn .raw-t{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--navy2);background:#fff;border:1px solid var(--line);border-radius:6px;padding:3px 8px}
+  .blk{padding:9px 12px;border-bottom:1px solid #f0ede5}
+  .blk:last-child{border-bottom:0}
+  .blk .tag{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:1px 7px;border-radius:5px;margin-right:8px;vertical-align:middle}
+  .tag.reason{background:var(--navyBg);color:var(--navy2)}
+  .tag.act{background:var(--tealBg);color:var(--teal)}
+  .tag.result{background:var(--amberBg);color:var(--amber)}
+  .blk .txt{font-size:12.3px;line-height:1.5}
+  .call{font-family:ui-monospace,monospace;font-size:11.5px;color:var(--teal);font-weight:700;margin-top:5px}
+  .call .args{color:var(--gray)}
+  .rows{margin-top:7px;display:flex;flex-direction:column;gap:4px}
+  .rrow{display:flex;justify-content:space-between;font-family:ui-monospace,monospace;font-size:11px;border:1px solid var(--line);border-radius:6px;padding:4px 9px;background:#fcfbf8}
+  .rrow.win{border-color:var(--teal2);background:var(--tealBg)}
+  .rrow .nm{font-weight:700;color:var(--ink)} .rrow .pv{font-weight:800;color:var(--navy)}
+  .raw{border-top:1px dashed var(--line);background:#1d2230;color:#cdd6e6;font-family:ui-monospace,monospace;font-size:10.5px;
+       line-height:1.5;padding:10px 12px;white-space:pre;overflow-x:auto;display:none}
+  .raw .k{color:#9db4d6} .raw .s{color:#caa46a} .raw .c{color:#6f7a8f}
+  .turn.open .raw{display:block}
+
+  /* state column */
+  .scroll{flex:1;min-height:0;overflow-y:auto;padding:13px}
+  .ctx{border:1px solid var(--line);border-radius:11px;background:#fff;padding:10px 11px;margin-bottom:12px}
+  .ctx .hd{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--navy);margin-bottom:3px}
+  .ctx .hint{font-size:9.5px;color:var(--faint);margin-bottom:8px;font-family:ui-monospace,monospace}
+  .citem{font-family:ui-monospace,monospace;font-size:11px;border-radius:7px;padding:4px 9px;margin-bottom:5px;border:1px solid}
+  .ci-goal{background:var(--navyBg);border-color:#cdd9ea;color:var(--navy2)}
+  .ci-tools{background:#fff;border-color:var(--line);color:var(--gray)}
+  .ci-mem{background:var(--purpleBg);border-color:#e0d6ec;color:var(--purple)}
+  .ci-res{background:var(--amberBg);border-color:#efdcc0;color:var(--amber);opacity:0;height:0;padding:0 9px;margin:0;border-width:0;transition:.25s}
+  .ci-res.show{opacity:1;height:auto;padding:4px 9px;margin-bottom:5px;border-width:1px}
+
+  .meter{border:1px solid var(--line);border-radius:11px;background:#fff;padding:10px 11px;margin-bottom:12px}
+  .meter .hd{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--navy);margin-bottom:8px;display:flex;justify-content:space-between}
+  .meter .hd .v{font-family:ui-monospace,monospace;color:var(--faint)}
+  .meter .hd .v.over{color:var(--red)} .meter .hd .v.ok{color:var(--teal)}
+  .bar{height:13px;border-radius:7px;background:#edeae3;position:relative;overflow:hidden}
+  .bar > i{position:absolute;left:0;top:0;height:100%;width:0;background:var(--teal2);border-radius:7px;transition:width .6s cubic-bezier(.22,.61,.36,1),background .3s}
+  .bar > i.over{background:var(--red)}
+  .bar .cap{position:absolute;top:-3px;bottom:-3px;left:83.3%;width:2px;background:var(--navy)}
+  .meter .lg{font-size:9px;color:var(--faint);margin-top:5px;font-family:ui-monospace,monospace}
+
+  .itin{border:1px solid var(--line);border-radius:11px;background:#fff;padding:10px 11px}
+  .itin .hd{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--navy);margin-bottom:7px}
+  .itin .none{font-size:11px;color:var(--faint);font-family:ui-monospace,monospace}
+  .itin .line{font-family:ui-monospace,monospace;font-size:11.5px;display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0ede5}
+  .itin .line:last-child{border-bottom:0}
+  .itin .tot{font-weight:800;color:var(--teal);margin-top:6px;font-size:12.5px}
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="t">Travel Agent</span><span class="v mono">· loop runner</span></div>
+
+    <div class="goal">
+      <span class="cap">Goal</span>
+      <input id="goal" value="Goa · round-trip + 5★ hotel · 5 nights · under $5,000" spellcheck="false">
+    </div>
+
+    <div class="engine">
+      <span class="cap">Engine (reason step)</span>
+      <div class="seg" role="group" aria-label="Provider">
+        <button class="mock" id="p-mock" aria-pressed="true"><span class="d"></span>No model</button>
+        <button class="oai"  id="p-oai"  aria-pressed="false"><span class="d"></span>OpenAI</button>
+        <button class="ant"  id="p-ant"  aria-pressed="false"><span class="d"></span>Anthropic</button>
+      </div>
+    </div>
+
+    <div class="badge">
+      <span class="cap">Model</span>
+      <span class="chip" id="badge"></span>
+    </div>
+
+    <div class="runs">
+      <span class="cap">Run</span>
+      <div class="btns">
+        <button class="run" id="run">▸ Run</button>
+        <button id="step">Step</button>
+        <button id="reset">Reset</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="body">
+    <!-- loop column -->
+    <div class="col loopcol">
+      <div>
+        <div class="sectlbl">The loop</div>
+        <div class="loop3">
+          <div class="lstage ls-sense" id="ls-sense"><span class="dot"></span><span class="nm">SENSE</span><span class="sub">perceive</span></div>
+          <div class="lstage ls-reason" id="ls-reason"><span class="dot"></span><span class="nm">REASON</span><span class="sub">model</span></div>
+          <div class="lstage ls-act" id="ls-act"><span class="dot"></span><span class="nm">ACT</span><span class="sub">tool</span></div>
+        </div>
+      </div>
+      <div class="turnpill" id="turnpill">turn 0 / 4</div>
+      <div class="loopnote">The same loop runs no matter the engine. Only the <b>REASON</b> step swaps — mock, OpenAI, or Anthropic.</div>
+      <div class="enginepill mono" id="enginepill"></div>
+    </div>
+
+    <!-- transcript -->
+    <div class="col center">
+      <div class="tstrip">
+        <span class="h">Transcript</span>
+        <span class="mode mono" id="modebanner"></span>
+      </div>
+      <div class="feed" id="feed">
+        <div class="empty" id="empty">No turns yet. Pick an <b>engine</b>, then <b>Run</b> the loop —<br>or <b>Step</b> through one turn at a time.</div>
+      </div>
+    </div>
+
+    <!-- state column -->
+    <div class="col statecol">
+      <div class="scroll">
+        <div class="ctx">
+          <div class="hd">Context window · the prompt</div>
+          <div class="hint">re-sent &amp; re-read every turn — it grows</div>
+          <div class="citem ci-goal" id="ctx-goal">goal: Goa · 5★ · ≤ $5,000</div>
+          <div class="citem ci-tools">tools: search_flights, find_hotels, book_flight, book_hotel, get/save_user_profile</div>
+          <div class="citem ci-mem" id="ctx-mem">memory: — (read at start)</div>
+          <div class="citem ci-res" id="ctx-r1">+ flights: 3 fares</div>
+          <div class="citem ci-res" id="ctx-r2">+ hotels: 3 5★</div>
+          <div class="citem ci-res" id="ctx-r3">+ cheaper: 3 fares</div>
+          <div class="citem ci-res" id="ctx-r4">+ booking: confirmed</div>
+        </div>
+
+        <div class="meter">
+          <div class="hd"><span>Budget</span><span class="v mono" id="bval">$0 / $5,000</span></div>
+          <div class="bar"><i id="bfill"></i><span class="cap"></span></div>
+          <div class="lg">cap marker = $5,000 of a $6,000 scale</div>
+        </div>
+
+        <div class="itin">
+          <div class="hd">Itinerary</div>
+          <div id="itin"><div class="none">— not booked yet —</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+
+/* ---- providers ---- */
+const PROV={
+  mock:{label:"No model",model:"deterministic replay",color:"var(--gray)",bg:"#eeece4",bd:"#d9d4c8",live:"MOCK",liveBg:"#e7e4db",liveFg:"#6b6960",
+        mode:"mock · deterministic · offline · $0", modeBg:"#eeece4", modeFg:"#6b6960",
+        note:"reason() returns a canned plan. No network, no keys — perfect for tests & teaching."},
+  oai:{label:"OpenAI",model:"gpt-4o",color:"var(--teal)",bg:"var(--tealBg)",bd:"#bfe6d6",live:"LIVE",liveBg:"#d7f0e6",liveFg:"#0F6E56",
+       mode:"live · OpenAI gpt-4o · real API call", modeBg:"#E1F5EE", modeFg:"#0F6E56",
+       note:"reason() → POST /v1/chat/completions · tool_calls in the response."},
+  ant:{label:"Anthropic",model:"claude-sonnet-4-6",color:"var(--amber)",bg:"var(--amberBg)",bd:"#efdcc0",live:"LIVE",liveBg:"#f7e7cf",liveFg:"#854F0B",
+       mode:"live · Anthropic claude-sonnet-4-6 · real API call", modeBg:"#FAEEDA", modeFg:"#854F0B",
+       note:"reason() → POST /v1/messages · tool_use content block in the response."}
+};
+let prov="mock";
+
+/* ---- the scripted run (same for every engine — only reason() differs) ---- */
+const MEM={prefers:"Emirates"};
+const TURNS=[
+ {n:1,reason:"Goal needs a round-trip flight first. I'll call search_flights.",
+  tool:"search_flights",args:'{from:"BLR", to:"GOI", when:"next month"}',
+  result:[["Emirates",1520],["Qatar",1480],["Etihad",1610]],unit:"$",rlabel:"3 fares",ctx:"ctx-r1"},
+ {n:2,reason:"Flights are in context. The goal still needs a 5★ hotel. I'll call find_hotels.",
+  tool:"find_hotels",args:'{place:"Goa", stars:5, nights:5}',
+  result:[["Taj Exotica",4100],["The Leela",4500],["ITC Grand Goa",3650]],unit:"$",rlabel:"3 hotels",ctx:"ctx-r2"},
+ {n:3,reason:"Cheapest Qatar $1,480 + cheapest 5★ ITC $3,650 = $5,130 — over the $5,000 cap by $130. I'll relax dates ±3d and search flights again.",
+  tool:"search_flights",args:'{from:"BLR", to:"GOI", dates:"±3d"}',
+  result:[["Qatar",1090],["Emirates",1180],["Etihad",1320]],unit:"$",rlabel:"cheaper fares",ctx:"ctx-r3",budget:{total:5130,over:true}},
+ {n:4,reason:"Qatar $1,090 + ITC $3,650 = $4,740 ≤ $5,000. It fits. Book the flight and hotel, and save the preference.",
+  tool:"book_flight · book_hotel · save_user_profile",args:'{flight:"Qatar", hotel:"ITC Grand Goa"}',
+  result:[["status","confirmed"],["total",4740]],unit:"",rlabel:"confirmed ✓",ctx:"ctx-r4",budget:{total:4740,over:false},done:true,
+  win:["Qatar","ITC Grand Goa"]}
+];
+
+let cur=0, running=false, timer=null;
+
+/* ---- engine UI ---- */
+function applyProvider(p){
+  prov=p;["mock","oai","ant"].forEach(k=>$("p-"+k).setAttribute("aria-pressed",String(k===p)));
+  const P=PROV[p];
+  $("badge").style.background=P.bg;$("badge").style.borderColor=P.bd;$("badge").style.color=P.color;
+  $("badge").innerHTML=`${P.model}<span class="live" style="background:${P.liveBg};color:${P.liveFg}">${P.live}</span>`;
+  $("modebanner").textContent=P.mode;$("modebanner").style.background=P.modeBg;$("modebanner").style.color=P.modeFg;
+  $("enginepill").innerHTML="<b>reason()</b> → "+P.note;
+  // re-render any existing turns' raw view in the new provider's shape
+  document.querySelectorAll(".turn").forEach(t=>{const raw=t.querySelector(".raw");if(raw)raw.innerHTML=rawFor(TURNS[+t.dataset.n-1]);});
+}
+["mock","oai","ant"].forEach(k=>$("p-"+k).addEventListener("click",()=>{applyProvider(k);reset();}));
+
+/* ---- raw provider payload (the adapter difference) ---- */
+function esc(s){return s.replace(/</g,"&lt;");}
+function rawFor(t){
+  const argsObj=t.args;
+  if(prov==="ant"){
+    return `<span class="c">// POST /v1/messages</span>
+<span class="k">response.content</span> = [
+  { type:<span class="s">"text"</span>, text:<span class="s">"${esc(t.reason.slice(0,38))}…"</span> },
+  { type:<span class="s">"tool_use"</span>, name:<span class="s">"${t.tool.split(" ")[0]}"</span>,
+    input: ${esc(argsObj)} }
+]
+<span class="c">// you run the tool, then send back:</span>
+{ role:<span class="s">"user"</span>, content:[{ type:<span class="s">"tool_result"</span>,
+   content:<span class="s">"${t.rlabel}"</span> }] }`;
+  }
+  if(prov==="oai"){
+    return `<span class="c">// POST /v1/chat/completions</span>
+<span class="k">choices[0].message</span> = {
+  content: <span class="s">"${esc(t.reason.slice(0,38))}…"</span>,
+  tool_calls:[{ id:<span class="s">"call_1"</span>, type:<span class="s">"function"</span>,
+    function:{ name:<span class="s">"${t.tool.split(" ")[0]}"</span>,
+      arguments:<span class="s">'${esc(argsObj)}'</span> } }]
+}
+<span class="c">// you run the tool, then send back:</span>
+{ role:<span class="s">"tool"</span>, tool_call_id:<span class="s">"call_1"</span>,
+  content:<span class="s">"${t.rlabel}"</span> }`;
+  }
+  return `<span class="c">// no model — deterministic replay</span>
+<span class="k">reason(ctx)</span> = {
+  thought:<span class="s">"${esc(t.reason.slice(0,38))}…"</span>,
+  call:{ name:<span class="s">"${t.tool.split(" ")[0]}"</span>, args:${esc(argsObj)} }
+}
+<span class="c">// same tool contract as the live engines</span>`;
+}
+
+/* ---- loop stage lights ---- */
+function lights(stage){["sense","reason","act"].forEach(s=>$("ls-"+s).setAttribute("data-on",s===stage?"1":"0"));}
+
+/* ---- render a turn ---- */
+function renderTurn(t){
+  $("empty").style.display="none";
+  const div=document.createElement("div");div.className="turn";div.dataset.n=t.n;
+  const rows=t.result.map(r=>{
+    const win=t.win&&t.win.includes(r[0]);
+    const val=t.unit==="$"?("$"+r[1].toLocaleString()):(typeof r[1]==="number"?("$"+r[1].toLocaleString()):r[1]);
+    return `<div class="rrow ${win?'win':''}"><span class="nm">${r[0]}</span><span class="pv">${val}</span></div>`;
+  }).join("");
+  div.innerHTML=`
+    <div class="thd"><span class="tn">turn ${t.n}</span><span class="tstage">reason → act</span>
+      <button class="raw-t">show raw ▸</button></div>
+    <div class="blk"><span class="tag reason">reason</span><span class="txt">${t.reason}</span></div>
+    <div class="blk"><span class="tag act">act</span><span class="txt">calls the chosen tool</span>
+      <div class="call">${t.tool.split(" ")[0]}<span class="args">(${t.args})</span></div></div>
+    <div class="blk"><span class="tag result">result</span><span class="txt">← ${t.rlabel} returned · appended to context</span>
+      <div class="rows">${rows}</div></div>
+    <div class="raw mono">${rawFor(t)}</div>`;
+  div.querySelector(".raw-t").addEventListener("click",e=>{div.classList.toggle("open");
+    e.target.textContent=div.classList.contains("open")?"hide raw ▾":"show raw ▸";});
+  $("feed").appendChild(div);$("feed").scrollTop=$("feed").scrollHeight;
+}
+
+/* ---- budget / context / itinerary ---- */
+function setBudget(total,over){
+  $("bfill").style.width=Math.min(total/6000*100,100)+"%";$("bfill").classList.toggle("over",!!over);
+  const v=$("bval");v.textContent="$"+total.toLocaleString()+" / $5,000";v.className="v mono "+(over?"over":(total>0?"ok":""));
+}
+function showItin(){
+  $("itin").innerHTML=`<div class="line"><span>✈ Qatar (±3d)</span><span>$1,090</span></div>
+    <div class="line"><span>🏨 ITC Grand Goa · 5n</span><span>$3,650</span></div>
+    <div class="tot">total · $4,740 ✓ fits</div>`;
+}
+
+/* ---- step / run / reset ---- */
+function doStep(){
+  if(cur>=TURNS.length)return false;
+  const t=TURNS[cur];
+  if(cur===0){$("ctx-mem").textContent="memory: prefers "+MEM.prefers+" (get_user_profile)";}
+  lights("reason");
+  renderTurn(t);
+  $(t.ctx).classList.add("show");
+  if(t.budget)setBudget(t.budget.total,t.budget.over);
+  if(t.done){showItin();setBudget(4740,false);}
+  cur++;
+  $("turnpill").textContent="turn "+cur+" / "+TURNS.length;
+  setTimeout(()=>lights("act"),200);
+  return cur<TURNS.length||!t.done;
+}
+function run(){
+  if(running){running=false;clearTimeout(timer);$("run").innerHTML="▸ Run";return;}
+  if(cur>=TURNS.length)reset();
+  running=true;$("run").innerHTML="❚❚ Pause";
+  (function tick(){if(!running)return;const more=doStep();
+    if(cur<TURNS.length){timer=setTimeout(tick,1500);}else{running=false;$("run").innerHTML="✓ Done";lights(null);}})();
+}
+function reset(){
+  running=false;clearTimeout(timer);cur=0;
+  $("feed").querySelectorAll(".turn").forEach(t=>t.remove());$("empty").style.display="";
+  ["ctx-r1","ctx-r2","ctx-r3","ctx-r4"].forEach(id=>$(id).classList.remove("show"));
+  $("ctx-mem").textContent="memory: — (read at start)";
+  setBudget(0,false);$("itin").innerHTML='<div class="none">— not booked yet —</div>';
+  $("turnpill").textContent="turn 0 / 4";$("run").innerHTML="▸ Run";lights(null);
+}
+$("run").addEventListener("click",run);
+$("step").addEventListener("click",()=>{if(cur>=TURNS.length){reset();return;}doStep();});
+$("reset").addEventListener("click",reset);
+
+/* init */
+applyProvider("mock");reset();
+</script>
+</body>
+</html>

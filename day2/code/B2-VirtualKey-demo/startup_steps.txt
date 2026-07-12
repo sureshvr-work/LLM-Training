@@ -1,0 +1,82 @@
+# STEP 1 : start litellm and postgres
+docker compose up -d postgres litellm
+
+# STEP 2: Open the litellm UI:
+http://localhost:4000/ui
+login: admin / admin
+
+# STEP 3 — Create the virtual key:
+Virtual Keys → + Create Key
+
+Key Name    : alice-banking-app
+Models      : openai-chat
+Max Budget  : 5.00
+Duration    : monthly
+
+# STEP 4 - Paste into .env:
+INTERNAL_KEY=sk-internal-abc123...
+
+# STEP 5- Start the app:
+docker compose up -d --build app
+
+# STEP 6 - CHECK ① AUTH: Revoke the key live
+Virtual Keys → find alice-banking-app
+→ click the row → Delete Key (or Disable)
+
+# STEP 7- Mint a new key and resume
+Virtual Keys → + Create Key
+Same settings as before
+Copy the new sk-internal-...
+
+# STEP 8 - start app
+docker compose up -d --build app
+
+# STEP 9 - CHECK ③ BUDGET: Mint a tiny budget key
+Virtual Keys → + Create Key
+
+Key Name   : over-budget-demo
+Models     : openai-chat
+Max Budget : 0.0001          ← one cent
+Duration   : monthly
+
+# What OpenAI sends back in every 200 response:
+{
+  "usage": {
+    "prompt_tokens":     15,
+    "completion_tokens": 28,
+    "total_tokens":      43
+  }
+}
+
+cost = (prompt_tokens × input_price) + (completion_tokens × output_price)
+
+For gpt-4o-mini:
+  input:  $0.15 per 1M tokens
+  output: $0.60 per 1M tokens
+
+One typical call (15 in + 28 out):
+  = (15 × 0.00000015) + (28 × 0.00000060)
+  = $0.000002 + $0.0000168
+  = $0.0000188 per call
+
+
+# STEP 10 - start app
+docker compose up -d --build app
+(or)
+docker compose up --force-recreate app
+
+# STEP 11 - MODEL ROUTING
+create alice virtual key with openai
+test for 401 error
+
+# STEP 12 - FLIP THE MODEL
+Run the below commadn to change model for alice
+
+curl -s http://localhost:4000/key/update \
+  -H "Authorization: Bearer sk-master-supersecret123" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"key\":    \"$(grep INTERNAL_KEY .env | cut -d= -f2)\",
+    \"models\": [\"openai-chat\", \"anthropic-chat\", \"google-chat\"]
+  }" | python3 -m json.tool
+

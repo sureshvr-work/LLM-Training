@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+httpx
+pymupdf                       # PDF text extraction + page rasterization (scanned-PDF fallback)
+
+# LangChain interface (the "one shape hides the differences" path)
+langchain
+langchain-openai
+langchain-anthropic
+langchain-google-genai        # 4.0.0+ uses the consolidated google-genai SDK

@@ -1,0 +1,435 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>RAG Lab — see every stage</title>
+  <style>
+    :root{
+      --navy:#1d3a5f; --navy2:#185FA5;
+      --teal:#0F6E56; --teal2:#1D9E75; --teal-bg:#E1F5EE;
+      --amber:#854F0B; --amber2:#EF9F27; --amber-bg:#FAEEDA;
+      --purple:#7B3FA0; --purple-bg:#F0E8F8;
+      --red:#C0392B;
+      --gray:#5F5E5A; --line:#e3e0d9; --paper:#ffffff; --bg:#f5f6f8;
+    }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:var(--bg);color:#222;}
+    .wrap{max-width:880px;margin:0 auto;padding:26px 20px 80px;}
+    header h1{color:var(--navy);font-size:23px;margin:0 0 3px;}
+    header p{color:var(--gray);font-size:13px;margin:0 0 6px;}
+    .crumbs{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 8px;font-size:11px;}
+    .crumb{padding:3px 9px;border-radius:12px;background:#fff;border:1px solid var(--line);color:var(--gray);}
+    .crumb.done{background:var(--teal-bg);border-color:var(--teal2);color:var(--teal);}
+    .crumb.active{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600;}
+
+    .card{background:var(--paper);border:1px solid var(--line);border-radius:13px;padding:18px 20px;margin-top:16px;
+          transition:opacity .25s, box-shadow .25s;}
+    .card.locked{opacity:.5;pointer-events:none;}
+    .card-head{display:flex;align-items:center;gap:11px;margin-bottom:4px;}
+    .num{flex:none;width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;font-size:13px;font-weight:700;
+         display:flex;align-items:center;justify-content:center;}
+    .card.done .num{background:var(--teal);}
+    .card h2{font-size:15px;color:var(--navy);margin:0;}
+    .card .desc{color:var(--gray);font-size:12.5px;margin:2px 0 0;}
+    .body{margin-top:13px;}
+
+    label{font-size:12.5px;font-weight:600;color:#333;display:block;margin-bottom:5px;}
+    select,input[type=text]{padding:9px 11px;border:1.5px solid var(--line);border-radius:8px;font-size:13.5px;background:#fff;}
+    select:focus,input[type=text]:focus{outline:none;border-color:var(--navy);}
+    .row{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end;}
+    .seg{display:inline-flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;}
+    .seg button{border:0;background:#fff;padding:9px 14px;font-size:13px;cursor:pointer;color:var(--gray);}
+    .seg button.on{background:var(--navy);color:#fff;font-weight:600;}
+    .seg.teal button.on{background:var(--teal);}
+
+    button.go{background:var(--navy);color:#fff;border:0;border-radius:9px;padding:10px 18px;font-size:13.5px;font-weight:600;cursor:pointer;}
+    button.go.teal{background:var(--teal);}
+    button.go.amber{background:var(--amber2);color:#3a2606;}
+    button.go.purple{background:var(--purple);}
+    button.go:disabled{opacity:.45;cursor:default;}
+    button.ghost{background:#fff;border:1.5px solid var(--line);color:var(--navy);border-radius:9px;padding:9px 14px;font-size:13px;cursor:pointer;}
+
+    input[type=range]{width:230px;vertical-align:middle;accent-color:var(--navy);}
+    .pill{display:inline-block;background:var(--amber-bg);color:var(--amber);border-radius:9px;padding:1px 8px;font-size:11px;font-weight:700;}
+    .pill.teal{background:var(--teal-bg);color:var(--teal);}
+    .pill.navy{background:#e6eef7;color:var(--navy);}
+    .muted{color:var(--gray);font-size:12px;}
+    .err{color:var(--red);font-size:12.5px;margin-top:8px;}
+    .spin{font-size:12.5px;color:var(--navy);}
+
+    /* upload */
+    .drop{border:1.6px dashed #c7c3b8;border-radius:10px;padding:18px;text-align:center;background:#fafaf7;}
+    .ppbars{display:flex;align-items:flex-end;gap:5px;height:60px;margin-top:12px;}
+    .ppbar{flex:1;background:var(--navy2);border-radius:3px 3px 0 0;min-height:4px;}
+    .ppbar span{display:block;text-align:center;font-size:9px;color:var(--gray);margin-top:3px;}
+
+    /* chunk preview */
+    .chunks{max-height:280px;overflow:auto;border:1px solid var(--line);border-radius:9px;padding:4px;}
+    .chunk{border:1px solid var(--line);border-radius:7px;padding:8px 10px;margin:6px 4px;}
+    .chunk-h{display:flex;gap:7px;align-items:center;font-size:11px;color:var(--gray);margin-bottom:4px;}
+    .chunk-t{font-size:11.5px;line-height:1.45;color:#333;white-space:pre-wrap;}
+    .mono{font-family:ui-monospace,Menlo,Consolas,monospace;}
+
+    /* heatmap */
+    .heat{overflow:auto;border:1px solid var(--line);border-radius:9px;padding:8px;max-height:340px;}
+    .heat-row{display:flex;align-items:center;gap:7px;margin:2px 0;}
+    .heat-lab{flex:none;width:74px;font-size:10px;color:var(--gray);text-align:right;}
+    .cells{display:flex;gap:1px;}
+    .cell{width:11px;height:15px;border-radius:1px;}
+    .legend{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gray);margin-top:8px;}
+    .lg{width:13px;height:13px;border-radius:2px;display:inline-block;}
+
+    /* results */
+    .res{border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin-top:8px;}
+    .res-h{display:flex;align-items:center;gap:9px;font-size:11.5px;color:var(--gray);margin-bottom:5px;}
+    .bar{flex:1;height:6px;background:#eee;border-radius:4px;overflow:hidden;max-width:260px;}
+    .bar>i{display:block;height:100%;background:var(--teal2);}
+    .score{font-weight:700;color:var(--teal);font-variant-numeric:tabular-nums;}
+    .res-t{font-size:11.5px;line-height:1.45;color:#333;}
+
+    .answer{border-left:4px solid var(--teal);background:#fbfdfc;}
+    .answer .a-text{font-size:14px;line-height:1.55;white-space:pre-wrap;}
+    .qprev{margin-top:9px;font-size:12.5px;color:var(--navy);min-height:18px;}
+    .kdesc{font-size:12.5px;color:var(--gray);margin-top:6px;}
+
+    /* chunk explorer: button list (left) + preview (right) */
+    .chunk-summary{margin-bottom:10px;}
+    .chunk-pane{display:flex;gap:14px;align-items:flex-start;}
+    .chunk-list{flex:none;width:206px;}
+    .cbtns{display:flex;flex-wrap:wrap;gap:6px;max-height:316px;overflow:auto;padding:2px;}
+    .cbtn{display:flex;flex-direction:column;align-items:center;gap:1px;border:1.5px solid var(--line);
+          background:#fff;border-radius:8px;padding:6px 8px;font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;min-width:44px;}
+    .cbtn:hover{border-color:var(--navy);}
+    .cbtn .cp{font-size:9px;font-weight:600;color:var(--gray);}
+    .cbtn.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+    .cbtn.on .cp{color:#cdd9e8;}
+    .chunk-view{flex:1;border:1px solid var(--line);border-radius:9px;padding:10px 12px;min-height:130px;}
+    .cv-head{display:flex;gap:7px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+    .cv-body{font-size:12px;line-height:1.55;white-space:pre-wrap;
+             font-family:ui-monospace,Menlo,Consolas,monospace;max-height:300px;overflow:auto;}
+    .ov{background:#FFF3B0;border-radius:2px;box-shadow:0 0 0 1px #E4C200 inset;}
+    .cite{background:#e6eef7;color:#1d3a5f;border-radius:4px;padding:0 4px;font-weight:700;
+          font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;white-space:nowrap;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>RAG Lab — watch every stage</h1>
+    <p>One document, end to end: upload → chunk → embed → search → answer. Each step shows you what it produced.</p>
+  </header>
+
+  <div class="crumbs" id="crumbs"></div>
+
+  <!-- STEP 1 — model & SDK -->
+  <section class="card" id="s1">
+    <div class="card-head"><div class="num">1</div><h2>Choose the model &amp; the SDK</h2></div>
+    <p class="desc">The SDK choice applies to both embedding and the final answer — same result, two abstraction levels.</p>
+    <div class="body row">
+      <div>
+        <label>Chat model (for the answer)</label>
+        <select id="llmModel">
+          <option value="gpt-4o-mini">OpenAI · gpt-4o-mini</option>
+          <option value="gpt-4o">OpenAI · gpt-4o</option>
+        </select>
+      </div>
+      <div>
+        <label>SDK / path</label>
+        <div class="seg" id="sdkSeg">
+          <button data-sdk="openai" class="on">OpenAI SDK (direct)</button>
+          <button data-sdk="langchain">LangChain (OpenAI)</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 2 — upload -->
+  <section class="card" id="s2">
+    <div class="card-head"><div class="num">2</div><h2>Upload a PDF</h2></div>
+    <p class="desc">Text is extracted in the backend, so each chunk can carry a real page number.</p>
+    <div class="body">
+      <div class="drop">
+        <input type="file" id="file" accept="application/pdf"/>
+        <div class="muted" style="margin-top:8px">or
+          <button class="ghost" id="loadSample" style="padding:5px 10px">Load the sample drug reference (10 pages)</button>
+        </div>
+      </div>
+      <div id="uploadOut"></div>
+    </div>
+  </section>
+
+  <!-- STEP 3+4 — chunking + preview -->
+  <section class="card locked" id="s3">
+    <div class="card-head"><div class="num">3</div><h2>Chunk it — fixed-size</h2></div>
+    <p class="desc">Fixed-size character windows with overlap. (Other strategies come later in the course.)</p>
+    <div class="body">
+      <div class="row">
+        <div>
+          <label>Chunk size: <span id="sizeV" class="pill navy">800</span> chars</label>
+          <input type="range" id="size" min="200" max="1500" step="50" value="800"/>
+        </div>
+        <div>
+          <label>Overlap: <span id="ovV" class="pill navy">150</span> chars</label>
+          <input type="range" id="ov" min="0" max="400" step="10" value="150"/>
+        </div>
+        <button class="go" id="chunkBtn">Chunk</button>
+      </div>
+      <div id="chunkOut" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <!-- STEP 5+6+7 — embedding -->
+  <section class="card locked" id="s5">
+    <div class="card-head"><div class="num">5</div><h2>Embed the chunks</h2></div>
+    <p class="desc">An API-based embedding model turns each chunk into a vector. Then we preview the vectors.</p>
+    <div class="body">
+      <div class="row">
+        <div>
+          <label>Embedding model (API-based)</label>
+          <select id="embedModel">
+            <option value="text-embedding-3-small">OpenAI · text-embedding-3-small (1536-d)</option>
+            <option value="text-embedding-3-large">OpenAI · text-embedding-3-large (3072-d)</option>
+          </select>
+        </div>
+        <button class="go teal" id="embedBtn">6 · Embed</button>
+      </div>
+      <div id="embedOut" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <!-- STEP 8+9+10 — query + retrieve -->
+  <section class="card locked" id="s8">
+    <div class="card-head"><div class="num">8</div><h2>Ask &amp; retrieve</h2></div>
+    <p class="desc">Type a query, choose how many chunks to keep, then retrieve by cosine similarity.</p>
+    <div class="body">
+      <label>Your query</label>
+      <input type="text" id="query" style="width:100%" placeholder="e.g. When do you reduce the apixaban dose?"/>
+      <div class="qprev" id="qprev"></div>
+
+      <div style="margin-top:12px">
+        <label>top_k: <span id="kV" class="pill teal">4</span></label>
+        <input type="range" id="topk" min="1" max="10" step="1" value="4"/>
+        <div class="kdesc" id="kdesc"></div>
+      </div>
+
+      <button class="go teal" id="retrieveBtn" style="margin-top:12px">10 · Retrieve (cosine)</button>
+      <div id="searchOut" style="margin-top:8px"></div>
+    </div>
+  </section>
+
+  <!-- STEP 11 — answer -->
+  <section class="card locked" id="s11">
+    <div class="card-head"><div class="num">11</div><h2>Send to the LLM</h2></div>
+    <p class="desc">The retrieved chunks become the context. Answered via your chosen SDK path.</p>
+    <div class="body">
+      <button class="go purple" id="answerBtn">Send to LLM</button>
+      <span class="muted" id="answerVia"></span>
+      <div id="answerOut" style="margin-top:10px"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+  const S = { sdk:'openai', llmModel:'gpt-4o-mini', embedModel:'text-embedding-3-small',
+              uploaded:false, chunked:false, embedded:false, topk:4 };
+
+  const $ = id => document.getElementById(id);
+  async function post(url, body){
+    const res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    return res.json();
+  }
+  const esc = s => (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  /* ---- breadcrumbs + gating ---- */
+  const STEPS = [['Model & SDK',true],['Upload',false],['Chunk',false],['Embed',false],['Query',false],['Answer',false]];
+  function lock(id,on){ $(id).classList.toggle('locked', on); }
+  function done(id,on){ $(id).classList.toggle('done', on); }
+  function refresh(){
+    lock('s3', !S.uploaded); lock('s5', !S.chunked); lock('s8', !S.embedded); lock('s11', !S.embedded);
+    done('s2', S.uploaded); done('s3', S.chunked); done('s5', S.embedded);
+    const states = [true, S.uploaded, S.chunked, S.embedded, S.embedded, S.answered];
+    $('crumbs').innerHTML = STEPS.map((s,i)=>{
+      const cls = states[i] ? 'done' : (i>0 && states[i-1] ? 'active':'');
+      return `<span class="crumb ${cls}">${i+1}. ${s[0]}</span>`;
+    }).join('');
+  }
+
+  /* ---- step 1 ---- */
+  $('sdkSeg').addEventListener('click', e=>{
+    if(e.target.dataset.sdk){ S.sdk=e.target.dataset.sdk;
+      [...$('sdkSeg').children].forEach(b=>b.classList.toggle('on', b.dataset.sdk===S.sdk)); }
+  });
+  $('llmModel').addEventListener('change', e=> S.llmModel=e.target.value);
+
+  /* ---- step 2: upload ---- */
+  $('file').addEventListener('change', e=>{ if(e.target.files[0]) uploadFile(e.target.files[0]); });
+  $('loadSample').addEventListener('click', async ()=>{
+    const r = await fetch('/sample_drug_reference.pdf'); const b = await r.blob();
+    uploadFile(new File([b],'sample_drug_reference.pdf',{type:'application/pdf'}));
+  });
+  async function uploadFile(file){
+    $('uploadOut').innerHTML = '<div class="spin">Parsing PDF…</div>';
+    try{
+      const fd = new FormData(); fd.append('file', file, file.name);
+      const res = await fetch('/api/upload',{method:'POST', body:fd});
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const d = await res.json();
+      const max = Math.max(...d.per_page.map(p=>p.chars), 1);
+      const bars = d.per_page.map(p=>
+        `<div style="flex:1"><div class="ppbar" style="height:${Math.round(p.chars/max*52)+4}px"></div><span>${p.page}</span></div>`).join('');
+      $('uploadOut').innerHTML =
+        `<div style="margin-top:12px"><span class="pill navy">${esc(d.filename)}</span>
+          <span class="muted">· ${d.pages} pages · ${d.total_chars.toLocaleString()} chars</span></div>
+         <div class="muted" style="margin-top:8px">characters per page</div>
+         <div class="ppbars">${bars}</div>`;
+      S.uploaded=true; S.chunked=false; S.embedded=false; S.answered=false; refresh();
+    }catch(err){ $('uploadOut').innerHTML = `<div class="err">Upload failed: ${err.message}. Is the backend up?</div>`; }
+  }
+
+  /* ---- step 3+4: chunk ---- */
+  $('size').addEventListener('input', e=>$('sizeV').textContent=e.target.value);
+  $('ov').addEventListener('input', e=>$('ovV').textContent=e.target.value);
+  $('chunkBtn').addEventListener('click', async ()=>{
+    $('chunkOut').innerHTML='<div class="spin">Chunking…</div>';
+    try{
+      const d = await post('/api/chunk',{size:+$('size').value, overlap:+$('ov').value});
+      renderChunkUI(d);
+      S.chunked=true; S.embedded=false; S.answered=false; refresh();
+    }catch(err){ $('chunkOut').innerHTML=`<div class="err">Chunk failed: ${err.message}</div>`; }
+  });
+
+  function pspan(c){ return c.page_start===c.page_end ? `p${c.page_start}` : `p${c.page_start}–${c.page_end}`; }
+
+  function renderChunkUI(d){
+    S.chunkData = d;
+    const btns = d.chunks.map((c,i)=>
+      `<button class="cbtn" data-i="${i}">${c.id}<span class="cp">${pspan(c)}</span></button>`).join('');
+    $('chunkOut').innerHTML = `
+      <div class="chunk-summary"><b>${d.count} chunks</b>
+        <span class="muted">· size ${d.size}, overlap ${d.overlap} (step ${d.step}) · click a chunk to preview it →</span></div>
+      <div class="chunk-pane">
+        <div class="chunk-list"><div class="cbtns">${btns}</div></div>
+        <div class="chunk-view">
+          <div class="cv-head" id="cvHead"></div>
+          <div class="cv-body" id="cvBody"></div>
+          <div class="legend" style="margin-top:10px">
+            <span class="lg" style="background:#FFF3B0;box-shadow:0 0 0 1px #E4C200 inset"></span>
+            highlighted = the overlap — characters this chunk shares with a neighbour</div>
+        </div>
+      </div>`;
+    $('chunkOut').querySelectorAll('.cbtn').forEach(b=>
+      b.addEventListener('click', ()=> selectChunk(+b.dataset.i)));
+    selectChunk(0);
+  }
+
+  function selectChunk(i){
+    const c = S.chunkData.chunks[i];
+    $('chunkOut').querySelectorAll('.cbtn').forEach(b=> b.classList.toggle('on', +b.dataset.i===i));
+    const t = c.text;
+    let head = Math.min(c.overlap_head||0, t.length);
+    let tail = Math.min(c.overlap_tail||0, Math.max(0, t.length-head));
+    const headTxt = t.slice(0, head);
+    const midTxt  = t.slice(head, t.length-tail);
+    const tailTxt = t.slice(t.length-tail);
+    $('cvHead').innerHTML =
+      `<span class="pill">${c.id}</span><span class="pill teal">${pspan(c)}</span>`
+      + (c.source?`<span class="pill navy" title="source document">${esc(c.source)}</span>`:'')
+      + `<span class="muted">${c.chars} chars`
+      + (head?` · <span style="color:#9a7b00">${head} shared with previous ↑</span>`:'')
+      + (tail?` · <span style="color:#9a7b00">${tail} shared with next ↓</span>`:'')
+      + `</span>`;
+    $('cvBody').innerHTML =
+        (head?`<span class="ov" title="shared with the previous chunk">${esc(headTxt)}</span>`:'')
+      + esc(midTxt)
+      + (tail?`<span class="ov" title="shared with the next chunk">${esc(tailTxt)}</span>`:'');
+  }
+
+  /* ---- step 5+6+7: embed + heatmap ---- */
+  $('embedModel').addEventListener('change', e=>S.embedModel=e.target.value);
+  function cellColor(v, scale){
+    const r = Math.max(-1, Math.min(1, v/scale));      // -1..1
+    const a = Math.abs(r);
+    const neutral=[239,236,228];                        // near-zero
+    const target = r>=0 ? [192,83,47] : [44,111,176];   // red pos / blue neg
+    const mix = neutral.map((n,i)=>Math.round(n+(target[i]-n)*a));
+    return `rgb(${mix[0]},${mix[1]},${mix[2]})`;
+  }
+  $('embedBtn').addEventListener('click', async ()=>{
+    $('embedOut').innerHTML='<div class="spin">Embedding all chunks via '+(S.sdk==='langchain'?'LangChain':'OpenAI SDK')+'…</div>';
+    try{
+      const d = await post('/api/embed',{model:S.embedModel, sdk:S.sdk});
+      const rows = d.rows.map(rw=>{
+        const cells = rw.cells.map(v=>`<div class="cell" title="${v}" style="background:${cellColor(v,d.scale)}"></div>`).join('');
+        return `<div class="heat-row"><div class="heat-lab">${rw.id} · p${rw.page}</div><div class="cells">${cells}</div></div>`;
+      }).join('');
+      $('embedOut').innerHTML =
+        `<div><b>${d.n_chunks} vectors</b> <span class="muted">· ${d.dim} dimensions each · via ${d.sdk==='langchain'?'LangChain':'OpenAI SDK'}</span></div>
+         <div class="muted" style="margin:6px 0">Heatmap of the <b>first ${d.preview_dims}</b> of ${d.dim} dimensions — each row is one chunk's vector. You can't see all ${d.dim}; this is the shape.</div>
+         <div class="heat">${rows}</div>
+         <div class="legend"><span class="lg" style="background:rgb(44,111,176)"></span> negative
+           <span class="lg" style="background:rgb(239,236,228)"></span> ~zero
+           <span class="lg" style="background:rgb(192,83,47)"></span> positive
+           &nbsp;— sign &amp; magnitude only; no single cell "means" anything.</div>`;
+      S.embedded=true; S.answered=false; refresh();
+      updateKdesc();
+    }catch(err){ $('embedOut').innerHTML=`<div class="err">Embed failed: ${err.message}. Is OPENAI_API_KEY set${S.sdk==='langchain'?' and langchain installed':''}?</div>`; }
+  });
+
+  /* ---- step 8+9+10: query + retrieve ---- */
+  $('query').addEventListener('input', e=>{
+    const v=e.target.value.trim();
+    $('qprev').innerHTML = v ? `Searching for: <span class="mono">“${esc(v)}”</span>` : '';
+  });
+  function updateKdesc(){
+    const k=S.topk;
+    $('kdesc').textContent = `Return the ${k} best-scoring chunk${k>1?'s':''}. Smaller K = tighter & cheaper context; larger K = more context but more noise.`;
+  }
+  $('topk').addEventListener('input', e=>{ S.topk=+e.target.value; $('kV').textContent=e.target.value; updateKdesc(); });
+  updateKdesc();
+  $('retrieveBtn').addEventListener('click', async ()=>{
+    const q=$('query').value.trim(); if(!q){ $('searchOut').innerHTML='<div class="err">Type a query first.</div>'; return; }
+    $('searchOut').innerHTML='<div class="spin">Embedding query & scoring all chunks…</div>';
+    try{
+      const d = await post('/api/search',{query:q, top_k:S.topk, sdk:S.sdk});
+      $('searchOut').innerHTML = renderResults(d.results, 'Top-'+d.top_k+' by cosine');
+      S.answered=false; refresh();
+    }catch(err){ $('searchOut').innerHTML=`<div class="err">Search failed: ${err.message}</div>`; }
+  });
+  function renderResults(results, title){
+    const items = results.map(r=>`
+      <div class="res"><div class="res-h">
+        <span class="pill">${r.id}</span><span class="pill teal">p${r.page}</span>
+        ${r.source?`<span class="pill navy" title="source document">${esc(r.source)}</span>`:''}
+        <span class="bar"><i style="width:${Math.max(0,Math.min(100,r.score*100)).toFixed(0)}%"></i></span>
+        <span class="score">${r.score}</span></div>
+        <div class="res-t">${esc(r.text)}</div></div>`).join('');
+    return `<div style="margin-top:6px"><b>${title}</b></div>${items}`;
+  }
+  // Highlight the model's inline [c7, p3] citations so the provenance pops.
+  function highlightCites(s){
+    return esc(s).replace(/\[c\d+,\s*p\d+\]/g, m=>`<span class="cite">${m}</span>`);
+  }
+
+  /* ---- step 11: answer ---- */
+  $('answerBtn').addEventListener('click', async ()=>{
+    const q=$('query').value.trim(); if(!q){ $('answerOut').innerHTML='<div class="err">Type a query in step 8 first.</div>'; return; }
+    $('answerVia').textContent = ` via ${S.sdk==='langchain'?'LangChain + OpenAI':'OpenAI SDK'} · ${S.llmModel}`;
+    $('answerOut').innerHTML='<div class="spin">Asking the LLM with the retrieved chunks…</div>';
+    try{
+      const d = await post('/api/answer',{question:q, top_k:S.topk, sdk:S.sdk, model:S.llmModel});
+      $('answerOut').innerHTML =
+        `<div class="card answer" style="margin-top:0"><div class="card-head"><div class="num" style="background:var(--teal)">A</div>
+          <h2>Answer</h2></div>
+          <div class="a-text" style="margin-top:8px">${highlightCites(d.answer)}</div></div>
+         ${renderResults(d.matches, 'Chunks the LLM was given (its sources)')}`;
+      S.answered=true; refresh();
+    }catch(err){ $('answerOut').innerHTML=`<div class="err">Answer failed: ${err.message}</div>`; }
+  });
+
+  refresh();
+</script>
+</body>
+</html>

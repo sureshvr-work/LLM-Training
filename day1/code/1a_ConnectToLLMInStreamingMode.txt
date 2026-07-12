@@ -1,0 +1,88 @@
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+QUESTION = "In one short sentence, what is an API?"
+
+for name in ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GOOGLE_API_KEY"]:
+    status = "found" if os.getenv(name) else "MISSING"
+    print(f"{name:20s}: {status}")
+
+print("\n" + "="*60)
+print("Streaming comparison — watch tokens arrive in real time")
+print("="*60 + "\n")
+
+
+# Vendor 1 — OpenAI
+def ask_openai_stream():
+    from openai import OpenAI
+    client = OpenAI()
+
+    print("OpenAI (gpt-4o-mini) >>> ", end="", flush=True)
+
+    stream = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": QUESTION}],
+        stream=True,                          # flip to streaming
+    )
+
+    for chunk in stream:
+        token = chunk.choices[0].delta.content
+        if token:
+            print(token, end="", flush=True)  # print each token as it arrives
+
+    print("\n")                               # newline after stream ends
+
+
+# Vendor 2 — Anthropic
+def ask_anthropic_stream():
+    from anthropic import Anthropic
+    client = Anthropic()
+
+    print("Anthropic (claude-haiku-4-5) >>> ", end="", flush=True)
+
+    with client.messages.stream(              # .stream() instead of .create()
+        model="claude-haiku-4-5",
+        max_tokens=300,
+        messages=[{"role": "user", "content": QUESTION}],
+    ) as stream:
+        for token in stream.text_stream:
+            print(token, end="", flush=True)  # print each token as it arrives
+
+    print("\n")
+
+
+# Vendor 3 — Google
+def ask_google_stream():
+    from google import genai
+    client = genai.Client()
+
+    print("Google (gemini-2.5-flash) >>> ", end="", flush=True)
+
+    for chunk in client.models.generate_content_stream(
+        model="gemini-2.5-flash",             # _stream version of the method
+        contents=QUESTION,
+    ):
+        if chunk.text:
+            print(chunk.text, end="", flush=True)
+
+    print("\n")
+
+
+# Run all three
+try:
+    ask_openai_stream()
+except Exception as e:
+    print(f"OpenAI skipped: {e}\n")
+
+try:
+    ask_anthropic_stream()
+except Exception as e:
+    print(f"Anthropic skipped: {e}\n")
+
+try:
+    ask_google_stream()
+except Exception as e:
+    print(f"Google skipped: {e}\n")
+---------------------------------------------

@@ -1,1 +1,59 @@
+Agent Discovery card:
 
+{
+  "name": "CardiologyConsultantAgent",
+  "version": "1.2.0",
+  "description": "Autonomous clinical triage and risk-assessment agent for acute cardiovascular events.",
+  "provider": "HospitalCentralNetwork",
+  "autonomy_tier": "human-in-the-loop",
+
+  "skills": [
+    {
+      "id": "timi_risk_calculator",
+      "name": "TIMI Risk Profile Calculator",
+      "description": "Accepts raw patient metrics (age, blood pressure, EKG ST changes, troponin) to determine the thrombolysis in myocardial infarction risk score.",
+      "required_inputs": ["age", "systolic_bp", "st_deviation", "troponin_positive"]
+    },
+    {
+      "id": "ehr_cardio_history_parser",
+      "name": "EHR Cardiovascular History Extractor",
+      "description": "Scans historical Electronic Health Records to find past cardiac stents, bypass surgeries, or history of myocardial infarction.",
+      "required_inputs": ["patient_id"]
+    },
+    {
+      "id": "hemodynamic_stability_monitor",
+      "name": "Hemodynamic Stability Triage",
+      "description": "Continuously evaluates live vitals (heart rate, MAP, oxygen saturation) to detect signs of cardiogenic shock.",
+      "required_inputs": ["heart_rate", "mean_arterial_pressure", "spo2"]
+    }
+  ],
+
+  "supportedInterfaces": [
+    {
+      "name": "internal_high_speed_triage",
+      "url": "https://hospital.org",
+      "protocolBinding": "GRPC",
+      "protocolVersion": "1.0.0",
+      "interactionPatterns": ["StatelessRequest", "ProgressBuffering"]
+    },
+    {
+      "name": "cross_department_chat",
+      "url": "https://hospital.org",
+      "protocolBinding": "JSONRPC",
+      "protocolVersion": "1.0.0",
+      "interactionPatterns": ["Streaming", "MultiTurn", "Resumable"]
+    }
+  ],
+
+  "securitySchemes": {
+    "mTLSAuth": {
+      "type": "mutualTLS",
+      "required_scopes": ["clinical:read", "triage:write"]
+    }
+  },
+
+  "outputConstraints": {
+    "required_schema": "JSON_SCHEMA_CLINICAL_SUMMARY_V2",
+    "stop_sequences": ["</clinical_summary>", "CRITICAL_ESCALATION:"]
+  }
+}

@@ -1,0 +1,332 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Postgres as a Vector DB — pgvector lab</title>
+  <style>
+    :root{
+      --navy:#1d3a5f; --teal:#0F6E56; --teal2:#1D9E75; --teal-bg:#E1F5EE;
+      --amber:#854F0B; --amber2:#B0700A; --amber-bg:#FAEEDA;
+      --red:#C0392B; --red-bg:#FBEAE7; --gray:#5F5E5A; --line:#e3e0d9; --bg:#f4f6f8;
+    }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:var(--bg);color:#222;}
+    .wrap{max-width:1080px;margin:0 auto;padding:22px 18px 70px;}
+    h1{color:var(--navy);font-size:22px;margin:0 0 3px;}
+    .sub{color:var(--gray);font-size:13px;margin:0 0 16px;}
+    .card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+    .card h2{font-size:13px;letter-spacing:.4px;text-transform:uppercase;color:var(--gray);margin:0 0 12px;font-weight:800;}
+    button{font-family:inherit;border:1.5px solid var(--line);background:#fff;color:var(--navy);border-radius:9px;padding:9px 15px;font-size:13px;font-weight:700;cursor:pointer;}
+    button.teal{background:var(--teal);color:#fff;border-color:var(--teal);}
+    button.ghost{background:#fff;}
+    button:disabled{opacity:.45;cursor:default;}
+    input,select,textarea{font-family:inherit;font-size:13px;border:1.5px solid var(--line);border-radius:9px;padding:9px 11px;color:#222;}
+    textarea{width:100%;resize:vertical;}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    .mono,pre{font-family:ui-monospace,Menlo,Consolas,monospace;}
+    pre.sql{background:#0f1b2d;color:#d7e3f4;border-radius:9px;padding:11px 13px;font-size:11.5px;line-height:1.5;overflow:auto;margin:8px 0 0;white-space:pre;}
+    pre.sql .k{color:#7fb2ff;} pre.sql .c{color:#7d8aa0;font-style:italic;}
+
+    /* lifecycle */
+    .life{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+    .pill{flex:1;min-width:160px;border:1.5px solid var(--line);border-radius:11px;padding:10px 12px;background:#fbfcfd;}
+    .pill .t{font-size:11px;color:var(--gray);font-weight:700;}
+    .pill .v{font-size:13px;font-weight:800;color:#9a968c;margin-top:3px;}
+    .pill.ok{border-color:var(--teal2);background:var(--teal-bg);}
+    .pill.ok .v{color:var(--teal);}
+    .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#cfcabb;margin-right:6px;vertical-align:0px;}
+    .pill.ok .dot{background:var(--teal2);}
+
+    .log{margin-top:10px;}
+    .step{border-left:3px solid var(--teal2);padding:6px 0 6px 12px;margin:9px 0;}
+    .step .st{font-weight:800;color:var(--navy);font-size:12.5px;}
+    .step .dt{color:var(--gray);font-size:11.5px;margin-top:2px;}
+
+    /* search lanes */
+    .lanes{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    @media(max-width:820px){.lanes{grid-template-columns:1fr;}}
+    .lane{border-radius:12px;padding:14px;border:1.5px solid var(--line);}
+    .lane.kw{background:#FFFDF8;border-color:#e7c98c;}
+    .lane.vec{background:#F6FBF9;border-color:#bfe6d6;}
+    .lane h3{margin:0 0 2px;font-size:14px;}
+    .lane.kw h3{color:var(--amber);}
+    .lane.vec h3{color:var(--teal);}
+    .lane .cap{font-size:11px;color:var(--gray);margin-bottom:6px;}
+    .hit{border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 11px;margin:8px 0;}
+    .hit .h-title{font-weight:800;color:var(--navy);font-size:12.5px;}
+    .hit .h-body{color:#333;font-size:12px;margin-top:3px;line-height:1.45;}
+    .hit.top{border-color:var(--teal2);box-shadow:0 0 0 2px var(--teal-bg) inset;}
+    .bar{height:8px;background:#e6eef0;border-radius:5px;margin-top:7px;overflow:hidden;}
+    .bar > i{display:block;height:100%;background:var(--teal2);border-radius:5px;}
+    .meta{font-size:11px;color:var(--gray);margin-top:5px;}
+    .empty{background:var(--red-bg);border:1px solid #e7b3aa;color:var(--red);border-radius:9px;padding:11px 12px;font-size:12.5px;font-weight:700;}
+    .qvec{font-size:11px;color:var(--teal);background:var(--teal-bg);border-radius:7px;padding:5px 8px;margin-top:8px;display:inline-block;}
+
+    /* two-col cheat */
+    .cheat{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    @media(max-width:820px){.cheat{grid-template-columns:1fr;}}
+    .cheat .col{border-radius:11px;padding:13px;}
+    .cheat .kwcol{background:var(--amber-bg);} .cheat .veccol{background:var(--teal-bg);}
+    .cheat h4{margin:0 0 8px;font-size:13px;}
+    .cheat .kwcol h4{color:var(--amber);} .cheat .veccol h4{color:var(--teal);}
+    .cheat ul{margin:0;padding-left:18px;font-size:12px;line-height:1.7;color:#333;}
+    .toast{position:fixed;right:18px;bottom:18px;background:var(--navy);color:#fff;padding:11px 15px;border-radius:10px;font-size:12.5px;font-weight:700;opacity:0;transform:translateY(8px);transition:.25s;pointer-events:none;}
+    .toast.show{opacity:1;transform:none;}
+    .vecpeek{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:#333;background:#f7f7f5;border-radius:8px;padding:9px 11px;margin-top:8px;word-break:break-word;}
+    .tag{display:inline-block;background:var(--teal-bg);color:var(--teal);border-radius:6px;padding:1px 7px;font-size:10.5px;font-weight:700;margin-left:6px;}
+    a.code{color:var(--teal);text-decoration:none;font-weight:700;}
+
+    /* setup grid + extension explainer panel */
+    .setupgrid{display:grid;grid-template-columns:1.12fr .88fr;gap:18px;align-items:start;}
+    @media(max-width:980px){.setupgrid{grid-template-columns:1fr;}}
+    .extpanel{background:linear-gradient(180deg,#F6FBF9,#ffffff);border:1.5px solid #bfe6d6;border-radius:12px;padding:14px 15px;}
+    .extbadge{display:inline-block;background:var(--teal);color:#fff;font-size:11px;font-weight:800;letter-spacing:.3px;padding:4px 11px;border-radius:999px;margin-bottom:10px;}
+    .extlede{font-size:12px;color:#333;line-height:1.55;margin:4px 0 10px;}
+    .extitem{display:flex;gap:10px;padding:8px 0;border-top:1px dashed #d7ece3;}
+    .extk{flex:0 0 92px;font-size:11.5px;font-weight:800;color:var(--teal);}
+    .extv{font-size:11.5px;color:#333;line-height:1.5;}
+    .extnote{font-size:11px;color:var(--gray);line-height:1.5;margin-top:9px;background:#fbfcfd;border-left:3px solid var(--teal2);border-radius:6px;padding:7px 10px;}
+    .extv code,.extlede code,.extnote code{font-family:ui-monospace,Menlo,Consolas,monospace;background:#eef5f2;border-radius:4px;padding:1px 5px;font-size:11px;color:#0F6E56;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Postgres as a Vector DB — <span style="color:#0F6E56">pgvector</span> lab</h1>
+  <p class="sub">Same Postgres you know, plus one extension. Watch the difference between <b style="color:#854F0B">exact SQL matching</b> and <b style="color:#0F6E56">vector search by meaning</b> — from install to query.</p>
+
+  <!-- ===================== LIFECYCLE ===================== -->
+  <div class="card">
+    <h2>① From installation to a working index</h2>
+    <div class="setupgrid">
+      <div class="setupleft">
+        <div class="life" id="life">
+          <div class="pill" id="p-ext"><div class="t"><span class="dot"></span>extension</div><div class="v">—</div></div>
+          <div class="pill" id="p-tab"><div class="t"><span class="dot"></span>table</div><div class="v">—</div></div>
+          <div class="pill" id="p-rows"><div class="t"><span class="dot"></span>rows embedded</div><div class="v">—</div></div>
+          <div class="pill" id="p-idx"><div class="t"><span class="dot"></span>HNSW index</div><div class="v">—</div></div>
+        </div>
+        <div class="row">
+          <button class="teal" id="btnSetup">▶ Run setup</button>
+          <button class="ghost" id="btnReset">↺ Reset</button>
+          <button class="ghost" id="btnSelftest">✓ Self-test embeddings</button>
+          <span class="meta" id="setupHint">Runs: CREATE EXTENSION → CREATE TABLE → embed &amp; INSERT → CREATE INDEX.</span>
+        </div>
+        <div class="log" id="setupLog"></div>
+      </div>
+
+      <aside class="extpanel">
+        <div class="extbadge">bring vectors to your existing database</div>
+        <pre class="sql"><span class="k">CREATE EXTENSION</span> <span class="k">IF NOT EXISTS</span> vector;</pre>
+        <p class="extlede">Loads <b>pgvector</b> into <b>this</b> database. Postgres is a small core plus a plug-in system — an extension adds new types, operators, functions and index methods into one database, <b>without changing Postgres itself</b>. This one line is the whole &ldquo;install the vector DB&rdquo; step, and it gives you three things at once:</p>
+
+        <div class="extitem"><span class="extk">+ a column type</span><span class="extv"><code>vector(n)</code> &middot; <code>halfvec</code> &middot; <code>bit</code> &middot; <code>sparsevec</code> — a column can hold a fixed-length array of floats.</span></div>
+        <div class="extitem"><span class="extk">+ operators</span><span class="extv"><code>&lt;=&gt;</code> cosine &middot; <code>&lt;-&gt;</code> L2 &middot; <code>&lt;#&gt;</code> inner product &middot; <code>&lt;+&gt;</code> L1 — for comparing vectors.</span></div>
+        <div class="extitem"><span class="extk">+ index types</span><span class="extv"><b>HNSW</b> &amp; <b>IVFFlat</b> — the approximate-nearest-neighbour indexes that make similarity search fast.</span></div>
+
+        <div class="extnote"><b>Per-database.</b> Run it in each database that needs vectors — not once per server.</div>
+        <div class="extnote">The extension files must already be <b>on the machine</b> (a package, or baked into an image like <code>pgvector/pgvector:pg16</code>). <code>CREATE EXTENSION</code> <b>activates</b> what's installed — it doesn't download anything.</div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ===================== SEARCH ===================== -->
+  <div class="card">
+    <h2>② Ask the same question two ways</h2>
+    <div class="row" style="margin-bottom:8px">
+      <input id="q" placeholder="type a query, e.g. heart attack" style="flex:1;min-width:240px"/>
+      <select id="metric" title="distance operator">
+        <option value="cosine">cosine  (&lt;=&gt;)</option>
+        <option value="l2">L2  (&lt;-&gt;)</option>
+        <option value="ip">inner product  (&lt;#&gt;)</option>
+      </select>
+      <button class="teal" id="btnSearch">Search</button>
+    </div>
+    <div class="row" id="chips" style="margin-bottom:6px"></div>
+    <div class="lanes">
+      <div class="lane kw">
+        <h3>Normal SQL · exact match</h3>
+        <div class="cap">B-tree / sequential scan · matches the literal characters (ILIKE).</div>
+        <div id="kwSql"></div>
+        <div id="kwRows"></div>
+      </div>
+      <div class="lane vec">
+        <h3>Vector search · by meaning</h3>
+        <div class="cap">HNSW ANN index · ranks by distance to the query's embedding.</div>
+        <div id="vecSql"></div>
+        <div id="vecRows"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== INSERT + PEEK ===================== -->
+  <div class="card">
+    <h2>③ Store new data (text → model → vector)</h2>
+    <div class="row" style="align-items:flex-start">
+      <div style="flex:1;min-width:260px">
+        <input id="newTitle" placeholder="title" style="width:100%;margin-bottom:8px"/>
+        <textarea id="newBody" rows="3" placeholder="body — this text gets embedded into a vector, then stored"></textarea>
+        <div class="row" style="margin-top:8px"><button class="teal" id="btnAdd">+ Embed &amp; store</button><span class="meta" id="addHint"></span></div>
+      </div>
+      <div style="flex:1;min-width:260px">
+        <div class="row"><span class="meta">Peek at a stored row's vector:</span><select id="docPick"></select></div>
+        <div id="peek" class="vecpeek">pick a row to see what its vector data looks like</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== CHEAT ===================== -->
+  <div class="card">
+    <h2>④ Normal data vs vector data — the differences</h2>
+    <div class="cheat">
+      <div class="col kwcol">
+        <h4>Normal data</h4>
+        <ul>
+          <li>Value <b>is</b> the data — small scalar (int, text).</li>
+          <li>Stored as-is; no model involved.</li>
+          <li>Index: <span class="mono">B-tree</span> — exact lookup &amp; ranges.</li>
+          <li>Query: <span class="mono">WHERE col = …</span> — equals / LIKE.</li>
+          <li><b>Exact</b> &amp; deterministic — matches or it doesn't.</li>
+        </ul>
+      </div>
+      <div class="col veccol">
+        <h4>Vector data</h4>
+        <ul>
+          <li>Fixed-length float array from an <b>embedding model</b>.</li>
+          <li>Extra step on write &amp; read: <span class="mono">text → vector</span>.</li>
+          <li>Index: <span class="mono">HNSW / IVFFlat</span> — approximate NN.</li>
+          <li>Query: <span class="mono">ORDER BY embedding &lt;=&gt; $q</span> — nearest.</li>
+          <li><b>Approximate</b> &amp; ranked — finds by meaning; recall is tunable.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="meta" style="margin-top:10px">The invariant: the query must be embedded with the <b>same model</b> as the rows — same idea as the analyzer rule in the keyword pipeline, different machine.</p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const api = (path, body) => fetch("/api/" + path, body ? {
+    method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)
+  } : {}).then(r => r.json());
+
+  function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2200); }
+  function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function sqlHTML(sql){
+    let s=esc(sql)
+      .replace(/--([^\n]*)/g,'<span class="c">--$1</span>')
+      .replace(/\b(CREATE|EXTENSION|TABLE|INDEX|USING|SELECT|FROM|WHERE|ORDER BY|LIMIT|INSERT|INTO|VALUES|DROP|IF|NOT|EXISTS|ILIKE|AND|OR|AS)\b/g,'<span class="k">$1</span>');
+    return '<pre class="sql">'+s+'</pre>';
+  }
+
+  function renderStatus(st){
+    const set=(id,ok,val)=>{ const e=$(id); e.classList.toggle("ok",!!ok); e.querySelector(".v").textContent=val; };
+    set("p-ext", st.extension, st.extension?"installed ✓":"not yet");
+    set("p-tab", st.table, st.table?"created ✓":"not yet");
+    set("p-rows", st.rows>0, st.rows>0?(st.rows+" rows"):"0");
+    set("p-idx", st.index, st.index?"HNSW ✓":"none");
+  }
+
+  async function loadStatus(){ renderStatus(await api("status")); loadDocs(); }
+
+  async function runSetup(){
+    $("btnSetup").disabled=true; $("setupHint").textContent="working…";
+    const r=await api("setup",{});
+    let html="";
+    (r.steps||[]).forEach(s=>{ html+=`<div class="step"><div class="st">${esc(s.title)}</div>${sqlHTML(s.sql)}<div class="dt">${esc(s.detail)}</div></div>`; });
+    $("setupLog").innerHTML=html;
+    renderStatus(r.status); $("setupHint").textContent="ready."; $("btnSetup").disabled=false; loadDocs();
+  }
+
+  async function reset(){
+    if(!confirm("Drop the docs table? (the extension stays)")) return;
+    const r=await api("reset",{}); renderStatus(r.status); $("setupLog").innerHTML=""; $("peek").textContent="pick a row…"; loadDocs();
+    toast("table dropped — run setup to rebuild");
+  }
+
+  async function selftest(){
+    const r=await api("selftest");
+    let html=`<div class="step"><div class="st">Embedding self-test · ${esc(r.model)} · ${r.dim}-dim</div>`;
+    r.pairs.forEach(p=>{ const pct=Math.round(Math.max(0,p.cosine_similarity)*100);
+      html+=`<div class="meta" style="margin:6px 0">“${esc(p.a)}” vs “${esc(p.b)}” → <b>${p.cosine_similarity}</b>
+        <div class="bar" style="max-width:240px"><i style="width:${pct}%"></i></div></div>`; });
+    html+=`<div class="dt">${esc(r.note)}</div></div>`;
+    $("setupLog").innerHTML=html;
+  }
+
+  function laneRows(rows){
+    if(!rows.length) return '<div class="empty">0 rows — the exact text isn\'t in any document.</div>';
+    return rows.map(r=>`<div class="hit"><div class="h-title">${esc(r.title)}</div><div class="h-body">${esc(r.body)}</div></div>`).join("");
+  }
+  function vecRows(rows, metric){
+    if(!rows.length) return '<div class="empty">no rows — run setup first.</div>';
+    return rows.map((r,i)=>{
+      const sim = r.similarity;
+      const pct = sim!=null ? Math.round(Math.max(0,Math.min(1,sim))*100) : null;
+      const bar = pct!=null ? `<div class="bar"><i style="width:${pct}%"></i></div>` : "";
+      const score = sim!=null ? `similarity ${sim}` : `distance ${r.distance}`;
+      return `<div class="hit ${i===0?'top':''}"><div class="h-title">${i===0?'★ ':''}${esc(r.title)}</div>
+        <div class="h-body">${esc(r.body)}</div>${bar}
+        <div class="meta">${score} · ${metric}-distance ${r.distance}</div></div>`;
+    }).join("");
+  }
+
+  async function runSearch(){
+    const q=$("q").value.trim(); if(!q){ toast("type a query"); return; }
+    const metric=$("metric").value;
+    $("btnSearch").disabled=true;
+    const r=await api("search",{q,metric});
+    $("btnSearch").disabled=false;
+    if(r.error){ $("kwRows").innerHTML=`<div class="empty">${esc(r.error)}</div>`; $("vecRows").innerHTML=""; $("kwSql").innerHTML=""; $("vecSql").innerHTML=""; return; }
+    $("kwSql").innerHTML=sqlHTML(r.keyword.sql);
+    $("kwRows").innerHTML=laneRows(r.keyword.rows);
+    $("vecSql").innerHTML=sqlHTML(r.vector.sql);
+    const peek = r.vector.qpreview && r.vector.qpreview.length ? `<div class="qvec">query → [${r.vector.qpreview.join(", ")}, … ] &nbsp;(${384}-dim)</div>` : "";
+    $("vecRows").innerHTML=peek+vecRows(r.vector.rows, r.metric);
+  }
+
+  async function addDoc(){
+    const title=$("newTitle").value.trim(), body=$("newBody").value.trim();
+    if(!body){ toast("write a body"); return; }
+    $("btnAdd").disabled=true;
+    const r=await api("insert",{title,body});
+    $("btnAdd").disabled=false;
+    if(r.error){ $("addHint").textContent=r.error; return; }
+    $("addHint").innerHTML=`stored as row #${r.id} → embedded (${r.dim}-dim): [${r.preview.slice(0,4).join(", ")}, …]`;
+    $("newTitle").value=""; $("newBody").value="";
+    toast("embedded & stored — now searchable"); loadStatus();
+  }
+
+  async function loadDocs(){
+    const r=await api("docs"); const sel=$("docPick");
+    sel.innerHTML='<option value="">—</option>'+(r.docs||[]).map(d=>`<option value="${d.id}">${d.id} · ${esc(d.title)}</option>`).join("");
+  }
+  async function peekDoc(id){
+    if(!id){ $("peek").textContent="pick a row…"; return; }
+    const r=await api("doc/"+id);
+    if(r.error){ $("peek").textContent=r.error; return; }
+    $("peek").innerHTML=`<b>${esc(r.title)}</b> <span class="tag">${r.dim}-dim · ‖v‖=${r.norm}</span><br>${esc(r.body)}
+      <br><br>embedding = [ ${r.preview.join(", ")}, … <span style="color:#9a968c">(${r.dim-8} more)</span> ]`;
+  }
+
+  async function loadExamples(){
+    const r=await api("examples"); const c=$("chips");
+    c.innerHTML=(r.queries||[]).map(q=>`<button class="ghost" data-q="${esc(q)}" style="font-weight:600;font-size:12px;padding:6px 11px">${esc(q)}</button>`).join("");
+    c.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{ $("q").value=b.dataset.q; runSearch(); }));
+  }
+
+  $("btnSetup").addEventListener("click",runSetup);
+  $("btnReset").addEventListener("click",reset);
+  $("btnSelftest").addEventListener("click",selftest);
+  $("btnSearch").addEventListener("click",runSearch);
+  $("q").addEventListener("keydown",e=>{ if(e.key==="Enter") runSearch(); });
+  $("btnAdd").addEventListener("click",addDoc);
+  $("docPick").addEventListener("change",e=>peekDoc(e.target.value));
+
+  loadStatus(); loadExamples();
+</script>
+</body>
+</html>

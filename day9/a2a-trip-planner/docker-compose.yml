@@ -1,0 +1,103 @@
+# ---------------------------------------------------------------------------
+# A2A Trip Planner — four agents on one network
+#
+#   weather-agent ─┐
+#   flights-agent ─┤─ a2a-net ─►  trip-planner  ─►  ui  (http://localhost:8080)
+#                  ┘   (discovered + called by the planner over A2A)
+#
+#   1. cp .env.example .env   and fill in your keys
+#   2. docker compose up -d --build
+#   3. open http://localhost:8080
+# ---------------------------------------------------------------------------
+services:
+
+  weather-agent:
+    build: ./weather-agent
+    container_name: weather-agent
+    networks: [a2a-net]
+    ports: ["8001:8001"]
+    environment:
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-3-5-sonnet-latest}
+      - WEATHER_STUB=${WEATHER_STUB:-}
+
+  flights-agent:
+    build: ./flights-agent
+    container_name: flights-agent
+    networks: [a2a-net]
+    ports: ["8002:8002"]
+    environment:
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-3-5-sonnet-latest}
+      - FLIGHTS_PROVIDER=${FLIGHTS_PROVIDER:-duffel}
+      - DUFFEL_TOKEN=${DUFFEL_TOKEN:-}
+      - DUFFEL_VERSION=${DUFFEL_VERSION:-v2}
+      - AMADEUS_KEY=${AMADEUS_KEY:-}
+      - AMADEUS_SECRET=${AMADEUS_SECRET:-}
+      - AMADEUS_BASE=${AMADEUS_BASE:-https://test.api.amadeus.com}
+      - AVIATIONSTACK_KEY=${AVIATIONSTACK_KEY:-}
+      - FLIGHTS_STUB=${FLIGHTS_STUB:-}
+
+  flights-status-agent:
+    build: ./flights-status-agent
+    container_name: flights-status-agent
+    networks: [a2a-net]
+    ports: ["8004:8004"]
+    environment:
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-3-5-sonnet-latest}
+      - STATUS_PROVIDER=${STATUS_PROVIDER:-sample}
+      - STATUS_TICK=${STATUS_TICK:-1.4}
+      - AVIATIONSTACK_KEY=${AVIATIONSTACK_KEY:-}
+      - STATUS_STUB=${STATUS_STUB:-}
+
+  flights-book-agent:
+    build: ./flights-book-agent
+    container_name: flights-book-agent
+    networks: [a2a-net]
+    ports: ["8005:8005"]
+    environment:
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-3-5-sonnet-latest}
+
+  trip-planner:
+    build: ./trip-planner
+    container_name: trip-planner
+    depends_on: [weather-agent, flights-agent, flights-status-agent, flights-book-agent]
+    networks: [a2a-net]
+    ports: ["8003:8003"]
+    environment:
+      - WEATHER_URL=http://weather-agent:8001
+      - FLIGHTS_URL=http://flights-agent:8002
+      - STATUS_URL=http://flights-status-agent:8004
+      - BOOK_URL=http://flights-book-agent:8005
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-3-5-sonnet-latest}
+
+  ui:
+    build: ./ui
+    container_name: trip-ui
+    depends_on: [trip-planner]
+    networks: [a2a-net]
+    ports: ["8080:8080"]
+    environment:
+      - PLANNER_URL=http://trip-planner:8003
+
+networks:
+  a2a-net:
+    driver: bridge

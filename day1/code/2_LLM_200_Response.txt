@@ -1,0 +1,137 @@
+from dotenv import load_dotenv
+load_dotenv()
+print("Keys loaded from .env")
+print()
+
+import os
+# ── Quick key check ──────────────────────────────────────────
+for name in ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GOOGLE_API_KEY", "GROQ_API_KEY"]:
+    status = "found" if os.getenv(name) else "MISSING"
+    print(f"  {name:22s}: {status}")
+
+print()
+
+# ── The frame we are sending ─────────────────────────────────
+SYSTEM_PROMPT = "You are a retail banking assistant. Answer only banking questions."
+QUESTION      = "In one sentence, what is a fixed deposit?"
+
+print("─" * 55)
+print("STEP 1 - Frame built")
+print("  System prompt :", SYSTEM_PROMPT)
+print("  Question      :", QUESTION)
+print("─" * 55)
+
+---------------------------------
+
+# ── Vendor 1 — OpenAI ────────────────────────────────────────
+def journey_openai():
+    from openai import OpenAI
+    client = OpenAI()
+
+    print("  STEP 2 — Sending frame to OpenAI's data center...")
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user",   "content": QUESTION},
+        ],
+    )
+    print("  STEP 3 — API gateway checked key + rate limit")
+    print("  STEP 4 — Model ran on GPU and generated tokens")
+    print("  STEP 5 — Green response frame received (HTTP 200)")
+    print(f"  Reply  : {response.choices[0].message.content.strip()}")
+    print(f"  Tokens : in={response.usage.prompt_tokens}  "
+          f"out={response.usage.completion_tokens}  "
+          f"total={response.usage.total_tokens}")
+
+
+# ── Vendor 2 — Anthropic ─────────────────────────────────────
+def journey_anthropic():
+    from anthropic import Anthropic
+    client = Anthropic()
+
+    print("  STEP 2 — Sending frame to Anthropic's data center...")
+    # NOTE: system prompt is a top-level param, NOT inside messages[]
+    response = client.messages.create(
+        model="claude-haiku-4-5",
+        max_tokens=300,
+        system=SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": QUESTION}],
+    )
+    print("  STEP 3 — API gateway checked key + rate limit")
+    print("  STEP 4 — Model ran on GPU and generated tokens")
+    print("  STEP 5 — Green response frame received (HTTP 200)")
+    print(f"  Reply  : {response.content[0].text.strip()}")
+    print(f"  Tokens : in={response.usage.input_tokens}  "
+          f"out={response.usage.output_tokens}  "
+          f"total={response.usage.input_tokens + response.usage.output_tokens}")
+
+
+#── Vendor 3 — Google ────────────────────────────────────────
+def journey_google():
+    from google import genai
+    from google.genai import types
+    client = genai.Client()
+
+    print("  STEP 2 — Sending frame to Google's data center...")
+    # NOTE: system prompt goes inside GenerateContentConfig
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=QUESTION,
+        config=types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT
+        ),
+    )
+    print("  STEP 3 — API gateway checked key + rate limit")
+    print("  STEP 4 — Model ran on GPU and generated tokens")
+    print("  STEP 5 — Green response frame received (HTTP 200)")
+    print(f"  Reply  : {response.text.strip()}")
+    u = response.usage_metadata
+    print(f"  Tokens : in={u.prompt_token_count}  "
+          f"out={u.candidates_token_count}  "
+          f"total={u.total_token_count}")
+
+# ── Vendor 4 — Groq ──────────────────────────────────────────
+def journey_groq():
+    from groq import Groq
+    client = Groq()
+
+    print("  STEP 2 — Sending frame to Groq's data center...")
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user",   "content": QUESTION},
+        ],
+    )
+    print("  STEP 3 — API gateway checked key + rate limit")
+    print("  STEP 4 — Model ran on GPU and generated tokens")
+    print("  STEP 5 — Green response frame received (HTTP 200)")
+    print(f"  Reply  : {response.choices[0].message.content.strip()}")
+    print(f"  Tokens : in={response.usage.prompt_tokens}  "
+          f"out={response.usage.completion_tokens}  "
+          f"total={response.usage.total_tokens}")
+
+---------------------------------------
+
+vendors = [
+    ("OpenAI    (gpt-4o-mini)",          journey_openai),
+    ("Anthropic (claude-haiku-4-5)",     journey_anthropic),
+    ("Google    (gemini-2.5-flash)",     journey_google),
+    ("Groq      (llama-3.3-70b)",        journey_groq),
+]
+
+for label, fn in vendors:
+    print()
+    print(f"{'═' * 55}")
+    print(f"  Vendor: {label}")
+    print(f"{'═' * 55}")
+    try:
+        fn()
+    except Exception as e:
+        print(f"  SKIPPED — {e}")
+
+print()
+print("─" * 55)
+print("All vendors done.")
+print("─" * 55)

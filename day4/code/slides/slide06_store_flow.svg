@@ -1,0 +1,164 @@
+<svg width="100%" viewBox="0 0 820 950" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>Where vectors are stored. The application loads, chunks, and embeds documents over a network call, producing one vector per chunk; the same vectors can live in memory (RAM) or in a database. Each chunk is stored as three things together: its vector (the only part you search), its original text (returned to the LLM later), and metadata (source, page, tenant, permissions — what you filter and secure on). Only two things truly force a database: the data won't fit in memory, or it must be shared across instances and survive restart. Filtering, access control and speed do not force a database. If a database, choose among extend-what-you-run, purpose-built, or in-process library.</title>
+<defs>
+<marker id="d" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1.5 1L8.5 5L1.5 9" fill="none" stroke="#444441" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1.5 1L8.5 5L1.5 9" fill="none" stroke="#185FA5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<style>
+ text{font-family:sans-serif}.mono{font-family:monospace}.an{font-style:italic;fill:#5F5E5A}
+ .cell{width:22px;height:16px;stroke:#fff;stroke-width:1}
+ .h1{fill:#2c6fb0}.h2{fill:#7aa9d6}.h3{fill:#bed5ec}.h4{fill:#efece4}.h5{fill:#f3c9b6}.h6{fill:#e08a6a}.h7{fill:#c0532f}
+</style>
+</defs>
+<rect x="0" y="0" width="820" height="950" fill="#FFFFFF"/>
+
+<text x="410" y="30" text-anchor="middle" font-size="17" font-weight="700" fill="#1d3a5f">Embedding made the vectors — where do we keep them?</text>
+<text x="410" y="49" text-anchor="middle" font-size="10.5" fill="#5F5E5A">From the application, into memory or a database — and if a database, which one.</text>
+
+<!-- SECTION 1 -->
+<rect x="20" y="60" width="780" height="22" rx="6" fill="#1d3a5f"/>
+<text x="34" y="76" font-size="10.5" font-weight="700" fill="#FFFFFF">① The application turns documents into vectors</text>
+
+<rect x="300" y="90" width="186" height="24" rx="12" fill="#F2F7FC" stroke="#185FA5" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="393" y="106" text-anchor="middle" font-size="8.5" fill="#185FA5">Embedding model · network call</text>
+<line x1="350" y1="150" x2="350" y2="116" stroke="#185FA5" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#b)" marker-start="url(#b)"/>
+<text x="358" y="134" font-size="7.5" fill="#9a958c">text → / ← numbers</text>
+
+<rect x="40" y="120" width="468" height="84" rx="9" fill="#FFFDF8" stroke="#EF9F27" stroke-width="1.4"/>
+<text x="52" y="137" font-size="9" font-weight="700" fill="#B0700A">Your application</text>
+<rect x="54" y="148" width="120" height="34" rx="6" fill="#FAEEDA" stroke="#e7c98c"/><text x="114" y="169" text-anchor="middle" font-size="9" fill="#854F0B">Load document</text>
+<line x1="176" y1="165" x2="190" y2="165" stroke="#444441" stroke-width="1.4" marker-end="url(#d)"/>
+<rect x="192" y="148" width="84" height="34" rx="6" fill="#FAEEDA" stroke="#e7c98c"/><text x="234" y="169" text-anchor="middle" font-size="9" fill="#854F0B">Chunk</text>
+<line x1="278" y1="165" x2="292" y2="165" stroke="#444441" stroke-width="1.4" marker-end="url(#d)"/>
+<rect x="294" y="148" width="112" height="34" rx="6" fill="#E1F5EE" stroke="#5DCAA5"/><text x="350" y="169" text-anchor="middle" font-size="9" font-weight="700" fill="#0F6E56">Embed</text>
+
+<line x1="508" y1="163" x2="544" y2="163" stroke="#444441" stroke-width="1.6" marker-end="url(#d)"/>
+<text x="556" y="134" font-size="9" font-weight="700" fill="#1d3a5f">vectors</text>
+<text x="600" y="134" font-size="8" class="an">one per chunk</text>
+<rect x="556" y="150" width="16" height="11" fill="#7aa9d6"/><rect x="573" y="150" width="16" height="11" fill="#c0532f"/><rect x="590" y="150" width="16" height="11" fill="#efece4"/><rect x="607" y="150" width="16" height="11" fill="#e08a6a"/><rect x="624" y="150" width="16" height="11" fill="#2c6fb0"/><rect x="641" y="150" width="16" height="11" fill="#bed5ec"/>
+<rect x="556" y="163" width="16" height="11" fill="#e08a6a"/><rect x="573" y="163" width="16" height="11" fill="#bed5ec"/><rect x="590" y="163" width="16" height="11" fill="#c0532f"/><rect x="607" y="163" width="16" height="11" fill="#efece4"/><rect x="624" y="163" width="16" height="11" fill="#7aa9d6"/><rect x="641" y="163" width="16" height="11" fill="#e08a6a"/>
+<rect x="556" y="176" width="16" height="11" fill="#efece4"/><rect x="573" y="176" width="16" height="11" fill="#2c6fb0"/><rect x="590" y="176" width="16" height="11" fill="#e08a6a"/><rect x="607" y="176" width="16" height="11" fill="#bed5ec"/><rect x="624" y="176" width="16" height="11" fill="#c0532f"/><rect x="641" y="176" width="16" height="11" fill="#7aa9d6"/>
+<text x="690" y="170" font-size="13" fill="#888780">…</text>
+
+<!-- SECTION 2 -->
+<rect x="20" y="214" width="780" height="22" rx="6" fill="#1d3a5f"/>
+<text x="34" y="230" font-size="10.5" font-weight="700" fill="#FFFFFF">② Those vectors go one of two places</text>
+
+<rect x="40" y="244" width="360" height="132" rx="10" fill="#FFFFFF" stroke="#1D9E75" stroke-width="1.5"/>
+<text x="56" y="266" font-size="11.5" font-weight="700" fill="#0F6E56">IN MEMORY (RAM)</text>
+<rect x="56" y="276" width="116" height="54" rx="4" fill="#EAF7F1" stroke="#1D9E75" stroke-width="1.2"/>
+<rect x="64" y="285" width="14" height="9" fill="#7aa9d6"/><rect x="80" y="285" width="14" height="9" fill="#c0532f"/><rect x="96" y="285" width="14" height="9" fill="#efece4"/><rect x="112" y="285" width="14" height="9" fill="#e08a6a"/><rect x="128" y="285" width="14" height="9" fill="#2c6fb0"/>
+<rect x="64" y="298" width="14" height="9" fill="#e08a6a"/><rect x="80" y="298" width="14" height="9" fill="#bed5ec"/><rect x="96" y="298" width="14" height="9" fill="#c0532f"/><rect x="112" y="298" width="14" height="9" fill="#efece4"/><rect x="128" y="298" width="14" height="9" fill="#7aa9d6"/>
+<line x1="64" y1="330" x2="64" y2="336" stroke="#1D9E75" stroke-width="1.3"/><line x1="76" y1="330" x2="76" y2="336" stroke="#1D9E75" stroke-width="1.3"/><line x1="88" y1="330" x2="88" y2="336" stroke="#1D9E75" stroke-width="1.3"/><line x1="100" y1="330" x2="100" y2="336" stroke="#1D9E75" stroke-width="1.3"/><line x1="112" y1="330" x2="112" y2="336" stroke="#1D9E75" stroke-width="1.3"/><line x1="124" y1="330" x2="124" y2="336" stroke="#1D9E75" stroke-width="1.3"/><line x1="136" y1="330" x2="136" y2="336" stroke="#1D9E75" stroke-width="1.3"/>
+<text x="56" y="350" font-size="8" class="an">vectors held inside the app</text>
+<text x="190" y="288" font-size="9.5" fill="#444441">• <tspan font-weight="700" fill="#0F6E56">Fast</tspan> — read instantly,</text>
+<text x="198" y="301" font-size="9.5" fill="#444441">no network in between.</text>
+<text x="190" y="327" font-size="9.5" fill="#444441">• <tspan font-weight="700" fill="#0F6E56">Temporary</tspan> — gone when</text>
+<text x="198" y="340" font-size="9.5" fill="#444441">the app stops; capped by</text>
+<text x="198" y="353" font-size="9.5" fill="#444441">the machine's memory.</text>
+
+<rect x="420" y="244" width="360" height="132" rx="10" fill="#FFFFFF" stroke="#185FA5" stroke-width="1.5"/>
+<text x="436" y="266" font-size="11.5" font-weight="700" fill="#1d3a5f">IN A DATABASE</text>
+<rect x="432" y="286" width="38" height="28" rx="5" fill="#FFFFFF" stroke="#185FA5" stroke-width="1.2"/><text x="451" y="304" text-anchor="middle" font-size="8" fill="#185FA5">app</text>
+<line x1="472" y1="300" x2="500" y2="300" stroke="#185FA5" stroke-width="1.4" marker-end="url(#b)" marker-start="url(#b)"/>
+<text x="486" y="294" text-anchor="middle" font-size="7" fill="#9a958c">query</text>
+<ellipse cx="540" cy="290" rx="30" ry="7" fill="#E6EEF7" stroke="#185FA5" stroke-width="1.3"/>
+<path d="M510 290 V340 A30 7 0 0 0 570 340 V290" fill="#E6EEF7" stroke="#185FA5" stroke-width="1.3"/>
+<rect x="518" y="300" width="11" height="8" fill="#7aa9d6"/><rect x="531" y="300" width="11" height="8" fill="#c0532f"/><rect x="544" y="300" width="11" height="8" fill="#efece4"/><rect x="557" y="300" width="11" height="8" fill="#e08a6a"/>
+<rect x="518" y="312" width="11" height="8" fill="#e08a6a"/><rect x="531" y="312" width="11" height="8" fill="#bed5ec"/><rect x="544" y="312" width="11" height="8" fill="#c0532f"/><rect x="557" y="312" width="11" height="8" fill="#7aa9d6"/>
+<text x="540" y="360" text-anchor="middle" font-size="8" class="an">same vectors, stored in the DB</text>
+<text x="586" y="288" font-size="9.5" fill="#444441">• <tspan font-weight="700" fill="#185FA5">Durable &amp; shared</tspan> —</text>
+<text x="594" y="301" font-size="9.5" fill="#444441">survives restarts; many</text>
+<text x="594" y="314" font-size="9.5" fill="#444441">users query at once.</text>
+<text x="586" y="336" font-size="9.5" fill="#444441">• <tspan font-weight="700" fill="#185FA5">Scales &amp; secured</tspan> —</text>
+<text x="594" y="349" font-size="9.5" fill="#444441">beyond memory, with</text>
+<text x="594" y="362" font-size="9.5" fill="#444441">access control.</text>
+
+<!-- SECTION 3: what you store per chunk -->
+<rect x="20" y="388" width="780" height="22" rx="6" fill="#1d3a5f"/>
+<text x="34" y="404" font-size="10.5" font-weight="700" fill="#FFFFFF">③ What you actually store per chunk — three things together</text>
+
+<rect x="20" y="414" width="780" height="124" rx="10" fill="#FFFFFF" stroke="#1D9E75" stroke-width="1.4"/>
+<text x="40" y="436" font-size="9.5" font-weight="700" fill="#0F6E56">VECTOR</text>
+<rect class="cell h2" x="40" y="442"/><rect class="cell h7" x="62" y="442"/><rect class="cell h1" x="84" y="442"/><rect class="cell h4" x="106" y="442"/><rect class="cell h6" x="128" y="442"/><rect class="cell h3" x="150" y="442"/><rect class="cell h7" x="172" y="442"/><rect class="cell h5" x="194" y="442"/>
+<text x="40" y="476" font-size="8.5" fill="#444441">the length-1 list (768+ numbers)</text>
+<text x="40" y="488" font-size="8.5" font-weight="700" fill="#0F6E56">the only part you search</text>
+
+<line x1="252" y1="430" x2="252" y2="500" stroke="#e3e0d9" stroke-width="1.2"/>
+<text x="272" y="436" font-size="9.5" font-weight="700" fill="#5F5E5A">TEXT</text>
+<rect x="272" y="442" width="226" height="30" rx="5" fill="#F7F6F3" stroke="#dcd9d1"/><text x="282" y="455" font-size="8" class="mono" fill="#444441">"…prior authorization is required</text><text x="282" y="466" font-size="8" class="mono" fill="#444441">for an MRI of the lumbar spine…"</text>
+<text x="272" y="488" font-size="8.5" fill="#444441">the original chunk · returned to the LLM later</text>
+
+<line x1="512" y1="430" x2="512" y2="500" stroke="#e3e0d9" stroke-width="1.2"/>
+<text x="532" y="436" font-size="9.5" font-weight="700" fill="#B0700A">METADATA</text>
+<rect x="532" y="442" width="84" height="15" rx="7" fill="#FAEEDA" stroke="#e7c98c"/><text x="574" y="453" text-anchor="middle" font-size="7.5" fill="#854F0B">doc: policy.pdf</text>
+<rect x="620" y="442" width="50" height="15" rx="7" fill="#FAEEDA" stroke="#e7c98c"/><text x="645" y="453" text-anchor="middle" font-size="7.5" fill="#854F0B">page 7</text>
+<rect x="532" y="460" width="74" height="15" rx="7" fill="#FAEEDA" stroke="#e7c98c"/><text x="569" y="471" text-anchor="middle" font-size="7.5" fill="#854F0B">tenant: acme</text>
+<rect x="610" y="460" width="60" height="15" rx="7" fill="#FAEEDA" stroke="#e7c98c"/><text x="640" y="471" text-anchor="middle" font-size="7.5" fill="#854F0B">acl: nurse</text>
+<text x="532" y="488" font-size="8.5" fill="#444441">source, page, tenant, permissions ·</text>
+<text x="532" y="500" font-size="8.5" font-weight="700" fill="#B0700A">what you filter &amp; secure on</text>
+
+<rect x="40" y="510" width="744" height="20" rx="5" fill="#FBECEA"/><text x="50" y="524" font-size="8.5" fill="#C0392B">Drop the text or metadata and you can't explain WHY a chunk matched — or restrict it by patient / account / tenant.</text>
+
+<!-- SECTION 4: what forces a database -->
+<rect x="20" y="548" width="780" height="22" rx="6" fill="#1d3a5f"/>
+<text x="34" y="564" font-size="10.5" font-weight="700" fill="#FFFFFF">④ What actually forces a database — and what doesn't</text>
+
+<rect x="40" y="576" width="360" height="100" rx="9" fill="#FFFFFF" stroke="#185FA5" stroke-width="1.6"/>
+<rect x="40" y="576" width="360" height="20" rx="9" fill="#E6EEF7"/><rect x="40" y="586" width="360" height="10" fill="#E6EEF7"/>
+<text x="52" y="590" font-size="9.5" font-weight="700" fill="#1d3a5f">These FORCE a database</text>
+<text x="52" y="614" font-size="9" fill="#444441"><tspan font-weight="700" fill="#185FA5">1.</tspan> The data <tspan font-weight="700">won't fit in memory</tspan></text>
+<text x="66" y="626" font-size="8.5" fill="#5F5E5A">(vectors + index + everything else the box runs)</text>
+<text x="52" y="648" font-size="9" fill="#444441"><tspan font-weight="700" fill="#185FA5">2.</tspan> It must be <tspan font-weight="700">shared across instances</tspan></text>
+<text x="66" y="660" font-size="8.5" fill="#5F5E5A">&amp; survive restart — built once, queried by all</text>
+
+<rect x="420" y="576" width="360" height="100" rx="9" fill="#FFFFFF" stroke="#B0700A" stroke-width="1.3"/>
+<rect x="420" y="576" width="360" height="20" rx="9" fill="#FAEEDA"/><rect x="420" y="586" width="360" height="10" fill="#FAEEDA"/>
+<text x="432" y="590" font-size="9.5" font-weight="700" fill="#854F0B">NOT forks — a database is just safer / simpler here</text>
+<text x="432" y="612" font-size="9" fill="#444441"><tspan font-weight="700" fill="#B0700A">Filtering &amp; access:</tspan> RAM can filter in code —</text>
+<text x="446" y="624" font-size="8.5" fill="#5F5E5A">a DB <tspan font-weight="700">enforces &amp; logs</tspan> it (safer for PHI / tenants)</text>
+<text x="432" y="646" font-size="9" fill="#444441"><tspan font-weight="700" fill="#B0700A">Speed:</tspan> exact-in-RAM is fastest while it fits —</text>
+<text x="446" y="658" font-size="8.5" fill="#5F5E5A">"approximate search" is a search method, not a place</text>
+
+<!-- SECTION 5: which database -->
+<rect x="20" y="686" width="780" height="22" rx="6" fill="#1d3a5f"/>
+<text x="34" y="702" font-size="10.5" font-weight="700" fill="#FFFFFF">⑤ If it's a database — which one? Three families</text>
+
+<rect x="20" y="714" width="252" height="128" rx="9" fill="#FFFFFF" stroke="#7B3FA0" stroke-width="1.4"/>
+<rect x="20" y="714" width="252" height="22" rx="9" fill="#F0E8F8"/><rect x="20" y="727" width="252" height="9" fill="#F0E8F8"/>
+<text x="32" y="729" font-size="9.5" font-weight="700" fill="#7B3FA0">1 · Extend what you run</text>
+<text x="32" y="750" font-size="8" class="an">add vectors to a store you already run</text>
+<text x="32" y="768" font-size="8.5" class="mono" fill="#7B3FA0">pgvector · Elasticsearch</text>
+<text x="32" y="780" font-size="8.5" class="mono" fill="#7B3FA0">Redis · MongoDB · Oracle</text>
+<text x="32" y="800" font-size="8.5" fill="#444441"><tspan font-weight="700">Best:</tspan> vectors are a feature,</text>
+<text x="32" y="812" font-size="8.5" fill="#444441">not the whole product.</text>
+<text x="32" y="832" font-size="8" fill="#5F5E5A"><tspan font-weight="700" fill="#7B3FA0">no new system</tspan> — reuse auth, compliance</text>
+
+<rect x="284" y="714" width="252" height="128" rx="9" fill="#FFFFFF" stroke="#185FA5" stroke-width="1.4"/>
+<rect x="284" y="714" width="252" height="22" rx="9" fill="#E6EEF7"/><rect x="284" y="727" width="252" height="9" fill="#E6EEF7"/>
+<text x="296" y="729" font-size="9.5" font-weight="700" fill="#1d3a5f">2 · Purpose-built vector DB</text>
+<text x="296" y="750" font-size="8" class="an">engines born for vector search</text>
+<text x="296" y="768" font-size="8.5" class="mono" fill="#185FA5">Qdrant · Weaviate · Milvus</text>
+<text x="296" y="780" font-size="8.5" class="mono" fill="#185FA5">Pinecone · Vespa</text>
+<text x="296" y="800" font-size="8.5" fill="#444441"><tspan font-weight="700">Best:</tspan> vector search IS the</text>
+<text x="296" y="812" font-size="8.5" fill="#444441">core workload — millions+.</text>
+<text x="296" y="832" font-size="8" fill="#5F5E5A"><tspan font-weight="700" fill="#185FA5">best recall/latency</tspan> at scale; rich filtering</text>
+
+<rect x="548" y="714" width="252" height="128" rx="9" fill="#FFFFFF" stroke="#1D9E75" stroke-width="1.4"/>
+<rect x="548" y="714" width="252" height="22" rx="9" fill="#E1F5EE"/><rect x="548" y="727" width="252" height="9" fill="#E1F5EE"/>
+<text x="560" y="729" font-size="9.5" font-weight="700" fill="#0F6E56">3 · In-process library</text>
+<text x="560" y="750" font-size="8" class="an">a vector index inside your app — no server</text>
+<text x="560" y="768" font-size="8.5" class="mono" fill="#0F6E56">FAISS · hnswlib · Chroma</text>
+<text x="560" y="780" font-size="8.5" class="mono" fill="#0F6E56">sqlite-vec · LanceDB</text>
+<text x="560" y="800" font-size="8.5" fill="#444441"><tspan font-weight="700">Best:</tspan> one app, bounded</text>
+<text x="560" y="812" font-size="8.5" fill="#444441">data; step up from a list.</text>
+<text x="560" y="832" font-size="8" fill="#5F5E5A"><tspan font-weight="700" fill="#0F6E56">zero infrastructure</tspan> — lives with the app</text>
+
+<text x="20" y="858" font-size="8.5" fill="#5F5E5A"><tspan font-weight="700" fill="#1d3a5f">Second axis (families 1 &amp; 2):</tspan>  self-host (you run it) or managed / SaaS (the vendor runs it) — e.g. RDS, Elastic Cloud, Qdrant Cloud, Pinecone.</text>
+
+<!-- SECTION 6: final call -->
+<rect x="20" y="870" width="780" height="22" rx="6" fill="#1d3a5f"/>
+<text x="34" y="886" font-size="10.5" font-weight="700" fill="#FFFFFF">⑥ The final call</text>
+<rect x="20" y="898" width="780" height="42" rx="9" fill="#F7F4FB" stroke="#7B3FA0" stroke-width="1.3"/>
+<text x="36" y="916" font-size="9" fill="#444441"><tspan font-weight="700" fill="#0F6E56">In memory</tspan> while small &amp; changing fast  →  <tspan font-weight="700" fill="#185FA5">a database</tspan> once it won't fit, or must be shared &amp; survive restart.</text>
+<text x="36" y="932" font-size="9" fill="#444441">For most enterprise apps that database is <tspan font-weight="700" fill="#7B3FA0">Postgres + pgvector</tspan> — already in your stack (and it secures &amp; filters too).</text>
+</svg>
