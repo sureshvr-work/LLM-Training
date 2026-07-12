@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<!-- saved from url=(0052)file:///Users/ramji/Downloads/a2a-combined-deck.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A2A — the story, field by field</title>
+<style>
+  :root{
+    --navy:#185FA5;--navy2:#185FA5;--navyBg:#E6EEF7;
+    --teal:#0F6E56;--teal2:#1D9E75;--tealBg:#E1F5EE;
+    --amber:#854F0B;--amber2:#EF9F27;--amberBg:#FAEEDA;
+    --purple:#7B3FA0;--purple2:#7B3FA0;--purpleBg:#F0E8F8;
+    --pink:#A8488C;--pinkBg:#F8E6F1;--red:#C0392B;--redBg:#FBEAE7;
+    --ink:#23211c;--gray:#5c5a52;--faint:#9a968b;--line:#e4e0d6;
+    --panel:rgba(255,255,255,.9);--panel2:#ffffff;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;overflow:hidden}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);
+    background:#f5f6f8;position:relative}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  /* ---- space background ---- */
+  #space{position:fixed;inset:0;z-index:0;overflow:hidden;background:radial-gradient(1100px 640px at 82% -8%,rgba(123,63,160,.05),transparent 60%),radial-gradient(1000px 640px at 8% 108%,rgba(24,95,165,.05),transparent 62%),linear-gradient(160deg,#fbfaf7,#f5f6f8 55%,#f3f0e9);}
+  #stars,#stars2{display:none}
+  #stars{background-image:
+    radial-gradient(1.4px 1.4px at 20% 30%, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 70% 60%, #cfe0ff, transparent),
+    radial-gradient(1px 1px at 40% 80%, #fff, transparent),
+    radial-gradient(1.3px 1.3px at 85% 25%, #dfe9ff, transparent),
+    radial-gradient(1px 1px at 55% 15%, #fff, transparent),
+    radial-gradient(1.1px 1.1px at 12% 65%, #e9d6ff, transparent),
+    radial-gradient(1px 1px at 92% 72%, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 33% 48%, #cfe0ff, transparent);
+    background-size:520px 520px;opacity:.7;animation:drift 140s linear infinite}
+  #stars2{background-image:
+    radial-gradient(1px 1px at 15% 20%, #fff, transparent),
+    radial-gradient(1px 1px at 60% 70%, #bcd2ff, transparent),
+    radial-gradient(1px 1px at 80% 40%, #fff, transparent),
+    radial-gradient(1px 1px at 35% 90%, #e7d8ff, transparent);
+    background-size:320px 320px;opacity:.5;animation:drift 90s linear infinite reverse}
+  @keyframes drift{to{transform:translate(60px,40px)}}
+
+  /* ---- shell ---- */
+  .app{position:relative;z-index:2;height:100vh;display:grid;grid-template-rows:1fr auto}
+  .hd{display:flex;align-items:baseline;gap:14px;padding:12px 26px 10px;border-bottom:1px solid var(--line);
+    background:rgba(6,10,22,.35);backdrop-filter:blur(6px)}
+  .brand{font-weight:800;color:var(--ink);font-size:14px;letter-spacing:.03em}
+  .brand b{color:var(--purple)}
+  .sttl{font-size:12.5px;color:var(--gray);font-weight:600}
+  .sttl .n{color:var(--teal);font-weight:800}
+  .step{margin-left:auto;font-size:11px;color:var(--faint);font-family:ui-monospace,monospace}
+  .stagewrap{position:relative;min-height:0}
+  .slide{position:absolute;inset:0;padding:22px 30px 8px;flex-direction:column}
+  .slide:not(.show){display:none}
+  .slide.show{display:flex}
+  .ft{display:flex;align-items:center;gap:12px;padding:9px 26px;border-top:1px solid var(--line);
+    background:rgba(6,10,22,.35);backdrop-filter:blur(6px)}
+  .nav{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:#fff;
+    color:var(--ink);font-size:15px;cursor:pointer;display:grid;place-items:center}
+  .nav:hover{border-color:var(--purple);color:var(--purple)}
+  .dots{display:flex;gap:6px;margin:0 auto;flex-wrap:wrap;max-width:70%}
+  .dot{width:8px;height:8px;border-radius:50%;background:rgba(0,0,0,.14);cursor:pointer;transition:.2s}
+  .dot.on{background:var(--teal);transform:scale(1.35)}
+  .dot.seen{background:rgba(47,210,160,.5)}
+  .hint{font-size:10.5px;color:var(--faint);font-family:ui-monospace,monospace}
+
+  /* ---- reveal ---- */
+  [data-beat]{opacity:0;transform:translateY(10px);transition:opacity .5s ease,transform .5s ease}
+  [data-beat].in{opacity:1;transform:none}
+
+  /* ---- type ---- */
+  .kicker{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--teal)}
+  .kicker.p{color:var(--purple)} .kicker.a{color:var(--amber)} .kicker.pk{color:var(--pink)}
+  h1.big{font-size:52px;line-height:1.02;font-weight:800;margin:10px 0 0;color:var(--ink);letter-spacing:-.01em}
+  h1.big .g{background:linear-gradient(100deg,var(--purple),var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lead{font-size:26px;font-weight:800;color:var(--ink);line-height:1.2;margin:0}
+  .lead .hl{color:var(--purple)} .lead .ht{color:var(--teal)} .lead .ha{color:var(--amber)}
+  .sub{font-size:15px;color:var(--gray);line-height:1.55;max-width:70ch}
+  .sub b{color:var(--ink)} .sub .t{color:var(--teal);font-weight:700} .sub .p{color:var(--purple);font-weight:700} .sub .a{color:var(--amber);font-weight:700}
+  .row{display:flex;gap:18px} .col{display:flex;flex-direction:column}
+  .grow{flex:1;min-height:0}
+  .center{align-items:center;justify-content:center;text-align:center}
+
+  /* title globe */
+  .hero{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;height:100%;justify-content:center;gap:20px;padding:0}
+  .hero-top{display:flex;flex-direction:column;align-items:center}
+  .hero-bot{display:flex;flex-direction:column;align-items:center}
+  .globe-bg{position:relative;z-index:1;display:flex;justify-content:center;pointer-events:none;margin:0}
+  .globe-bg svg{width:min(44vh,420px);height:auto;opacity:1}
+  .globe-spin{animation:spin 60s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .gl-outline{fill:url(#gcore);stroke:rgba(175,205,255,.6);stroke-width:1.2}
+  .gl-grid ellipse{fill:none;stroke:rgba(155,185,250,.34);stroke-width:1}
+  .gl-links path{fill:none;stroke:rgba(175,205,255,.5);stroke-width:1.3;stroke-linecap:round;stroke-dasharray:4 8;animation:flow 3.6s linear infinite}
+  @keyframes flow{to{stroke-dashoffset:-48}}
+  .gl-nodes .ring{transform-box:fill-box;transform-origin:center;animation:ringpulse 3s ease-in-out infinite}
+  .gl-nodes g:nth-child(2n) .ring{animation-delay:1s} .gl-nodes g:nth-child(3n) .ring{animation-delay:1.8s}
+  .msg-fwd{offset-path:path('M78,270 Q270,150 462,270');offset-rotate:0deg;animation:mfwd 4s linear infinite}
+  .msg-rev{offset-path:path('M78,270 Q270,150 462,270');offset-rotate:0deg;animation:mrev 4s linear infinite}
+  .wirepanel{position:relative;height:150px;flex-shrink:0;margin-top:6px}
+  .wirecard{position:absolute;inset:0;overflow:auto;margin:0;font-size:11.5px;line-height:1.5}
+  .a5-f1{offset-path:path('M180,150 C320,118 400,92 510,74');offset-rotate:0deg;animation:a5go 5.5s linear infinite}
+  .a5-b1{offset-path:path('M180,150 C320,118 400,92 510,74');offset-rotate:0deg;animation:a5back 5.5s linear infinite}
+  .a5-f2{offset-path:path('M180,182 C320,214 400,238 510,250');offset-rotate:0deg;animation:a5go 5.5s linear infinite}
+  .a5-b2{offset-path:path('M180,182 C320,214 400,238 510,250');offset-rotate:0deg;animation:a5back 5.5s linear infinite}
+  @keyframes a5go{from{offset-distance:0%}to{offset-distance:100%}}
+  @keyframes a5back{from{offset-distance:100%}to{offset-distance:0%}}
+  @keyframes mfwd{from{offset-distance:0%}to{offset-distance:100%}}
+  @keyframes mrev{from{offset-distance:100%}to{offset-distance:0%}}
+  @keyframes ringpulse{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:.7;transform:scale(1.35)}}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 17px;backdrop-filter:blur(4px)}
+  .card .ct{font-size:13px;font-weight:800;color:var(--ink);margin-bottom:5px;display:flex;align-items:center;gap:8px}
+  .card .cd{font-size:12.5px;color:var(--gray);line-height:1.5}
+  .ico{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:900;flex-shrink:0}
+  .i-p{background:var(--purpleBg);color:var(--purple)} .i-t{background:var(--tealBg);color:var(--teal)}
+  .i-a{background:var(--amberBg);color:var(--amber)} .i-n{background:var(--navyBg);color:var(--navy)} .i-k{background:var(--pinkBg);color:var(--pink)}
+
+  .pill{display:inline-flex;align-items:center;gap:6px;font-family:ui-monospace,monospace;font-size:11px;font-weight:800;
+    border:1px solid var(--line);border-radius:20px;padding:4px 11px;color:var(--gray)}
+  .pill.on{border-color:var(--teal);color:var(--teal);background:var(--tealBg)}
+  .tag{font-family:ui-monospace,monospace;font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 8px}
+  .t-p{background:var(--purpleBg);color:var(--purple)} .t-t{background:var(--tealBg);color:var(--teal)} .t-a{background:var(--amberBg);color:var(--amber)} .t-n{background:var(--navyBg);color:var(--navy)}
+
+  .quote{border-left:3px solid var(--purple);padding:8px 0 8px 16px;font-size:16px;color:var(--ink);font-weight:600;line-height:1.45;font-style:italic}
+  .quote .who{display:block;font-style:normal;font-weight:700;font-size:12px;color:var(--faint);margin-top:7px}
+
+  /* logos row */
+  .logos{display:flex;flex-wrap:wrap;gap:8px}
+  .logo{font-family:ui-monospace,monospace;font-size:12px;font-weight:800;color:var(--ink);
+    border:1px solid var(--line);border-radius:9px;padding:7px 13px;background:rgba(255,255,255,.04)}
+
+  .stat{display:flex;flex-direction:column;gap:2px}
+  .stat .v{font-size:34px;font-weight:800;color:var(--ink);line-height:1}
+  .stat .v .u{font-size:16px;color:var(--teal)}
+  .stat .l{font-size:11.5px;color:var(--gray);font-weight:600}
+
+  /* code / dissection */
+  .code{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.75;overflow:auto;white-space:pre}
+  .code .k{color:var(--navy)} .code .s{color:var(--teal)} .code .n{color:var(--amber)} .code .c{color:var(--faint);font-style:italic}
+  .fl{display:block;border-radius:6px;padding:0 5px;margin:0 -5px;transition:background .3s,box-shadow .3s;border-left:2px solid transparent}
+  .fl.hot{background:rgba(200,166,255,.14);border-left-color:var(--purple);box-shadow:0 0 0 1px rgba(200,166,255,.15)}
+  .callout{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--purple);border-radius:10px;padding:12px 14px}
+  .callout .cf{font-family:ui-monospace,monospace;font-size:13px;font-weight:800;color:var(--purple)}
+  .callout .cr{font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-left:8px}
+  .callout .cx{font-size:13px;color:var(--gray);line-height:1.5;margin-top:6px}
+  .callout .cx b{color:var(--ink)}
+
+  /* arch layers */
+  .layer{border:1px solid var(--line);border-radius:12px;padding:12px 15px;background:var(--panel)}
+  .layer .ll{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .layer .lt{font-size:15px;font-weight:800;color:var(--ink);margin:2px 0 6px}
+  .chips{display:flex;gap:7px;flex-wrap:wrap}
+  .chip{font-family:ui-monospace,monospace;font-size:11px;font-weight:700;border:1px solid var(--line);border-radius:7px;padding:4px 9px;color:var(--gray)}
+  .chip.fw{font-size:12.5px;padding:4px 9px;border-color:rgba(155,108,255,.38);color:var(--purple)}
+  .chip.pr{font-size:12.5px;padding:4px 9px;border-color:rgba(240,180,69,.42);color:var(--amber)}
+
+  /* state machine */
+  .sm{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+  .state{font-family:ui-monospace,monospace;font-size:12px;font-weight:800;border-radius:9px;padding:7px 12px;border:1.5px solid var(--line);color:var(--gray)}
+  .state.act{border-color:var(--teal);color:var(--teal);background:var(--tealBg)}
+  .state.term{border-style:solid} .state.t-done.act{border-color:var(--teal2);color:var(--teal)}
+  .state.t-bad.act{border-color:var(--red);color:var(--red);background:var(--redBg)}
+  .state.t-int.act{border-color:var(--amber);color:var(--amber);background:var(--amberBg)}
+  .arrow{color:var(--faint);font-size:14px}
+
+  .mapt{width:100%;border-collapse:collapse;font-size:12px}
+  .mapt th{text-align:left;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:6px 10px;border-bottom:1px solid var(--line)}
+  .mapt td{padding:7px 10px;border-bottom:1px solid rgba(160,180,220,.09);font-family:ui-monospace,monospace;color:var(--ink)}
+  .mapt td.op{font-family:system-ui;font-weight:700;color:var(--ink)}
+  .mapt .c-j{color:var(--navy)} .mapt .c-g{color:var(--purple)} .mapt .c-r{color:var(--teal)}
+
+  .disc{font-size:11px;color:var(--faint);font-style:italic}
+  .disc b{color:var(--gray)}
+
+  /* ===== A2A Deep Dive component styles (scoped .dd) ===== */
+  .dd .hl{color:var(--purple)}
+  .dd .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .dd [data-beat]{opacity:0;transform:translateY(8px);transition:opacity .7s ease,transform .7s ease}
+  .dd [data-beat].on{opacity:1;transform:none}
+  .dd .agent{border-radius:13px;padding:12px 16px;font-weight:800;text-align:center;border:2.5px solid;min-width:150px}
+  .dd .agent .role{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;opacity:.8}
+  .dd .agent .nm{font-size:16px}
+  .dd .a-client{background:var(--redBg);border-color:var(--red);color:var(--red)}
+  .dd .a-remote{background:var(--tealBg);border-color:var(--teal);color:var(--teal)}
+  .dd .jpanel{background:#0f2030;border-radius:11px;padding:11px 13px;font-family:ui-monospace,monospace;font-size:11px;line-height:1.5;white-space:pre;overflow:auto;color:#d9e6f2;box-shadow:0 8px 22px rgba(20,40,70,.13);flex:1;min-height:0}
+  .dd .jk{color:#7ec6ff}
+  .dd .js{color:#9fe0b6}
+  .dd .jn{color:#f0b86a}
+  .dd .jb{color:#c8a6ff}
+  .dd .jc{color:#6f8aa6;font-style:italic}
+  .dd .jm{color:#f59e9e;font-weight:700}
+  .dd .ptitle{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px}
+  .dd .mhdr{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px}
+  .dd .mchip{font-family:ui-monospace,monospace;font-weight:800;font-size:14px;background:var(--navy);color:#fff;padding:5px 13px;border-radius:9px}
+  .dd .mchip .slash{opacity:.55}
+  .dd .mname{font-size:19px;font-weight:800;color:var(--navy)}
+  .dd .mpurpose{font-size:13px;color:var(--gray);flex:1 1 100%;margin-top:-2px}
+  .dd .mrow{flex:1;min-height:0;position:relative;display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:stretch}
+  .dd .mcol{display:flex;flex-direction:column;gap:8px;min-height:0}
+  .dd .mcol .agent{align-self:center}
+  .dd .mcol.right .agent{align-self:center}
+  .dd .pwrap{display:flex;flex-direction:column;flex:1;min-height:0;opacity:1;transition:opacity .5s}
+  .dd .pwrap.hide{opacity:0}
+  .dd .flypkt{position:absolute;transform:translate(-50%,-50%);background:#fff;border:2px solid var(--navy);color:var(--navy);
+    font-family:ui-monospace,monospace;font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:8px;pointer-events:none;z-index:5;white-space:nowrap;box-shadow:0 3px 9px rgba(0,0,0,.1)}
+  .dd .mnote{font-size:12.5px;color:var(--gray);margin-top:8px;line-height:1.5}
+  .dd .mnote b{color:var(--navy)}
+  .dd .lifebar{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .dd .lifebar .cap{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);margin-right:6px}
+  .dd .lst{font-family:ui-monospace,monospace;font-size:11px;font-weight:700;color:#b6b1a6;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:4px 11px;transition:.4s}
+  .dd .lst.on{color:var(--navy);border-color:var(--navy2);background:var(--navyBg)}
+  .dd .lst.cur{color:#fff;background:var(--amber2);border-color:var(--amber2);box-shadow:0 0 0 3px var(--amberBg)}
+  .dd .lst.term.on{color:#fff;background:var(--red);border-color:var(--red)}
+  .dd .lst.term.cur{box-shadow:0 0 0 3px var(--redBg)}
+  .dd .larrow{color:var(--faint);font-weight:800;font-size:13px}
+  .dd .objgrid{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:14px;align-content:center}
+  .dd .obj{border:1px solid var(--line);border-top:4px solid var(--purple);border-radius:12px;padding:13px 15px;background:#fff;display:flex;flex-direction:column}
+  .dd .obj .on-name{font-weight:800;color:var(--navy);font-size:15px;font-family:ui-monospace,monospace}
+  .dd .obj .on-tag{font-size:10.5px;color:var(--purple);font-weight:700;margin-bottom:7px}
+  .dd .obj .on-d{font-size:12px;color:var(--gray);line-height:1.5}
+  .dd .obj .on-d code{font-family:ui-monospace,monospace;font-size:11px;color:var(--navy);background:var(--navyBg);padding:1px 5px;border-radius:5px}
+  .dd .obj.c-task{border-top-color:var(--amber2)}
+  .dd .obj.c-task .on-name{color:var(--amber)}
+  .dd .obj.c-msg{border-top-color:var(--navy2)}
+  .dd .obj.c-msg .on-name{color:var(--navy2)}
+  .dd .obj.c-art{border-top-color:var(--teal2)}
+  .dd .obj.c-art .on-name{color:var(--teal)}
+  .dd .center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center}
+  .dd .lead{font-size:22px;font-weight:800;color:var(--navy);line-height:1.3;max-width:900px}
+  .dd .rolerow{display:flex;align-items:center;gap:0;width:100%;max-width:820px;justify-content:center}
+  .dd .pipe{flex:1;max-width:300px;height:0;border-top:2.5px dashed var(--navy2);position:relative;margin:0 4px}
+  .dd .pipe .pl{position:absolute;top:-26px;left:50%;transform:translateX(-50%);font-family:ui-monospace,monospace;font-size:11px;color:var(--navy2);font-weight:800;white-space:nowrap}
+  .dd .pipe .pl2{position:absolute;top:8px;left:50%;transform:translateX(-50%);font-family:ui-monospace,monospace;font-size:10px;color:var(--faint);white-space:nowrap}
+  .dd .bindings{display:flex;gap:12px}
+  .dd .bind{border:1.5px solid var(--line);border-radius:10px;padding:9px 18px;font-weight:800;font-family:ui-monospace,monospace;font-size:13px;color:var(--navy)}
+  .dd .bind.prime{border-color:var(--purple);color:var(--purple);background:var(--purpleBg)}
+  .dd .subnote{font-size:13px;color:var(--gray);max-width:760px;line-height:1.55}
+  .dd .maps{flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px;max-width:980px;margin:0 auto;width:100%}
+  .dd .mapgrp{border:1px solid var(--line);border-radius:12px;padding:13px 16px;background:#fff}
+  .dd .mapgrp h4{margin:0 0 9px;font-size:13px;color:var(--purple);font-family:ui-monospace,monospace}
+  .dd .mapgrp .ms{display:flex;flex-wrap:wrap;gap:8px}
+  .dd .mtag{font-family:ui-monospace,monospace;font-size:12px;font-weight:700;color:var(--navy);background:var(--navyBg);border-radius:8px;padding:5px 11px}
+  .dd .vs{display:flex;gap:14px}
+  .dd .vscard{flex:1;border:1px solid var(--line);border-radius:12px;padding:13px 16px;background:#fff}
+  .dd .vscard b{color:var(--navy)}
+  .dd .vscard.a2a{border-left:4px solid var(--purple)}
+  .dd .vscard.mcp{border-left:4px solid var(--teal)}
+</style>
+</head>
+<body>
+<div id="space"><div id="stars"></div><div id="stars2"></div></div>
+<div class="app">
+    <div class="stagewrap" id="stage">
+
+    <!-- 1 · TITLE -->
+    <section class="slide col center" data-beats="1">
+      <div class="hero">
+        <div class="hero-top">
+          <div data-beat="0" class="kicker in">The Agent2Agent Protocol · a field-by-field story</div>
+          <h1 class="big in" data-beat="0">The <span class="g">Internet of Agents</span><br>needs a common language.</h1>
+        </div>
+        <div class="globe-bg" aria-hidden="true">
+        <svg viewBox="0 0 620 620" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialgradient id="spacedisc" cx="50%" cy="46%" r="60%"><stop offset="0%" stop-color="#1b2552"></stop><stop offset="45%" stop-color="#141c42"></stop><stop offset="80%" stop-color="#0e1430"></stop><stop offset="100%" stop-color="rgba(14,20,48,0)"></stop></radialgradient>
+            <radialgradient id="gcore" cx="42%" cy="38%" r="70%">
+              <stop offset="0%" stop-color="rgba(47,210,160,.10)"></stop>
+              <stop offset="55%" stop-color="rgba(63,143,224,.06)"></stop>
+              <stop offset="100%" stop-color="rgba(123,63,160,.02)"></stop>
+            </radialgradient>
+            <filter id="gglow" x="-80%" y="-80%" width="260%" height="260%">
+              <fegaussianblur stdDeviation="4" result="b"></fegaussianblur><femerge><femergenode in="b"></femergenode><femergenode in="SourceGraphic"></femergenode></femerge>
+            </filter>
+          </defs>
+          <!-- globe -->
+          <circle cx="310" cy="310" r="252" fill="url(#spacedisc)"></circle>
+          <g class="globe-spin" transform-origin="310 310">
+            <circle class="gl-outline" cx="310" cy="310" r="200"></circle>
+            <g class="gl-grid">
+              <ellipse cx="310" cy="310" rx="150" ry="200"></ellipse><ellipse cx="310" cy="310" rx="92" ry="200"></ellipse><ellipse cx="310" cy="310" rx="34" ry="200"></ellipse>
+              <ellipse cx="310" cy="310" rx="200" ry="150"></ellipse><ellipse cx="310" cy="310" rx="200" ry="92"></ellipse><ellipse cx="310" cy="310" rx="200" ry="34"></ellipse>
+            </g>
+          </g>
+          <!-- router mesh (fixed over the globe) -->
+          <g class="gl-links">
+            <path id="l1" d="M310 118 L474 214"></path><path id="l2" d="M474 214 L502 360"></path>
+            <path id="l3" d="M502 360 L402 474"></path><path id="l4" d="M402 474 L206 462"></path>
+            <path id="l5" d="M206 462 L128 322"></path><path id="l6" d="M128 322 L168 186"></path>
+            <path id="l7" d="M168 186 L310 118"></path><path id="l8" d="M310 118 L402 474"></path><path id="l9" d="M474 214 L206 462"></path>
+          </g>
+          <g class="gl-packets">
+            <circle r="3.4" fill="#2fd2a0"><animatemotion dur="2.8s" repeatCount="indefinite"><mpath href="#l1"></mpath></animatemotion></circle>
+            <circle r="3.4" fill="#c8a6ff"><animatemotion dur="3.4s" begin="0.6s" repeatCount="indefinite"><mpath href="#l2"></mpath></animatemotion></circle>
+            <circle r="3.4" fill="#f0b445"><animatemotion dur="3.1s" begin="1.1s" repeatCount="indefinite"><mpath href="#l4"></mpath></animatemotion></circle>
+            <circle r="3.4" fill="#6db3f2"><animatemotion dur="3.6s" begin="0.3s" repeatCount="indefinite"><mpath href="#l8"></mpath></animatemotion></circle>
+            <circle r="3.4" fill="#e58bc8"><animatemotion dur="3.2s" begin="1.4s" repeatCount="indefinite"><mpath href="#l9"></mpath></animatemotion></circle>
+          </g>
+          <g class="gl-nodes" filter="url(#gglow)">
+            <g transform="translate(310 118)"><circle class="ring" r="12" fill="none" stroke="#2fd2a0"></circle><circle r="6" fill="#2fd2a0"></circle></g>
+            <g transform="translate(474 214)"><circle class="ring" r="12" fill="none" stroke="#c8a6ff"></circle><circle r="6" fill="#c8a6ff"></circle></g>
+            <g transform="translate(502 360)"><circle class="ring" r="12" fill="none" stroke="#6db3f2"></circle><circle r="6" fill="#6db3f2"></circle></g>
+            <g transform="translate(402 474)"><circle class="ring" r="12" fill="none" stroke="#f0b445"></circle><circle r="6" fill="#f0b445"></circle></g>
+            <g transform="translate(206 462)"><circle class="ring" r="12" fill="none" stroke="#e58bc8"></circle><circle r="6" fill="#e58bc8"></circle></g>
+            <g transform="translate(128 322)"><circle class="ring" r="12" fill="none" stroke="#2fd2a0"></circle><circle r="6" fill="#2fd2a0"></circle></g>
+            <g transform="translate(168 186)"><circle class="ring" r="12" fill="none" stroke="#6db3f2"></circle><circle r="6" fill="#6db3f2"></circle></g>
+          </g>
+        </svg>
+      </div>
+        <div class="hero-bot">
+          <div class="sub in" data-beat="0" style="font-size:17px;max-width:74ch">A2A is that language. This deck tells the story — <b>why</b> it exists, <b>who</b> built it, <b>who owns it now</b>, and <b>who runs it in production</b> — then dissects the protocol <span class="t">field by field</span> until you can read any A2A trace on sight.</div>
+          <div class="row in" data-beat="0" style="margin-top:16px;gap:10px">
+            <span class="pill on">why it was invented</span><span class="pill on">who owns it</span><span class="pill on">enterprise adoption</span><span class="pill on">every field, dissected</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 · THE WORLD BEFORE -->
+    <section class="slide col" data-beats="4">
+      <div class="kicker a in" data-beat="0">The problem · before A2A</div>
+      <h2 class="lead in" data-beat="0" style="margin-top:2px">Every agent was an <span class="ha">island</span>.</h2>
+      <div class="row grow" style="margin-top:10px;gap:20px">
+        <!-- LEFT: narrative -->
+        <div class="col" style="flex:0 0 48%;gap:12px;justify-content:center">
+          <div class="card in" data-beat="1" style="padding:13px 16px">
+            <div class="ct" style="margin-bottom:9px;font-size:19px">An agent is just a loop — built your way</div>
+            <div class="row" style="gap:11px">
+              <div style="flex:0 0 38%">
+                <div class="tag t-t" style="margin-bottom:5px;font-size:13px">without a framework</div>
+                <div class="cd" style="font-size:15.5px;line-height:1.5">your own plain Python<br><b class="mono" style="color:var(--teal)">SENSE → REASON → ACT</b> loop</div>
+              </div>
+              <div style="flex:1">
+                <div class="tag t-p" style="margin-bottom:5px;font-size:13px">with a framework</div>
+                <div class="chips" style="gap:3px">
+                  <span class="chip fw">LangGraph</span><span class="chip fw">CrewAI</span><span class="chip fw">MS Agent Framework</span><span class="chip fw">Google ADK</span><span class="chip fw">OpenAI Agents SDK</span><span class="chip fw">Claude Agent SDK</span><span class="chip fw">LlamaIndex</span><span class="chip fw">Haystack</span><span class="chip fw">Pydantic AI</span><span class="chip fw">Smolagents</span><span class="chip fw">Mastra</span>
+                </div>
+              </div>
+            </div>
+            <div class="cd" style="font-size:15px;margin-top:10px">frameworks add orchestration · state · retries · memory — the result either way is <b>an agent</b>.</div>
+          </div>
+          <div class="card in" data-beat="2" style="padding:13px 16px">
+            <div class="ct" style="margin-bottom:7px;font-size:18px">Two things hand-negotiated per pair</div>
+            <div class="row" style="gap:10px">
+              <div style="flex:1">
+                <div class="tag t-a" style="margin-bottom:5px;font-size:13px">how to talk · transport</div>
+                <div class="chips" style="gap:3px">
+                  <span class="chip pr">REST</span><span class="chip pr">gRPC</span><span class="chip pr">Kafka</span><span class="chip pr">MQ</span><span class="chip pr">pub/sub</span><span class="chip pr">event bus</span><span class="chip pr">webhooks</span>
+                </div>
+              </div>
+              <div style="flex:1">
+                <div class="tag t-p" style="margin-bottom:5px;font-size:13px">what the words mean · contract</div>
+                <div class="cd" style="font-size:14px;line-height:1.5">each pair invented its <b>own message schema</b> — field names, how you <b>advertise</b> abilities, what a request &amp; a result look like</div>
+              </div>
+            </div>
+            <div class="cd" style="font-size:14px;margin-top:9px"><b>sync, async &amp; distributed</b> transports — <b>and</b> a bespoke contract for every pair. Even on one transport, the <b>schema</b> was still custom. That's the real N×M.</div>
+          </div>
+          <div class="sub in" data-beat="3" style="font-size:15px;line-height:1.55"><span class="a">N × M</span> brittle links — a transport <b>and</b> a data contract per pair, maintained forever. And <b>same platform didn't save you</b>: two Salesforce Agentforce agents still needed custom glue — separate teams, different data schemas, and <b>no shared way to discover each other, authenticate, or agree on message formats</b>, so every pair got a bespoke adapter. <span class="a">Coordination — not intelligence — became the bottleneck.</span></div>
+        </div>
+
+        <!-- RIGHT: the tangled mesh, real agents + real protocols -->
+        <div class="col grow" style="justify-content:center;align-items:center">
+          <svg class="mesh" viewBox="0 0 640 606" width="100%" style="max-width:100%;max-height:70vh" font-family="system-ui">
+<defs><marker id="mk" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="5" refY="4" orient="auto"><path d="M0,1 L7,4 L0,7 z" fill="var(--gray)"></path></marker></defs>
+<g class="mlinks in" data-beat="2">
+<line x1="320" y1="151" x2="498" y2="254" stroke="var(--teal)" stroke-width="1.6" opacity=".85"></line>
+<line x1="498" y1="254" x2="498" y2="458" stroke="var(--purple)" stroke-width="1.6" opacity=".85"></line>
+<line x1="498" y1="458" x2="320" y2="561" stroke="var(--amber)" stroke-width="1.6" opacity=".85"></line>
+<line x1="320" y1="561" x2="142" y2="458" stroke="var(--navy)" stroke-width="1.6" opacity=".85"></line>
+<line x1="142" y1="253" x2="320" y2="151" stroke="var(--teal2)" stroke-width="1.6" opacity=".85"></line>
+</g>
+<g data-beat="3" class="in"><line stroke="var(--red)" x1="142" y1="458" x2="142" y2="253" stroke-width="2" stroke-dasharray="6 5"></line></g>
+<g class="mnodes">
+<g>
+ <rect x="235" y="39" width="170" height="112" rx="12" fill="#ffffff" stroke="var(--teal)" stroke-width="1.5"></rect>
+ <text x="320" y="54" text-anchor="middle" font-size="10.5" font-weight="800" fill="var(--ink)" font-family="system-ui">Intake</text>
+ <text x="320" y="65" text-anchor="middle" font-size="7.5" font-weight="700" fill="var(--teal)">hand-written · Python</text>
+ <rect x="258" y="70" width="124" height="17" rx="6" fill="var(--amberBg)" stroke="var(--amber)"></rect><text x="320" y="82" text-anchor="middle" font-size="7.5" font-weight="800" fill="var(--amber)">SENSE</text>
+ <rect x="258" y="92" width="124" height="17" rx="6" fill="var(--navyBg)" stroke="var(--navy)"></rect><text x="264" y="104" text-anchor="start" font-size="7.5" font-weight="800" fill="var(--navy)">REASON</text><text x="376" y="104" text-anchor="end" font-size="7.5" font-weight="800" fill="var(--teal2)" font-family="ui-monospace">◇ GPT-4o</text>
+ <rect x="258" y="114" width="124" height="17" rx="6" fill="var(--tealBg)" stroke="var(--teal)"></rect><text x="320" y="126" text-anchor="middle" font-size="7.5" font-weight="800" fill="var(--teal)">ACT</text>
+ <line x1="320" y1="87" x2="320" y2="92" stroke="var(--gray)" stroke-width="1.1" marker-end="url(#mk)"></line>
+ <line x1="320" y1="109" x2="320" y2="114" stroke="var(--gray)" stroke-width="1.1" marker-end="url(#mk)"></line>
+ <path d="M382,122 C400,119 400,81 382,78" fill="none" stroke="var(--gray)" stroke-width="1.1" marker-end="url(#mk)"></path>
+</g>
+<g>
+ <rect x="413" y="142" width="170" height="112" rx="12" fill="#ffffff" stroke="var(--purple)" stroke-width="1.5"></rect>
+ <text x="498" y="156" text-anchor="middle" font-size="10.5" font-weight="800" fill="var(--ink)" font-family="system-ui">Research</text>
+ <text x="498" y="168" text-anchor="middle" font-size="7.5" font-weight="700" fill="var(--purple)">LangGraph</text>
+ <rect x="436" y="172" width="124" height="17" rx="6" fill="var(--amberBg)" stroke="var(--amber)"></rect><text x="498" y="184" text-anchor="middle" font-size="7.5" font-weight="800" fill="var(--amber)">SENSE</text>
+ <rect x="436" y="194" width="124" height="17" rx="6" fill="var(--navyBg)" stroke="var(--navy)"></rect><text x="442" y="206" text-anchor="start" font-size="7.5" font-weight="800" fill="var(--navy)">REASON</text><text x="554" y="206" text-anchor="end" font-size="7.5" font-weight="800" fill="var(--amber)" font-family="ui-monospace">◇ Claude</text>
+ <rect x="436" y="216" width="124" height="17" rx="6" fill="var(--tealBg)" stroke="var(--teal)"></rect><text x="498" y="228" text-anchor="middle" font-size="7.5" font-weight="800" fill="var(--teal)">ACT</text>
+ <line x1="498" y1="190" x2="498" y2="194" stroke="var(--gray)" stroke-width="1.1" marker-end="url(#mk)"></line>
+ <line x1="498" y1="212" x2="498" y2="216" stroke="var(--gray)" stroke-width="1.1" marker-end="url(#mk)"></line>
+ <path d="M560,224 C578,222 578,184 560,180" fill="none" stroke="var(--gray)" stroke-width="1.1" marker-end="url(#mk)"></path>
+</g>
+<g>
+ <rect x="413" y="346" width="170" height="112" rx="12" fill="#ffffff" stroke="var(--purple)" stroke-width="1.5"></rect>
+ <text x="498" y="362" text-anchor="middle" font-size="10.5" font-weight="800" fill="var(--ink)" font-family="system-ui">Scheduler</text>
+ <text x="498" y="372" text-anchor="middle" font-size="7.5" font-weight="700" fill="var(--purple)">CrewAI</text>
+ <rect x="436" y="378" width="124" height="17" rx="6" fill="var(--amberBg)" stroke="var(--amber)"></rect><text x="498" y="390" text-anchor="middle" font-size="7.5" font-weight="800" fill="var(--amber)">SENSE</text>
+ <rect x="436" y="400" width="124" height="17" rx="6" fill="var(--navyBg)" stroke="var(--navy)"></rect><text x="442" y="412" text-anchor="start" font-size="7.5" font-weight="800" fill="var(--navy)">REASON</text><text x="554" y="412" text-anchor="end" font-size="7.5" font-weight="800" fill="var(--navy)" font-family="ui-monospace">◇ Gemini</text>
+ <rect x="436" y="422" width="124" height="17" rx="6" fill="var(--tealBg)" stroke="var(--teal)"></rect><text x="498" y="434" text-anchor="middle" font-size="7.5" font-weight="800" fill="var(--teal)">ACT</text>
+ <line x1="498" y1="394" x2="498" y2="400" stroke="var(--gray)" stroke-width="1.1" marker-end="url(#mk)"></line>
+ <line x1="498" y1="416" x2="498" y2="422" stroke="var(--gray)" stroke-width="1.1" marker-end="url(#mk)"></line>
+ <path d="M560,430 C578,426 578,388 560,386" fill="none" stroke="var(--gray)" stroke-width="1.1" marker-end="url(#mk)"></path>
+</g>
+<g>
+ <rect x="235" y="449" width="170" height="112" rx="12" fill="#ffffff" stroke="var(--amber)" stroke-width="1.5"></rect>
+ <text x="320" y="464" text-anchor="middle" font-size="10.5" font-weight="800" fill="var(--ink)" font-family="system-ui">Analytics</text>
+ <text x="320" y="475" text-anchor="middle" font-size="7.5" font-weight="700" fill="var(--amber)">AWS Bedrock</text>
+ <rect x="258" y="480" width="124" height="17" rx="6" fill="var(--amberBg)" stroke="var(--amber)"></rect><text x="320" y="492" text-anchor="middle" font-size="7.5" font-weight="800" fill="var(--amber)">SENSE</text>
+ <rect x="258" y="502" width="124" height="17" rx="6" fill="var(--navyBg)" stroke="var(--navy)"></rect><text x="264" y="514" text-anchor="start" font-size="7.5" font-weight="800" fill="var(--navy)">REASON</text><text x="376" y="514" text-anchor="end" font-size="7.5" font-weight="800" fill="var(--purple)" font-family="ui-monospace">◇ Llama 3</text>
+ <rect x="258" y="524" width="124" height="17" rx="6" fill="var(--tealBg)" stroke="var(--teal)"></rect><text x="320" y="536" text-anchor="middle" font-size="7.5" font-weight="800" fill="var(--teal)">ACT</text>
+ <line x1="320" y1="497" x2="320" y2="502" stroke="var(--gray)" stroke-width="1.1" marker-end="url(#mk)"></line>
+ <line x1="320" y1="519" x2="320" y2="524" stroke="var(--gray)" stroke-width="1.1" marker-end="url(#mk)"></line>
+ <path d="M382,532 C400,529 400,491 382,488" fill="none" stroke="var(--gray)" stroke-width="1.1" marker-end="url(#mk)"></path>
+</g>
+<g>
+ <rect x="57" y="346" width="170" height="112" rx="12" fill="#ffffff" stroke="var(--navy)" stroke-width="1.5"></rect>
+ <text x="142" y="362" text-anchor="middle" font-size="10.5" font-weight="800" fill="var(--ink)" font-family="system-ui">Service</text>
+ <text x="142" y="372" text-anchor="middle" font-size="7.5" font-weight="700" fill="var(--navy)">Salesforce Agentforce</text>
+ <rect x="80" y="378" width="124" height="17" rx="6" fill="var(--amberBg)" stroke="var(--amber)"></rect><text x="142" y="390" text-anchor="middle" font-size="7.5" font-weight="800" fill="var(--amber)">SENSE</text>
+ <rect x="80" y="400" width="124" height="17" rx="6" fill="var(--navyBg)" stroke="var(--navy)"></rect><text x="86" y="412" text-anchor="start" font-size="7.5" font-weight="800" fill="var(--navy)">REASON</text><text x="198" y="412" text-anchor="end" font-size="7.5" font-weight="800" fill="var(--pink)" font-family="ui-monospace">◇ Mistral</text>
+ <rect x="80" y="422" width="124" height="17" rx="6" fill="var(--tealBg)" stroke="var(--teal)"></rect><text x="142" y="434" text-anchor="middle" font-size="7.5" font-weight="800" fill="var(--teal)">ACT</text>
+ <line x1="142" y1="394" x2="142" y2="400" stroke="var(--gray)" stroke-width="1.1" marker-end="url(#mk)"></line>
+ <line x1="142" y1="416" x2="142" y2="422" stroke="var(--gray)" stroke-width="1.1" marker-end="url(#mk)"></line>
+ <path d="M204,430 C222,426 222,388 204,386" fill="none" stroke="var(--gray)" stroke-width="1.1" marker-end="url(#mk)"></path>
+</g>
+<g>
+ <rect x="57" y="141" width="170" height="112" rx="12" fill="#ffffff" stroke="var(--navy)" stroke-width="1.5"></rect>
+ <text x="142" y="156" text-anchor="middle" font-size="10.5" font-weight="800" fill="var(--ink)" font-family="system-ui">Sales</text>
+ <text x="142" y="167" text-anchor="middle" font-size="7.5" font-weight="700" fill="var(--navy)">Salesforce Agentforce</text>
+ <rect x="80" y="172" width="124" height="17" rx="6" fill="var(--amberBg)" stroke="var(--amber)"></rect><text x="142" y="184" text-anchor="middle" font-size="7.5" font-weight="800" fill="var(--amber)">SENSE</text>
+ <rect x="80" y="194" width="124" height="17" rx="6" fill="var(--navyBg)" stroke="var(--navy)"></rect><text x="86" y="206" text-anchor="start" font-size="7.5" font-weight="800" fill="var(--navy)">REASON</text><text x="198" y="206" text-anchor="end" font-size="7.5" font-weight="800" fill="var(--teal2)" font-family="ui-monospace">◇ Cmd R</text>
+ <rect x="80" y="216" width="124" height="17" rx="6" fill="var(--tealBg)" stroke="var(--teal)"></rect><text x="142" y="228" text-anchor="middle" font-size="7.5" font-weight="800" fill="var(--teal)">ACT</text>
+ <line x1="142" y1="189" x2="142" y2="194" stroke="var(--gray)" stroke-width="1.1" marker-end="url(#mk)"></line>
+ <line x1="142" y1="211" x2="142" y2="216" stroke="var(--gray)" stroke-width="1.1" marker-end="url(#mk)"></line>
+ <path d="M204,224 C222,221 222,183 204,180" fill="none" stroke="var(--gray)" stroke-width="1.1" marker-end="url(#mk)"></path>
+</g>
+</g>
+<g class="mlabels in" data-beat="2">
+<g><rect x="359" y="214" width="38" height="15" rx="4" fill="#ffffff" stroke="var(--line)"></rect><text x="378" y="225" text-anchor="middle" font-family="ui-monospace" font-size="8.5" font-weight="800" fill="var(--teal)">REST</text></g>
+<g><rect x="383" y="310" width="38" height="15" rx="4" fill="#ffffff" stroke="var(--line)"></rect><text x="402" y="321" text-anchor="middle" font-family="ui-monospace" font-size="8.5" font-weight="800" fill="var(--purple)">gRPC</text></g>
+<g><rect x="333" y="367" width="44" height="15" rx="4" fill="#ffffff" stroke="var(--line)"></rect><text x="355" y="378" text-anchor="middle" font-family="ui-monospace" font-size="8.5" font-weight="800" fill="var(--amber)">Kafka</text></g>
+<g><rect x="257" y="367" width="56" height="15" rx="4" fill="#ffffff" stroke="var(--line)"></rect><text x="285" y="378" text-anchor="middle" font-family="ui-monospace" font-size="8.5" font-weight="800" fill="var(--navy)">pub/sub</text></g>
+<g><rect x="240" y="222" width="56" height="15" rx="4" fill="#ffffff" stroke="var(--line)"></rect><text x="268" y="233" text-anchor="middle" font-family="ui-monospace" font-size="8.5" font-weight="800" fill="var(--teal2)">webhook</text></g>
+</g>
+<g data-beat="3" class="in"><g><rect x="64" y="292" width="156" height="16" rx="4" fill="var(--redBg)" stroke="var(--red)"></rect><text x="142" y="304" text-anchor="middle" font-family="ui-monospace" font-size="8.5" font-weight="800" fill="var(--red)">same platform · still hand-glued ✗</text></g><rect x="184" y="574" width="272" height="20" rx="6" fill="var(--amberBg)" stroke="var(--amber)"></rect><text x="320" y="588" text-anchor="middle" font-family="ui-monospace" font-size="9.5" font-weight="800" fill="var(--amber)">N × M · each link = own transport + schema</text></g>
+</svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · THE FIX -->
+    <section class="slide col" data-beats="4">
+      <div class="kicker in" data-beat="0">The fix · one shared contract</div>
+      <h2 class="lead in" data-beat="0" style="margin-top:6px">A2A is a <span class="ht">horizontal bus</span> every agent speaks.</h2>
+      <div class="row grow" style="margin-top:8px;gap:18px">
+        <!-- layered concentric contract: A2A core → contract(operations) → communication(protocols) → agents -->
+        <div class="col grow center" style="justify-content:center;flex:0 0 56%">
+          <svg viewBox="0 0 540 540" width="100%" style="max-width:640px;max-height:82vh" font-family="system-ui">
+<defs><path id="r3t" d="M102,270 A168,168 0 0 0 438,270"></path><path id="r2t" d="M154,270 A116,116 0 0 0 386,270"></path>
+<marker id="amsg" viewBox="0 0 8 8" markerWidth="7" markerHeight="7" refX="6" refY="4" orient="auto-start-reverse"><path d="M0,1 L7,4 L0,7 z" fill="var(--pink)"></path></marker></defs>
+<circle data-beat="0" cx="270" cy="270" r="168" fill="rgba(24,95,165,.06)" stroke="var(--navy)" stroke-opacity=".55" stroke-width="1.6" class="in"></circle>
+<circle data-beat="0" cx="270" cy="270" r="116" fill="rgba(123,63,160,.07)" stroke="var(--purple)" stroke-opacity=".6" stroke-width="1.6" class="in"></circle>
+<g data-beat="0" stroke="var(--teal)" stroke-width="2.2" opacity=".85" class="in"><line x1="354" y1="125" x2="367" y2="102"></line><line x1="438" y1="270" x2="464" y2="270"></line><line x1="354" y1="415" x2="367" y2="438"></line><line x1="186" y1="415" x2="173" y2="438"></line><line x1="102" y1="270" x2="76" y2="270"></line><line x1="186" y1="125" x2="173" y2="102"></line></g>
+<g data-beat="1" font-family="ui-monospace" font-size="10.5" font-weight="800" text-anchor="middle" class="in"><rect x="308" y="138" width="66" height="18" rx="5" fill="#ffffff" stroke="var(--navy)"></rect><text x="341" y="151" fill="var(--navy)">JSON-RPC</text><rect x="379" y="261" width="66" height="18" rx="5" fill="#ffffff" stroke="var(--purple)"></rect><text x="412" y="274" fill="var(--purple)">gRPC</text><rect x="308" y="384" width="66" height="18" rx="5" fill="#ffffff" stroke="var(--teal)"></rect><text x="341" y="397" fill="var(--teal)">REST</text><rect x="166" y="384" width="66" height="18" rx="5" fill="#ffffff" stroke="var(--navy)"></rect><text x="199" y="397" fill="var(--navy)">JSON-RPC</text><rect x="95" y="261" width="66" height="18" rx="5" fill="#ffffff" stroke="var(--purple)"></rect><text x="128" y="274" fill="var(--purple)">gRPC</text><rect x="166" y="138" width="66" height="18" rx="5" fill="#ffffff" stroke="var(--teal)"></rect><text x="199" y="151" fill="var(--teal)">REST</text></g>
+<g data-beat="2" font-family="ui-monospace" font-size="13" font-weight="700" fill="#23211c" text-anchor="middle" class="in"><text x="270" y="186">Send</text><text x="346" y="230">Stream</text><text x="346" y="318">Get Task</text><text x="270" y="362">List Tasks</text><text x="194" y="318">Cancel</text><text x="194" y="230">Get Card</text></g>
+<g data-beat="0" class="in"><circle cx="270" cy="270" r="52" fill="var(--tealBg)" stroke="var(--teal)" stroke-width="3"></circle><text x="270" y="266" text-anchor="middle" font-size="28" font-weight="800" fill="var(--teal)">A2A</text><text x="270" y="284" text-anchor="middle" font-family="ui-monospace" font-size="9" font-weight="700" fill="var(--teal2)">one contract</text></g>
+<text data-beat="1" font-family="ui-monospace" font-size="12" font-weight="800" letter-spacing="2.5" fill="var(--navy)" class="in"><textpath href="#r3t" startOffset="50%" text-anchor="middle">COMMUNICATION</textpath></text>
+<text data-beat="2" font-family="ui-monospace" font-size="11" font-weight="800" letter-spacing="1.8" fill="var(--purple)" class="in"><textpath href="#r2t" startOffset="50%" text-anchor="middle">STANDARDIZED CONTRACT</textpath></text>
+<g data-beat="0" font-family="ui-monospace" font-weight="800" text-anchor="middle" class="in"><circle cx="383" cy="74" r="32" fill="#ffffff" stroke="var(--teal)" stroke-width="2"></circle><text x="383" y="72" font-size="10.5" fill="var(--ink)" font-family="system-ui">Intake</text><text x="383" y="85" font-size="7.5" fill="var(--teal)">Python</text><circle cx="496" cy="270" r="32" fill="#ffffff" stroke="var(--purple)" stroke-width="2"></circle><text x="496" y="268" font-size="10.5" fill="var(--ink)" font-family="system-ui">Research</text><text x="496" y="281" font-size="7.5" fill="var(--purple)">LangGraph</text><circle cx="383" cy="466" r="32" fill="#ffffff" stroke="var(--purple)" stroke-width="2"></circle><text x="383" y="464" font-size="10.5" fill="var(--ink)" font-family="system-ui">Scheduler</text><text x="383" y="477" font-size="7.5" fill="var(--purple)">CrewAI</text><circle cx="157" cy="466" r="32" fill="#ffffff" stroke="var(--amber)" stroke-width="2"></circle><text x="157" y="464" font-size="10.5" fill="var(--ink)" font-family="system-ui">Analytics</text><text x="157" y="477" font-size="7.5" fill="var(--amber)">Bedrock</text><circle cx="44" cy="270" r="32" fill="#ffffff" stroke="var(--navy)" stroke-width="2"></circle><text x="44" y="268" font-size="10.5" fill="var(--ink)" font-family="system-ui">Service</text><text x="44" y="281" font-size="7.5" fill="var(--navy)">Agentforce</text><circle cx="157" cy="74" r="32" fill="#ffffff" stroke="var(--navy)" stroke-width="2"></circle><text x="157" y="72" font-size="10.5" fill="var(--ink)" font-family="system-ui">Sales</text><text x="157" y="85" font-size="7.5" fill="var(--navy)">Agentforce</text></g>
+<g data-beat="3" class="in"><path d="M78,270 Q270,150 462,270" fill="none" stroke="var(--pink)" stroke-width="2.2" stroke-dasharray="7 6" opacity=".5" marker-start="url(#amsg)" marker-end="url(#amsg)"></path><circle r="6" fill="var(--pink)" class="msg-fwd"></circle><circle r="6" fill="var(--teal2)" class="msg-rev"></circle></g>
+</svg>
+        </div>
+        <!-- explanation -->
+        <div class="col" style="flex:1;gap:10px;justify-content:center">
+          <div class="sub in" data-beat="2" style="font-size:13px">Define the contract <b>once</b>; every agent implements the same one. Any agent can <span class="t">discover</span>, <span class="t">ask</span>, and <span class="t">delegate to</span> any other — across vendors, frameworks and clouds.</div>
+          <div class="card in" data-beat="2" style="padding:11px 13px">
+            <div class="ct" style="font-size:12.5px">What's shared vs. what stays private</div>
+            <div class="cd" style="font-size:11.5px;margin-top:5px"><b style="color:var(--teal)">Advertised</b> — the agent's <b>skills &amp; capabilities</b>, so others know what they can <b>ask it to do</b>.</div>
+            <div class="cd" style="font-size:11.5px;margin-top:4px"><b style="color:var(--amber)">Private</b> — its <b>internal state, memory &amp; tool implementations</b>: <i>how</i> it does the work.</div>
+            <div class="cd" style="font-size:10.5px;margin-top:6px">You invoke a <b>skill</b> it advertised — never its internal tools. (State/memory privacy applies to any framework; A2A adds the <b>standard way to advertise and call skills</b>.)</div>
+          </div>
+          <div class="card in" data-beat="2" style="padding:10px 13px">
+            <div class="cd" style="font-size:11px;line-height:1.7">
+              <span class="mono" style="color:var(--teal)">●</span> core — <b>A2A</b>, one shared contract<br>
+              <span class="mono" style="color:var(--purple)">●</span> ring 1 — the <b>operations</b> (same for all)<br>
+              <span class="mono" style="color:var(--navy)">●</span> ring 2 — <b>communication</b>: JSON-RPC · gRPC · REST<br>
+              <span class="mono" style="color:#3a3a37">●</span> spokes — each agent <b>picks a protocol</b>; contract identical
+            </div>
+          </div>
+          <div class="sub in" data-beat="2" style="font-size:12.5px"><span class="t">N × M → N + M.</span> Same contract inside · your choice of protocol on the way out.</div>
+          <div class="sub in" data-beat="3" style="font-size:12.5px;color:var(--pink)">▶ <b>Watch:</b> the Service agent sends an A2A message to Research — same contract, each on its own protocol.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 · A2A vs MCP -->
+    <section class="slide col" data-beats="4">
+      <div class="kicker in" data-beat="0">Orientation · A2A vs MCP</div>
+      <h2 class="lead in" data-beat="0" style="margin-top:2px">A2A is the <span class="ht">horizontal</span> bus. MCP is the <span class="hl">vertical</span> one.</h2>
+      <div class="grow center" style="justify-content:center;min-height:0;margin-top:6px">
+        <svg viewBox="0 0 900 344" width="100%" style="max-width:100%;max-height:56vh" font-family="system-ui">
+          <defs>
+            <marker id="aTeal" viewBox="0 0 8 8" markerWidth="7" markerHeight="7" refX="6" refY="4" orient="auto-start-reverse"><path d="M0,1 L7,4 L0,7 z" fill="var(--teal)"></path></marker>
+            <marker id="aPur" viewBox="0 0 8 8" markerWidth="7" markerHeight="7" refX="6" refY="4" orient="auto-start-reverse"><path d="M0,1 L7,4 L0,7 z" fill="var(--purple)"></path></marker>
+            <marker id="aInk" viewBox="0 0 8 8" markerWidth="6" markerHeight="6" refX="5" refY="4" orient="auto"><path d="M0,1 L7,4 L0,7 z" fill="var(--gray)"></path></marker>
+          </defs>
+
+          <!-- A2A (horizontal) — top banner + arrows between agents -->
+          <g data-beat="1" class="in">
+            <rect x="330" y="20" width="240" height="22" rx="11" fill="var(--tealBg)" stroke="var(--teal)"></rect>
+            <text x="450" y="35" text-anchor="middle" font-family="ui-monospace" font-size="10" font-weight="800" fill="var(--teal)">A2A — horizontal · agent ↔ agent</text>
+            <line x1="277" y1="132" x2="353" y2="132" stroke="var(--teal)" stroke-width="2.4" marker-start="url(#aTeal)" marker-end="url(#aTeal)"></line>
+            <text x="315" y="123" text-anchor="middle" font-family="ui-monospace" font-size="10" font-weight="800" fill="var(--teal)">A2A</text>
+            <line x1="547" y1="132" x2="623" y2="132" stroke="var(--teal)" stroke-width="2.4" marker-start="url(#aTeal)" marker-end="url(#aTeal)"></line>
+            <text x="585" y="123" text-anchor="middle" font-family="ui-monospace" font-size="10" font-weight="800" fill="var(--teal)">A2A</text>
+          </g>
+
+          <!-- THREE AGENTS with SENSE→REASON→ACT loop (always visible) -->
+          <g font-family="ui-monospace">
+            <!-- agent generator: repeated for c=180,450,720 -->
+            <!-- c1 Diagnostics -->
+            <g>
+              <rect x="85" y="58" width="190" height="160" rx="13" fill="rgba(255,255,255,.94)" stroke="var(--line)"></rect>
+              <text x="180" y="76" text-anchor="middle" font-size="12" font-weight="800" fill="var(--ink)" font-family="system-ui">Diagnostics</text>
+              <text x="180" y="88" text-anchor="middle" font-size="7.5" font-weight="700" fill="var(--faint)">specialist agent</text>
+              <rect x="118" y="94" width="124" height="22" rx="7" fill="var(--amberBg)" stroke="var(--amber)"></rect><text x="180" y="109" text-anchor="middle" font-size="10" font-weight="800" fill="var(--amber)">SENSE</text>
+              <rect x="118" y="128" width="124" height="22" rx="7" fill="var(--navyBg)" stroke="var(--navy)"></rect><text x="180" y="143" text-anchor="middle" font-size="10" font-weight="800" fill="var(--navy)">REASON</text>
+              <rect x="118" y="162" width="124" height="22" rx="7" fill="var(--tealBg)" stroke="var(--teal)"></rect><text x="180" y="177" text-anchor="middle" font-size="10" font-weight="800" fill="var(--teal)">ACT</text>
+              <line x1="180" y1="116" x2="180" y2="127" stroke="var(--gray)" stroke-width="1.3" marker-end="url(#aInk)"></line>
+              <line x1="180" y1="150" x2="180" y2="161" stroke="var(--gray)" stroke-width="1.3" marker-end="url(#aInk)"></line>
+              <path d="M244,173 C266,169 266,109 244,105" fill="none" stroke="var(--gray)" stroke-width="1.2" marker-end="url(#aInk)"></path>
+              <text x="270" y="142" font-size="7" fill="var(--faint)" transform="rotate(90 270 142)">loop</text>
+            </g>
+            <!-- c2 Estimate -->
+            <g>
+              <rect x="355" y="58" width="190" height="160" rx="13" fill="rgba(255,255,255,.94)" stroke="var(--line)"></rect>
+              <text x="450" y="76" text-anchor="middle" font-size="12" font-weight="800" fill="var(--ink)" font-family="system-ui">Estimate</text>
+              <text x="450" y="88" text-anchor="middle" font-size="7.5" font-weight="700" fill="var(--faint)">specialist agent</text>
+              <rect x="388" y="94" width="124" height="22" rx="7" fill="var(--amberBg)" stroke="var(--amber)"></rect><text x="450" y="109" text-anchor="middle" font-size="10" font-weight="800" fill="var(--amber)">SENSE</text>
+              <rect x="388" y="128" width="124" height="22" rx="7" fill="var(--navyBg)" stroke="var(--navy)"></rect><text x="450" y="143" text-anchor="middle" font-size="10" font-weight="800" fill="var(--navy)">REASON</text>
+              <rect x="388" y="162" width="124" height="22" rx="7" fill="var(--tealBg)" stroke="var(--teal)"></rect><text x="450" y="177" text-anchor="middle" font-size="10" font-weight="800" fill="var(--teal)">ACT</text>
+              <line x1="450" y1="116" x2="450" y2="127" stroke="var(--gray)" stroke-width="1.3" marker-end="url(#aInk)"></line>
+              <line x1="450" y1="150" x2="450" y2="161" stroke="var(--gray)" stroke-width="1.3" marker-end="url(#aInk)"></line>
+              <path d="M514,173 C536,169 536,109 514,105" fill="none" stroke="var(--gray)" stroke-width="1.2" marker-end="url(#aInk)"></path>
+            </g>
+            <!-- c3 Parts -->
+            <g>
+              <rect x="625" y="58" width="190" height="160" rx="13" fill="rgba(255,255,255,.94)" stroke="var(--line)"></rect>
+              <text x="720" y="76" text-anchor="middle" font-size="12" font-weight="800" fill="var(--ink)" font-family="system-ui">Parts</text>
+              <text x="720" y="88" text-anchor="middle" font-size="7.5" font-weight="700" fill="var(--faint)">specialist agent</text>
+              <rect x="658" y="94" width="124" height="22" rx="7" fill="var(--amberBg)" stroke="var(--amber)"></rect><text x="720" y="109" text-anchor="middle" font-size="10" font-weight="800" fill="var(--amber)">SENSE</text>
+              <rect x="658" y="128" width="124" height="22" rx="7" fill="var(--navyBg)" stroke="var(--navy)"></rect><text x="720" y="143" text-anchor="middle" font-size="10" font-weight="800" fill="var(--navy)">REASON</text>
+              <rect x="658" y="162" width="124" height="22" rx="7" fill="var(--tealBg)" stroke="var(--teal)"></rect><text x="720" y="177" text-anchor="middle" font-size="10" font-weight="800" fill="var(--teal)">ACT</text>
+              <line x1="720" y1="116" x2="720" y2="127" stroke="var(--gray)" stroke-width="1.3" marker-end="url(#aInk)"></line>
+              <line x1="720" y1="150" x2="720" y2="161" stroke="var(--gray)" stroke-width="1.3" marker-end="url(#aInk)"></line>
+              <path d="M784,173 C806,169 806,109 784,105" fill="none" stroke="var(--gray)" stroke-width="1.2" marker-end="url(#aInk)"></path>
+            </g>
+          </g>
+
+          <!-- MCP (vertical) — from each ACT down to that agent's own tools -->
+          <g data-beat="2" font-family="ui-monospace" class="in">
+            <!-- links + MCP label -->
+            <g stroke="var(--purple)" stroke-width="1.8">
+              <line x1="180" y1="184" x2="180" y2="238"></line><line x1="132" y1="238" x2="228" y2="238"></line><line x1="450" y1="184" x2="450" y2="238"></line><line x1="402" y1="238" x2="498" y2="238"></line><line x1="720" y1="184" x2="720" y2="238"></line><line x1="672" y1="238" x2="768" y2="238"></line>
+            </g>
+            <g font-size="9" font-weight="800" fill="var(--purple)">
+              <text x="196" y="222">MCP</text><text x="466" y="222">MCP</text><text x="736" y="222">MCP</text>
+            </g>
+            <!-- tool chips (2 per agent) -->
+            <g font-size="8.5" font-weight="700" text-anchor="middle">
+              <rect x="92" y="252" width="80" height="26" rx="7" fill="var(--purpleBg)" stroke="var(--purple)"></rect><text x="132" y="268" fill="var(--purple)">sensor DB</text>
+              <rect x="188" y="252" width="80" height="26" rx="7" fill="var(--purpleBg)" stroke="var(--purple)"></rect><text x="228" y="268" fill="var(--purple)">OBD-II API</text>
+              <rect x="362" y="252" width="80" height="26" rx="7" fill="var(--purpleBg)" stroke="var(--purple)"></rect><text x="402" y="268" fill="var(--purple)">price list</text>
+              <rect x="458" y="252" width="80" height="26" rx="7" fill="var(--purpleBg)" stroke="var(--purple)"></rect><text x="498" y="268" fill="var(--purple)">labor rates</text>
+              <rect x="632" y="252" width="80" height="26" rx="7" fill="var(--purpleBg)" stroke="var(--purple)"></rect><text x="672" y="268" fill="var(--purple)">inventory</text>
+              <rect x="728" y="252" width="80" height="26" rx="7" fill="var(--purpleBg)" stroke="var(--purple)"></rect><text x="768" y="268" fill="var(--purple)">supplier API</text>
+            </g>
+            <!-- branch links from the single MCP line to the two chips -->
+            <g stroke="var(--purple)" stroke-width="1.3" opacity=".8">
+              <line x1="132" y1="238" x2="132" y2="252" marker-end="url(#aPur)"></line><line x1="228" y1="238" x2="228" y2="252" marker-end="url(#aPur)"></line>
+              <line x1="402" y1="238" x2="402" y2="252" marker-end="url(#aPur)"></line><line x1="498" y1="238" x2="498" y2="252" marker-end="url(#aPur)"></line>
+              <line x1="672" y1="238" x2="672" y2="252" marker-end="url(#aPur)"></line><line x1="768" y1="238" x2="768" y2="252" marker-end="url(#aPur)"></line>
+            </g>
+            <rect x="326" y="300" width="248" height="22" rx="11" fill="var(--purpleBg)" stroke="var(--purple)"></rect>
+            <text x="450" y="315" text-anchor="middle" font-size="10" font-weight="800" fill="var(--purple)">MCP — vertical · agent ↔ its own tools</text>
+          </g>
+        </svg>
+      </div>
+      <div class="row" style="gap:12px;margin-top:8px">
+        <div class="card grow in" data-beat="1" style="padding:9px 12px"><div class="cd" style="font-size:11.5px"><b style="color:var(--teal)">A2A · across the top.</b> Google's auto-repair-shop: the specialists talk <b>agent-to-agent</b> — Diagnostics hands findings to Estimate, Estimate asks Parts. Each stays a black box; only skills are shared.</div></div>
+        <div class="card grow in" data-beat="2" style="padding:9px 12px"><div class="cd" style="font-size:11.5px"><b style="color:var(--purple)">MCP · dropping down.</b> Each agent reaches its <b>own</b> tools &amp; data over MCP — its private DB, API, inventory. Vertical, and never exposed to the other agents.</div></div>
+        <div class="card grow in" data-beat="3" style="padding:9px 12px"><div class="cd" style="font-size:11.5px"><b>Same loop inside each:</b> SENSE→REASON→ACT. <b>ACT</b> is where both happen — call a tool (<span style="color:var(--purple)">MCP</span>) <i>or</i> delegate to a peer (<span style="color:var(--teal)">A2A</span>). Complementary layers — you'll use both.</div></div>
+      </div>
+    </section>
+
+
+    <!-- ============ A2A DEEP DIVE (spliced in) ============ -->
+    <!-- ===== SEC 0 · roles ===== -->
+    <section class="slide dd" id="sec-roles">
+      <div class="center">
+        <div class="lead on" data-beat="0">Two roles: a <span style="color:var(--red)">Client Agent</span> formulates the task, a <span style="color:var(--teal)">Remote Agent</span> executes it.</div>
+        <div class="rolerow on" data-beat="0">
+          <div class="agent a-client"><div class="role">A2A Client</div><div class="nm">Cardiac</div></div>
+          <div class="pipe" id="rolepipe"><div class="pl">JSON-RPC 2.0 · over HTTP(S)</div><div class="pl2 on" data-beat="1">request ▸ &nbsp;&nbsp; ◂ response</div></div>
+          <div class="agent a-remote"><div class="role">A2A Server</div><div class="nm">Respiratory</div></div>
+        </div>
+        <div class="bindings on" data-beat="2">
+          <div class="bind prime">JSON-RPC</div>
+          <div class="bind">gRPC</div>
+          <div class="bind">HTTP / REST</div>
+        </div>
+        <div class="subnote on" data-beat="2">A2A defines the operations <b>once</b>, then binds them to three transports. JSON-RPC is the canonical one — that's what we'll use. To the client, the remote agent is a black box reached over HTTP.</div>
+      </div>
+    </section>
+
+    <!-- ===== SEC 1 · objects ===== -->
+    <section class="slide dd" id="sec-objects">
+      <div class="objgrid">
+        <div class="obj on" data-beat="0"><div class="on-name">AgentCard</div><div class="on-tag">discovery</div><div class="on-d">JSON at <code>/.well-known/agent-card.json</code> — identity, endpoint <code>url</code>, <code>capabilities</code>, <code>skills</code>, auth. How you find an agent and learn what it does.</div></div>
+        <div class="obj c-task on" data-beat="1"><div class="on-name">Task</div><div class="on-tag">the unit of work</div><div class="on-d">Server-created, stateful: <code>id</code>, <code>contextId</code>, <code>status.state</code>, <code>artifacts[]</code>, <code>history[]</code>. Everything revolves around it.</div></div>
+        <div class="obj on" data-beat="2"><div class="on-name">TaskState</div><div class="on-tag">lifecycle</div><div class="on-d"><code>submitted → working → input-required → completed</code>. Terminal: <code>completed</code>, <code>canceled</code>, <code>failed</code>, <code>rejected</code>.</div></div>
+        <div class="obj c-msg on" data-beat="3"><div class="on-name">Message · Part</div><div class="on-tag">a turn</div><div class="on-d">A <code>Message</code> has a <code>role</code> (user/agent) and <code>parts[]</code>. A <code>Part</code> is <code>text</code>, <code>file</code>, or <code>data</code> (structured JSON).</div></div>
+        <div class="obj c-art on" data-beat="4"><div class="on-name">Artifact</div><div class="on-tag">the output</div><div class="on-d">What the task produces — <code>artifactId</code>, <code>name</code>, <code>parts[]</code>. Can stream in incrementally as the task runs.</div></div>
+        <div class="obj on" data-beat="5"><div class="on-name">contextId · taskId</div><div class="on-tag">two ids that thread it</div><div class="on-d"><code>contextId</code> groups a conversation (a thread); <code>taskId</code> is one request within it. Omit on first call; the server mints them.</div></div>
+      </div>
+    </section>
+
+    <!-- ===== SEC 2 · METHOD (reused) ===== -->
+    <section class="slide dd" id="sec-method">
+      <div class="mhdr">
+        <div class="mchip" id="m-chip">tasks<span class="slash"> / </span>push/set</div>
+        <div class="mname" id="m-name">pushNotificationConfig/set</div>
+        <div class="mpurpose" id="m-purpose">Register a webhook so the agent pings you when a long task finishes.</div>
+      </div>
+      <div class="mrow" id="m-row">
+        <div class="mcol left">
+          <div class="agent a-client"><div class="role">A2A Client</div><div class="nm">Cardiac</div></div>
+          <div class="pwrap"><div class="ptitle" style="color:var(--navy2)">▸ request the client sends</div><div class="jpanel" id="m-req">{
+  <span class="jk">"jsonrpc"</span>: <span class="js">"2.0"</span>, <span class="jk">"id"</span>: <span class="jn">6</span>,
+  <span class="jk">"method"</span>: <span class="js">"tasks/pushNotificationConfig/set"</span>,
+  <span class="jk">"params"</span>: {
+    <span class="jk">"taskId"</span>: <span class="js">"363422be..."</span>,
+    <span class="jk">"pushNotificationConfig"</span>: {
+      <span class="jk">"url"</span>: <span class="js">"https:<span class="&lt;/span&gt;jc">//client/webhook",</span>
+      <span class="jk">"token"</span>: <span class="js">"secure-token"</span>
+    }
+  }
+}</span></div></div>
+        </div>
+        <div class="mcol right">
+          <div class="agent a-remote"><div class="role">A2A Server</div><div class="nm">Respiratory</div></div>
+          <div class="pwrap" id="m-respwrap"><div class="ptitle" id="m-resptitle" style="color:var(--teal)">◂ ack  +  later webhook POST</div><div class="jpanel" id="m-resp">{
+  <span class="jk">"jsonrpc"</span>: <span class="js">"2.0"</span>, <span class="jk">"id"</span>: <span class="jn">6</span>,
+  <span class="jk">"result"</span>: { <span class="jk">"..."</span>: <span class="js">"config stored"</span> }
+}
+
+<span class="jc">// minutes later — the REMOTE calls YOUR webhook:</span>
+<span class="jm">POST</span> https:<span class="jc">//client/webhook</span>
+{ <span class="jk">"id"</span>: <span class="js">"363422be..."</span>,
+  <span class="jk">"status"</span>: { <span class="jk">"state"</span>: <span class="js">"completed"</span> },
+  <span class="jk">"kind"</span>: <span class="js">"task"</span> }</div></div>
+        </div>
+      </div>
+      <div class="mnote" id="m-note">For long jobs you don't want to hold a connection for. The agent calls <b>your</b> webhook when the task reaches a terminal state — fully async, requires <code>capabilities.pushNotifications</code>.</div>
+      <div class="lifebar" id="lifebar">
+        <span class="cap">task state</span>
+        <span class="lst on" data-s="submitted">submitted</span><span class="larrow">→</span>
+        <span class="lst on" data-s="working">working</span><span class="larrow">→</span>
+        <span class="lst" data-s="input-required">input-required</span><span class="larrow">→</span>
+        <span class="lst on cur" data-s="completed">completed</span>
+        <span class="larrow" style="opacity:.4">|</span>
+        <span class="lst term" data-s="canceled">canceled</span>
+      </div>
+    </section>
+
+    <!-- ===== SEC 3 · life of a task ===== -->
+    <section class="slide dd" id="sec-life">
+      <div class="mhdr"><div class="mname">The life of a task — discovery to completion</div></div>
+      <div class="mrow" id="life-row" style="grid-template-columns:1fr 1fr">
+        <div class="mcol left">
+          <div class="agent a-client"><div class="role">A2A Client</div><div class="nm">Cardiac</div></div>
+          <div class="jpanel" id="life-log" style="flex:1">▸ GET /.well-known/agent-card.json
+▸ message/stream
+  "Evaluate sleep breathing"
+(holding the SSE stream open…)
+(receiving artifact chunks…)
+▸ message/send  (same taskId)
+  "patient is 54, BMI 31"
+◂ stream closes</div>
+        </div>
+        <div class="mcol right">
+          <div class="agent a-remote"><div class="role">A2A Server</div><div class="nm">Respiratory</div></div>
+          <div class="jpanel" id="life-art" style="flex:1">◂ AgentCard
+  skills: [ respiratory.review ]
+  capabilities.streaming: <span class="jb">true</span>
+◂ <span class="jm">event: status</span>
+  { <span class="jk">"state"</span>: <span class="js">"submitted"</span> }
+◂ <span class="jm">event: status</span>
+  { <span class="jk">"state"</span>: <span class="js">"working"</span> }
+◂ <span class="jm">event: artifact</span>
+  { <span class="jk">"name"</span>: <span class="js">"notes"</span>, <span class="jk">"append"</span>: <span class="jb">true</span> }
+◂ <span class="jm">event: status</span>
+  { <span class="jk">"state"</span>: <span class="js">"input-required"</span> }
+◂ <span class="jm">event: status</span>
+  { <span class="jk">"state"</span>: <span class="js">"completed"</span>, <span class="jk">"final"</span>: <span class="jb">true</span> }
+◂ artifact: assessment
+  "possible sleep apnea" (0.78)</div>
+        </div>
+      </div>
+      <div class="mnote" id="life-note"><b>6 · Done.</b> Final event with <code>final: true</code>, the artifact is complete, state <code>completed</code>. One task, start to finish.</div>
+      <div class="lifebar" id="life-bar">
+        <span class="cap">task state</span>
+        <span class="lst on" data-s="submitted">submitted</span><span class="larrow">→</span>
+        <span class="lst on" data-s="working">working</span><span class="larrow">→</span>
+        <span class="lst on" data-s="input-required">input-required</span><span class="larrow">→</span>
+        <span class="lst on cur" data-s="completed">completed</span>
+      </div>
+    </section>
+
+    <!-- ===== SEC 4 · recap ===== -->
+    <section class="slide dd show" id="sec-recap">
+      <div class="maps">
+        <div class="lead on" style="text-align:center;font-size:19px" data-beat="0">The whole surface area — three categories, a handful of methods</div>
+        <div class="mapgrp on" data-beat="0"><h4>message/*</h4><div class="ms"><span class="mtag">message/send</span><span class="mtag">message/stream</span></div></div>
+        <div class="mapgrp on" data-beat="0"><h4>tasks/*</h4><div class="ms"><span class="mtag">tasks/get</span><span class="mtag">tasks/cancel</span><span class="mtag">tasks/resubscribe</span><span class="mtag">tasks/pushNotificationConfig/set</span></div></div>
+        <div class="mapgrp on" data-beat="0"><h4>agent/*</h4><div class="ms"><span class="mtag">GET /.well-known/agent-card.json</span><span class="mtag">agent/getAuthenticatedExtendedCard</span></div></div>
+        <div class="vs on" data-beat="0">
+          <div class="vscard a2a"><b>A2A</b> — agent ↔ agent. Discovery, tasks, streaming. <i>The conversation between agents.</i></div>
+          <div class="vscard mcp"><b>MCP</b> — agent ↔ tools/data. <i>How one agent reaches its tools.</i> Complementary, not competing.</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  </div>
+
+  <div class="ft">
+    <button class="nav" id="back">←</button>
+    <div class="dots" id="dots"><div class="dot seen"></div><div class="dot seen"></div><div class="dot seen"></div><div class="dot seen"></div><div class="dot seen"></div><div class="dot seen"></div><div class="dot seen"></div><div class="dot seen"></div><div class="dot seen"></div><div class="dot seen"></div><div class="dot seen"></div><div class="dot seen"></div><div class="dot seen"></div><div class="dot seen"></div><div class="dot on"></div></div>
+    <button class="nav" id="next">→</button>
+    <span class="hint mono" id="beatHint"></span>
+  </div>
+
+
+<script>
+const $=id=>document.getElementById(id);
+const stage=document.getElementById('stage');
+let timers=[];
+function later(fn,ms){const id=setTimeout(fn,ms);timers.push(id);return id;}
+function clearTimers(){timers.forEach(clearTimeout);timers=[];}
+
+/* ---------- json highlight ---------- */
+function hl(s){
+  s=s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  s=s.replace(/(\/\/[^\n]*)/g,'<span class="jc">$1</span>');
+  s=s.replace(/^(GET|POST)\b/gm,'<span class="jm">$1</span>');
+  s=s.replace(/(event:\s*\w+)/g,'<span class="jm">$1</span>');
+  s=s.replace(/"([^"\n]*)":/g,'<span class="jk">"$1"</span>:');
+  s=s.replace(/:\s*"([^"\n]*)"/g,': <span class="js">"$1"</span>');
+  s=s.replace(/\b(true|false|null)\b/g,'<span class="jb">$1</span>');
+  s=s.replace(/:\s*(\d+\.?\d*)/g,': <span class="jn">$1</span>');
+  return s;
+}
+
+/* ---------- floating packet between two DOM elements ---------- */
+function flyDom(stageEl,fromEl,toEl,label,color,dur,cb){
+  const sb=stageEl.getBoundingClientRect(),a=fromEl.getBoundingClientRect(),b=toEl.getBoundingClientRect();
+  const x1=a.left+a.width/2-sb.left, y1=a.bottom-sb.top-6;
+  const x2=b.left+b.width/2-sb.left, y2=b.bottom-sb.top-6;
+  const p=document.createElement("div");p.className="flypkt";p.textContent=label;
+  p.style.borderColor=color;p.style.color=color;p.style.left=x1+"px";p.style.top=y1+"px";
+  stageEl.appendChild(p);
+  const t0=performance.now();
+  (function f(now){let t=(now-t0)/dur;if(t>1)t=1;const e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+    p.style.left=(x1+(x2-x1)*e)+"px";
+    p.style.top=(y1+(y2-y1)*e - Math.sin(e*Math.PI)*40)+"px";
+    if(t<1)requestAnimationFrame(f);else{p.style.transition="opacity .4s";setTimeout(()=>{p.style.opacity=0;setTimeout(()=>p.remove(),420);},120);cb&&cb();}
+  })(performance.now());
+}
+function clearPkts(el){el.querySelectorAll(".flypkt").forEach(p=>p.remove());}
+
+/* ========================================================= */
+/*  METHODS data (verified against a2a-protocol.org latest)  */
+/* ========================================================= */
+const METHODS=[
+ { cat:"agent", action:"discover", name:"Agent Card discovery", tag:"GET card",
+   purpose:"Before any task — find the agent and learn what it can do.",
+   req:`GET /.well-known/agent-card.json`,
+   resp:`{
+  "name": "Respiratory Reviewer",
+  "url":  "https://resp.svc/a2a",
+  "version": "1.2.0",
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": true
+  },
+  "skills": [
+    { "id": "respiratory.review",
+      "name": "Review breathing case" }
+  ],
+  "defaultInputModes": ["text"],
+  "securitySchemes": { "...": "..." }
+}`,
+   resptitle:"◂ Agent Card",
+   life:[],
+   note:"The card advertises identity, endpoint, <b>capabilities</b> (streaming, push), <b>skills</b>, and auth. The client reads it to decide who to call and how — no shared code needed." },
+
+ { cat:"message", action:"send", name:"message/send", tag:"message/send",
+   purpose:"Send a message; get a Task back. Synchronous, or poll with tasks/get.",
+   req:`{
+  "jsonrpc": "2.0", "id": 1,
+  "method": "message/send",
+  "params": {
+    "message": {
+      "role": "user",
+      "parts": [{ "kind": "text",
+        "text": "Evaluate sleep breathing" }],
+      "messageId": "9229e7..."
+    }
+  }
+}`,
+   resp:`{
+  "jsonrpc": "2.0", "id": 1,
+  "result": {
+    "id": "363422be...",
+    "contextId": "c295ea44...",
+    "status": { "state": "completed" },
+    "artifacts": [{ "name": "assessment",
+      "parts": [{ "kind": "text",
+        "text": "possible sleep apnea" }] }],
+    "kind": "task"
+  }
+}`,
+   resptitle:"◂ Task",
+   life:["submitted","working","completed"],
+   note:"One call kicks off a <b>Task</b>. Short jobs return <code>completed</code> with artifacts; longer ones return <code>working</code> and you poll with <b>tasks/get</b>." },
+
+ { cat:"message", action:"stream", name:"message/stream", tag:"message/stream",
+   purpose:"Send + subscribe — the server streams updates as Server-Sent Events.",
+   req:`{
+  "jsonrpc": "2.0", "id": 2,
+  "method": "message/stream",
+  "params": {
+    "message": {
+      "role": "user",
+      "parts": [{ "kind": "text",
+        "text": "Evaluate sleep breathing" }],
+      "messageId": "a1b2..."
+    }
+  }
+}`,
+   events:[
+     `event: status   { "state": "submitted" }`,
+     `event: status   { "state": "working" }`,
+     `event: artifact { "name": "notes", "append": true }`,
+     `event: status   { "state": "completed", "final": true }`
+   ],
+   stream:true,
+   resptitle:"◂ SSE stream  (text/event-stream)",
+   life:["submitted","working","completed"],
+   note:"Each SSE event is a JSON-RPC response — <code>TaskStatusUpdateEvent</code> and <code>TaskArtifactUpdateEvent</code> — ending with <code>final: true</code>. Requires <code>capabilities.streaming</code>." },
+
+ { cat:"tasks", action:"get", name:"tasks/get", tag:"tasks/get",
+   purpose:"Poll a task's current status and results.",
+   req:`{
+  "jsonrpc": "2.0", "id": 3,
+  "method": "tasks/get",
+  "params": { "id": "363422be..." }
+}`,
+   resp:`{
+  "jsonrpc": "2.0", "id": 3,
+  "result": {
+    "id": "363422be...",
+    "status": { "state": "working" },
+    "kind": "task"
+  }
+}`,
+   resptitle:"◂ Task  (current state)",
+   life:["working"],
+   note:"After a non-streaming <b>message/send</b> on a long job, poll <b>tasks/get</b> until the state is terminal (<code>completed</code> / <code>failed</code> / <code>canceled</code>)." },
+
+ { cat:"tasks", action:"cancel", name:"tasks/cancel", tag:"tasks/cancel",
+   purpose:"Ask the remote agent to stop a running task.",
+   req:`{
+  "jsonrpc": "2.0", "id": 4,
+  "method": "tasks/cancel",
+  "params": { "id": "363422be..." }
+}`,
+   resp:`{
+  "jsonrpc": "2.0", "id": 4,
+  "result": {
+    "id": "363422be...",
+    "status": { "state": "canceled" },
+    "kind": "task"
+  }
+}`,
+   resptitle:"◂ Task  (canceled)",
+   life:["working","canceled"],
+   note:"Moves a <code>working</code> task to the terminal <code>canceled</code> state. Terminal tasks can't be restarted — a new goal means a new task." },
+
+ { cat:"tasks", action:"resubscribe", name:"tasks/resubscribe", tag:"tasks/resubscribe",
+   purpose:"Reattach to a task's SSE stream after a disconnect.",
+   req:`{
+  "jsonrpc": "2.0", "id": 5,
+  "method": "tasks/resubscribe",
+  "params": { "id": "363422be..." }
+}`,
+   events:[
+     `event: status   { "state": "working" }`,
+     `event: status   { "state": "completed", "final": true }`
+   ],
+   stream:true,
+   resptitle:"◂ SSE stream  (resumed)",
+   life:["working","completed"],
+   note:"Network dropped mid-stream? <b>resubscribe</b> picks the SSE stream back up where it left off — the task kept running on the server; no work lost." },
+
+ { cat:"tasks", action:"pushNotificationConfig/set", name:"pushNotificationConfig/set", tag:"push/set",
+   purpose:"Register a webhook so the agent pings you when a long task finishes.",
+   req:`{
+  "jsonrpc": "2.0", "id": 6,
+  "method": "tasks/pushNotificationConfig/set",
+  "params": {
+    "taskId": "363422be...",
+    "pushNotificationConfig": {
+      "url": "https://client/webhook",
+      "token": "secure-token"
+    }
+  }
+}`,
+   resp:`{
+  "jsonrpc": "2.0", "id": 6,
+  "result": { "...": "config stored" }
+}
+
+// minutes later — the REMOTE calls YOUR webhook:
+POST https://client/webhook
+{ "id": "363422be...",
+  "status": { "state": "completed" },
+  "kind": "task" }`,
+   resptitle:"◂ ack  +  later webhook POST",
+   webhook:true,
+   life:["submitted","working","completed"],
+   note:"For long jobs you don't want to hold a connection for. The agent calls <b>your</b> webhook when the task reaches a terminal state — fully async, requires <code>capabilities.pushNotifications</code>." },
+];
+
+/* lifecycle bar painter */
+function paintLife(barId,states){
+  const last=states[states.length-1];
+  $(barId).querySelectorAll(".lst").forEach(el=>{
+    const s=el.dataset.s;
+    el.classList.toggle("on",states.includes(s));
+    el.classList.toggle("cur",last===s);
+  });
+}
+
+/* render one method slide + animate */
+function showMethod(M){
+  $("m-chip").innerHTML = M.cat+'<span class="slash"> / </span>'+M.action.replace("pushNotificationConfig/set","push/set");
+  $("m-name").textContent = M.name;
+  $("m-purpose").textContent = M.purpose;
+  $("m-req").innerHTML = hl(M.req);
+  $("m-resptitle").textContent = M.resptitle;
+  $("m-resp").innerHTML = "";
+  $("m-respwrap").classList.add("hide");
+  $("m-note").innerHTML = M.note;
+  paintLife("lifebar", []);                    // start blank
+  const row=$("m-row"); clearPkts(row);
+  const client=row.querySelector(".mcol.left .agent");
+  const remote=row.querySelector(".mcol.right .agent");
+
+  later(()=>{
+    // request: client -> remote
+    flyDom(row,client,remote,M.tag,"#185FA5",1500,()=>{
+      if(M.life.length) paintLife("lifebar", M.life.slice(0, M.stream?1:M.life.length));
+      // response
+      if(M.stream){
+        $("m-resp").innerHTML="";
+        $("m-respwrap").classList.remove("hide");
+        M.events.forEach((ev,i)=>{
+          later(()=>{
+            $("m-resp").innerHTML += (i?"\n":"") + hl(ev);
+            $("m-resp").scrollTop=9e9;
+            flyDom(row,remote,client,"event","#854F0B",1100);
+            const upto = Math.min(i+1, M.life.length);
+            paintLife("lifebar", M.life.slice(0, upto));
+          }, 500 + i*1300);
+        });
+      } else {
+        $("m-resp").innerHTML=hl(M.resp);
+        $("m-respwrap").classList.remove("hide");
+        flyDom(row,remote,client,M.webhook?"ack":"result","#0F6E56",1400,()=>{
+          paintLife("lifebar", M.life);
+          if(M.webhook){
+            later(()=>flyDom(row,remote,client,"webhook POST","#7B3FA0",1500),900);
+          }
+        });
+      }
+    });
+  }, 450);
+}
+
+/* ========================================================= */
+/*  LIFE OF A TASK                                            */
+/* ========================================================= */
+const LIFE=[
+ {state:[], log:`▸ GET /.well-known/agent-card.json`, art:`◂ AgentCard\n  skills: [ respiratory.review ]\n  capabilities.streaming: true`,
+  note:"<b>1 · Discover.</b> The client fetches the Agent Card, confirms the skill exists and that streaming is supported.", from:"c", tag:"GET card", col:"#185FA5"},
+ {state:["submitted"], log:`▸ message/stream\n  "Evaluate sleep breathing"`, art:`◂ event: status\n  { "state": "submitted" }`,
+  note:"<b>2 · Ask.</b> The client opens a stream with message/stream. The server accepts the task — state <code>submitted</code>.", from:"c", tag:"message/stream", col:"#185FA5"},
+ {state:["submitted","working"], log:`(holding the SSE stream open…)`, art:`◂ event: status\n  { "state": "working" }`,
+  note:"<b>3 · Work.</b> The remote agent starts — state <code>working</code>. Updates push down the open stream.", from:"r", tag:"working", col:"#854F0B"},
+ {state:["submitted","working"], log:`(receiving artifact chunks…)`, art:`◂ event: artifact\n  { "name": "notes", "append": true }`,
+  note:"<b>4 · Stream artifacts.</b> Output arrives incrementally as <code>TaskArtifactUpdateEvent</code>s — the answer builds up live.", from:"r", tag:"artifact", col:"#854F0B"},
+ {state:["submitted","working","input-required"], log:`▸ message/send  (same taskId)\n  "patient is 54, BMI 31"`, art:`◂ event: status\n  { "state": "input-required" }`,
+  note:"<b>5 · Multi-turn.</b> The agent needs more — <code>input-required</code>. The client replies with message/send on the <b>same taskId</b>.", from:"c", tag:"message/send", col:"#185FA5"},
+ {state:["submitted","working","input-required","completed"], log:`◂ stream closes`, art:`◂ event: status\n  { "state": "completed", "final": true }\n◂ artifact: assessment\n  "possible sleep apnea" (0.78)`,
+  note:"<b>6 · Done.</b> Final event with <code>final: true</code>, the artifact is complete, state <code>completed</code>. One task, start to finish.", from:"r", tag:"completed", col:"#0F6E56"},
+];
+function showLife(k){
+  const row=$("life-row");
+  const client=row.querySelector(".mcol.left .agent"), remote=row.querySelector(".mcol.right .agent");
+  // accumulate log/art up to k
+  let logTxt="", artTxt="";
+  for(let i=0;i<=k;i++){ logTxt += (i?"\n":"")+LIFE[i].log; artTxt += (i?"\n":"")+LIFE[i].art; }
+  $("life-log").innerHTML=hl(logTxt); $("life-art").innerHTML=hl(artTxt);
+  $("life-log").scrollTop=9e9; $("life-art").scrollTop=9e9;
+  $("life-note").innerHTML=LIFE[k].note;
+  paintLife("life-bar", LIFE[k].state);
+  clearPkts(row);
+  const L=LIFE[k];
+  if(L.from==="c") flyDom(row,client,remote,L.tag,L.col,1400);
+  else flyDom(row,remote,client,L.tag,L.col,1400);
+}
+
+/* ========================================================= */
+/*  deck controller                                          */
+/* ========================================================= */
+
+const SECID=["sec-roles","sec-objects","sec-method","sec-life","sec-recap"];
+const SLIDES=[
+ {sec:0,t:"Client ⇄ Remote — the shape of A2A",steps:3},
+ {sec:1,t:"The objects — the nouns of A2A",steps:6},
+ {sec:2,t:"Discovery — the Agent Card",steps:1,mi:0},
+ {sec:2,t:"message/send — start a task",steps:1,mi:1},
+ {sec:2,t:"message/stream — live updates",steps:1,mi:2},
+ {sec:2,t:"tasks/get — poll status",steps:1,mi:3},
+ {sec:2,t:"tasks/cancel — stop a task",steps:1,mi:4},
+ {sec:2,t:"tasks/resubscribe — rejoin a stream",steps:1,mi:5},
+ {sec:2,t:"pushNotificationConfig/set — webhook",steps:1,mi:6},
+ {sec:3,t:"The life of a task — end to end",steps:6},
+ {sec:4,t:"Recap — the method map",steps:1},
+];
+
+/* ===== unified controller: deck20 intro (beats) + Deep Dive (methods / life) ===== */
+const introSlides=[...document.querySelectorAll(".slide.col")];   // the 4 deck20 intro slides
+const SEQ=[];
+introSlides.forEach(el=>SEQ.push({kind:"d20", el, beats:(+el.dataset.beats||1)}));
+SLIDES.forEach((s,i)=>SEQ.push({kind:"dd", i}));                    // 11 deep-dive logical slides
+
+let M=0, beat=0;
+function maxBeat(){ const e=SEQ[M]; return e.kind==="d20" ? e.beats-1 : SLIDES[e.i].steps-1; }
+
+function d20reveal(el,b){
+  el.querySelectorAll("[data-beat]").forEach(x=>x.classList.toggle("in", (+x.dataset.beat)<=b));
+  el.querySelectorAll(".fl").forEach(x=>x.classList.toggle("hot", (+x.dataset.f)===b));
+}
+function ddreveal(sec,k){ sec.querySelectorAll("[data-beat]").forEach(x=>x.classList.toggle("on",(+x.dataset.beat)<=k)); }
+
+function hideAll(){ clearTimers();
+  document.querySelectorAll(".flypkt").forEach(p=>p.remove());
+  document.querySelectorAll(".slide").forEach(s=>s.classList.remove("show")); }
+
+function show(){
+  const e=SEQ[M];
+  if(e.kind==="d20"){
+    hideAll(); e.el.classList.add("show"); d20reveal(e.el, beat);
+  }else{
+    const S=SLIDES[e.i], sec=document.getElementById(SECID[S.sec]);
+    hideAll(); sec.classList.add("show");
+    if(S.sec===2){ showMethod(METHODS[S.mi]); }
+    else if(S.sec===3){ showLife(beat); }
+    else { ddreveal(sec, beat); }
+  }
+  renderDots();
+  const bh=document.getElementById("beatHint");
+  if(bh) bh.textContent=(beat<maxBeat())?("beat "+(beat+1)+"/"+(maxBeat()+1)):"";
+}
+function go(m,b){ M=Math.max(0,Math.min(SEQ.length-1,m)); beat=b??0; show(); }
+function next(){ if(beat<maxBeat()){beat++;show();} else if(M<SEQ.length-1){go(M+1,0);} }
+function back(){ if(beat>0){beat--;show();} else if(M>0){ M--; beat=maxBeat(); show(); } }
+function renderDots(){
+  const d=document.getElementById("dots"); if(!d) return; d.innerHTML="";
+  SEQ.forEach((_,i)=>{ const o=document.createElement("div");
+    o.className="dot"+(i===M?" on":(i<M?" seen":"")); o.onclick=()=>go(i,0); d.appendChild(o); });
+}
+document.getElementById("next").onclick=next;
+document.getElementById("back").onclick=back;
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowRight"||e.key===" "||e.key==="Enter"){e.preventDefault();next();}
+  else if(e.key==="ArrowLeft"){e.preventDefault();back();}
+  else if(e.key==="r"||e.key==="R"){go(0,0);}
+});
+show();
+
+</script>
+
+</body></html>
