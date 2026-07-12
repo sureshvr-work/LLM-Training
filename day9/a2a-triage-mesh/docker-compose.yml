@@ -1,0 +1,58 @@
+# Five containers, one network, real A2A.  →  docker compose up -d --build
+# Then open http://127.0.0.1:8000  (the router + UI). No .env, no API key.
+#
+# Same image everywhere; AGENT_ROLE decides what each container is. The router
+# only knows the specialists' URLs (PEERS) — it DISCOVERS what each one can do by
+# reading its Agent Card. Stop a specialist and its capability vanishes from the
+# graph; that's the whole point of the demo.
+#
+# OBSERVE-ONLY: the app never controls containers. To take one down, stop it in
+# Docker Desktop (or `docker stop mesh-cardiology`), then re-run a case — the
+# router's probe fails for real and that agent's edges disappear. Run the stack
+# DETACHED (up -d); a foreground `up` re-converges the project and undoes stops.
+# Container names are pinned so `docker stop mesh-<role>` is easy.
+#
+# Specialist host ports (8101-8104) are exposed only so you can curl each card.
+
+x-image: &img
+  build: .
+  image: a2a-triage-mesh
+
+services:
+  cardiology:
+    <<: *img
+    container_name: mesh-cardiology
+    environment: { AGENT_ROLE: cardiology, SELF_URL: "http://cardiology:8000" }
+    ports: ["8101:8000"]
+
+  pulmonology:
+    <<: *img
+    container_name: mesh-pulmonology
+    environment: { AGENT_ROLE: pulmonology, SELF_URL: "http://pulmonology:8000" }
+    ports: ["8102:8000"]
+
+  dermatology:
+    <<: *img
+    container_name: mesh-dermatology
+    # advertises capabilities.streaming:false → the router auto-falls back to
+    # message/send for this one (capability-driven transport, live by default).
+    environment: { AGENT_ROLE: dermatology, SELF_URL: "http://dermatology:8000", STREAMING: "false" }
+    ports: ["8103:8000"]
+
+  neurology:
+    <<: *img
+    container_name: mesh-neurology
+    environment: { AGENT_ROLE: neurology, SELF_URL: "http://neurology:8000" }
+    ports: ["8104:8000"]
+
+  router:
+    <<: *img
+    container_name: mesh-router
+    environment:
+      AGENT_ROLE: router
+      PEERS: "http://cardiology:8000,http://pulmonology:8000,http://dermatology:8000,http://neurology:8000"
+      STEP_DELAY: "0.45"
+      # ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}   # only if you switch off "mock"
+      # OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    ports: ["8000:8000"]
+    depends_on: [cardiology, pulmonology, dermatology, neurology]

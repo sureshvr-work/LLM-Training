@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trip Planner · A2A</title>
+<style>
+  :root{
+    --ink:#12151c; --gray:#5b6270; --faint:#9aa1b0; --line:#e7e9f0; --bg:#eef1f7;
+    --card:#ffffff; --navy:#1f5fb0; --teal:#0e8f6f; --purple:#7b3fa0; --amber:#9a5a08;
+    --wx:#0e8f6f; --fl:#1f5fb0; --ai1:#6d4bd8; --ai2:#a24bd8;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(900px 500px at 90% -10%,rgba(123,63,160,.06),transparent 60%),
+      radial-gradient(900px 500px at -5% 110%,rgba(31,95,176,.06),transparent 60%),
+      linear-gradient(180deg,#f3f5fa,#eef1f7);min-height:100vh}
+  .wrap{max-width:1120px;margin:0 auto;padding:28px 22px 64px}
+  .kick{font-family:ui-monospace,monospace;font-size:11px;font-weight:800;letter-spacing:2.4px;
+    text-transform:uppercase;color:var(--teal)}
+  h1{font-size:30px;margin:6px 0 4px;letter-spacing:-.6px}
+  .sub{color:var(--gray);font-size:14px;max-width:66ch;line-height:1.5}
+
+  /* stage scaffolding */
+  .stage{margin-top:26px}
+  .stage[hidden]{display:none}
+  .shead{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .snum{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;
+    font-size:13px;font-family:ui-monospace,monospace;background:linear-gradient(135deg,#2166bb,#124a83)}
+  .stitle{font-size:16px;font-weight:800}
+  .ssub{font-size:12.5px;color:var(--gray)}
+
+  /* toolbar */
+  .toolbar{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;
+    background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;
+    box-shadow:0 8px 30px rgba(20,30,60,.06)}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:10.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--faint)}
+  .field input,.field select{font-family:inherit;font-size:15px;padding:10px 12px;border:1.5px solid var(--line);
+    border-radius:10px;background:#fff;min-width:150px}
+  .field input:focus,.field select:focus{outline:3px solid #e5edf9;border-color:var(--navy)}
+  .btn{font-family:inherit;font-weight:800;font-size:15px;color:#fff;border:0;cursor:pointer;
+    background:linear-gradient(135deg,#2166bb,#124a83);border-radius:11px;padding:12px 22px;
+    box-shadow:0 6px 16px rgba(31,95,176,.25)}
+  .btn:hover{filter:brightness(1.07)} .btn:disabled{opacity:.5;cursor:default}
+  .btn.ghost{background:#fff;color:var(--navy);border:1.5px solid #cdddf1;box-shadow:none}
+  .go-wrap{margin-left:auto}
+
+  /* discovery cards */
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media (max-width:820px){.cards{grid-template-columns:1fr}}
+  .acard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;
+    box-shadow:0 8px 30px rgba(20,30,60,.06)}
+  .acard .ah{display:flex;align-items:center;gap:9px}
+  .adot{width:10px;height:10px;border-radius:50%}
+  .wx .adot{background:var(--wx)} .fl .adot{background:var(--fl)}
+  .aname{font-weight:800;font-size:15px}
+  .abadge{margin-left:auto;font-family:ui-monospace,monospace;font-size:10px;font-weight:800;padding:3px 8px;
+    border-radius:999px;border:1px solid var(--line);color:var(--gray);background:#f7f8fb}
+  .adesc{font-size:13px;color:var(--gray);margin:8px 0 10px;line-height:1.45}
+  .arow{font-size:12px;color:var(--gray);margin-top:6px}
+  .arow b{color:var(--ink)}
+  .aget{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--amber);background:#faeeda;
+    border-radius:7px;padding:5px 8px;margin-top:10px;word-break:break-all}
+  .aex{font-family:ui-monospace,monospace;font-size:12px;color:#3a2b63;background:linear-gradient(135deg,#f4effe,#efe7fb);
+    border:1px solid #e0d3f4;border-radius:8px;padding:8px 10px;margin-top:8px}
+  .aex .lbl{display:block;font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--ai1);margin-bottom:3px}
+
+  /* compose: mode picker + message boxes */
+  .modes{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .mode{flex:1;min-width:230px;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:14px;
+    padding:14px 16px;cursor:pointer;transition:.15s}
+  .mode:hover{border-color:#b9c9e6;box-shadow:0 6px 16px rgba(20,30,60,.07)}
+  .mode.on{border-color:var(--ai1);box-shadow:0 0 0 3px rgba(109,75,216,.14)}
+  .mode .mt{font-weight:800;font-size:14px;display:flex;align-items:center;gap:7px}
+  .mode .ms{font-size:12px;color:var(--gray);margin-top:4px;line-height:1.4}
+  .mtag{font-family:ui-monospace,monospace;font-size:9px;font-weight:800;padding:2px 7px;border-radius:999px;text-transform:uppercase}
+  .mtag.tpl{background:#e7eff9;color:var(--navy)} .mtag.ada{background:#f0e8f8;color:var(--purple)}
+
+  .bridge{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media (max-width:820px){.bridge{grid-template-columns:1fr}}
+  .bcol{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;
+    box-shadow:0 8px 30px rgba(20,30,60,.06)}
+  .bcol .bh{font-weight:800;font-size:14px;display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .bcol .bh .prov{margin-left:auto;font-family:ui-monospace,monospace;font-size:9.5px;font-weight:800;color:#fff;
+    background:linear-gradient(135deg,var(--ai1),var(--ai2));padding:3px 8px;border-radius:999px}
+  .fromex{font-family:ui-monospace,monospace;font-size:12px;color:var(--gray);background:#f7f8fb;border:1px solid var(--line);
+    border-radius:8px;padding:8px 10px}
+  .fromex .lbl,.tomsg .lbl{display:block;font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;
+    color:var(--faint);margin-bottom:3px}
+  .down{display:flex;justify-content:center;color:var(--ai1);font-size:18px;margin:2px 0}
+  .ctrace{border-left:2px solid var(--line);padding-left:13px;margin:4px 0;display:flex;flex-direction:column;gap:8px}
+  .cstep{position:relative}
+  .cstep::before{content:"";position:absolute;left:-18px;top:3px;width:8px;height:8px;border-radius:50%;background:#c7ccd8;border:2px solid #fff}
+  .cstep.compose::before{background:var(--ai1);box-shadow:0 0 0 3px rgba(109,75,216,.15)}
+  .tomsg{font-family:ui-monospace,monospace;font-size:13px;color:#12351f;background:linear-gradient(135deg,#e1f5ee,#d5efe4);
+    border:1.5px solid #a9dcc8;border-radius:10px;padding:10px 12px;font-weight:600}
+  .bnote{font-size:11.5px;color:var(--faint);margin-top:8px;font-style:italic}
+
+  /* agent panels (stage 3) */
+  .agents{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media (max-width:820px){.agents{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;
+    box-shadow:0 8px 30px rgba(20,30,60,.06);display:flex;flex-direction:column}
+  .phead{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line)}
+  .pdot{width:10px;height:10px;border-radius:50%}
+  .wx .pdot{background:var(--wx)} .fl .pdot{background:var(--fl)}
+  .pname{font-weight:800;font-size:16px}
+  .pbadges{margin-left:auto;display:flex;gap:6px;align-items:center}
+  .badge{font-family:ui-monospace,monospace;font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;
+    border:1px solid var(--line);color:var(--gray);background:#f7f8fb}
+  .llm{color:#fff;border:0;background:linear-gradient(135deg,var(--ai1),var(--ai2));
+    box-shadow:0 2px 8px rgba(109,75,216,.3);display:inline-flex;align-items:center;gap:5px}
+  .spark{width:11px;height:11px;flex:none;vertical-align:middle}
+  .pbody{padding:16px 18px 18px}
+
+  .reason{border-left:2px solid var(--line);margin:2px 0 16px;padding-left:14px;display:flex;flex-direction:column;gap:9px}
+  .rstep{opacity:0;transform:translateY(3px);transition:.28s;position:relative}
+  .rstep.in{opacity:1;transform:none}
+  .rstep::before{content:"";position:absolute;left:-19px;top:3px;width:8px;height:8px;border-radius:50%;
+    background:#c7ccd8;border:2px solid #fff}
+  .rhead{display:flex;align-items:center;gap:7px}
+  .rlabel{font-size:12px;font-weight:700;color:var(--gray)}
+  .phase{font-family:ui-monospace,monospace;font-size:8.5px;font-weight:800;letter-spacing:.5px;
+    padding:2px 6px;border-radius:999px;text-transform:uppercase}
+  .p-sense{background:#e1f5ee;color:#0e8f6f} .p-reason{background:#f0e8f8;color:#7b3fa0}
+  .p-act{background:#e7eff9;color:#1f5fb0} .p-a2a{background:#eff1f5;color:#5b6270}
+  .p-discover{background:#faeeda;color:#9a5a08}
+  .rstep.disc::before{background:#9a5a08}
+  .rdetail{font-family:ui-monospace,monospace;font-size:11px;color:var(--faint);margin-top:1px;word-break:break-word}
+  .rstep.decide::before{background:var(--ai1);box-shadow:0 0 0 3px rgba(109,75,216,.15)}
+  .rstep.decide .rlabel{color:var(--ai1)}
+  .rstep.decide .box{margin-top:4px;font-family:ui-monospace,monospace;font-size:11.5px;color:#3a2b63;
+    background:linear-gradient(135deg,#f4effe,#efe7fb);border:1px solid #e0d3f4;border-radius:8px;padding:7px 10px}
+  .rstep.tool::before{background:var(--teal)}
+  .rstep.answer::before{background:var(--purple)}
+
+  .wcard{border-radius:16px;padding:18px 20px;color:#fff;min-height:196px;display:flex;flex-direction:column;
+    justify-content:space-between;box-shadow:0 10px 26px rgba(20,30,60,.16)}
+  .wtop{display:flex;justify-content:space-between;align-items:flex-start}
+  .wcity{font-size:19px;font-weight:800} .wsub{font-size:12px;opacity:.9;margin-top:2px}
+  .wemoji{font-size:42px;line-height:1}
+  .wtemp{font-size:58px;font-weight:800;letter-spacing:-2px;line-height:1;margin:4px 0}
+  .wcond{font-size:14px;font-weight:700;text-transform:capitalize;opacity:.95}
+  .wmeta{display:flex;gap:18px;margin-top:12px;font-size:12px}
+  .wmeta b{display:block;font-size:14px} .wmeta span{opacity:.85;font-size:10px;text-transform:uppercase;letter-spacing:.4px}
+
+  .flist{display:flex;flex-direction:column;gap:9px}
+  .froutehead{font-family:ui-monospace,monospace;font-size:11px;font-weight:800;color:var(--gray);letter-spacing:.5px;margin-bottom:8px}
+  .srcchip{font-family:ui-monospace,monospace;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;
+    padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:middle}
+  .srcchip.sample{background:#faeeda;color:#9a5a08} .srcchip.test{background:#eef1f5;color:#5b6270}
+  .fend{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:64px}
+  .fprice{font-weight:800;font-size:15px;color:var(--navy)}
+  .frow{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+  .fair{width:135px;min-width:110px}
+  .fairline{font-weight:800;font-size:13.5px} .fnum{font-family:ui-monospace,monospace;font-size:11px;color:var(--gray)}
+  .froute{flex:1;display:flex;align-items:center;gap:9px;justify-content:center}
+  .fcode{font-family:ui-monospace,monospace;font-weight:800;font-size:14px}
+  .ftime{font-size:11px;color:var(--gray);text-align:center}
+  .farrow{flex:1;height:2px;background:linear-gradient(90deg,var(--teal),var(--navy));position:relative;min-width:34px;max-width:90px}
+  .farrow::after{content:"\2708";position:absolute;right:-3px;top:-8px;color:var(--navy);font-size:12px}
+  .fstatus{font-family:ui-monospace,monospace;font-size:9.5px;font-weight:800;text-transform:uppercase;padding:3px 8px;border-radius:999px}
+  .s-scheduled{background:#e7eff9;color:var(--navy)} .s-active{background:#e2f4ee;color:var(--teal)}
+  .s-landed{background:#f1e9f8;color:var(--purple)} .s-cancelled{background:#fbeae7;color:#b23b2a}
+  .s-default{background:#eff1f5;color:var(--gray)}
+  .quote{font-size:12.5px;color:var(--gray);font-style:italic;margin-top:10px;line-height:1.45}
+  .ph{color:var(--faint);font-size:13px;font-style:italic;padding:20px 0}
+  .err{background:#fbeae7;border:1px solid #d98a7a;color:#7a2a1e;border-radius:10px;padding:12px 14px;font-size:13px}
+  .foot{margin-top:26px;font-size:12px;color:var(--faint);line-height:1.6}
+  .foot code{font-family:ui-monospace,monospace;color:var(--gray)}
+  /* ---- flight status (streaming · SSE) ---- */
+  .st .pdot{background:var(--amber)}
+  .lifebar{display:flex;flex-direction:column;gap:8px;margin:2px 0 16px}
+  .liferow{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .lifenote{font-size:11px;color:var(--faint);line-height:1.55}
+  .lifenote code{font-family:ui-monospace,monospace;font-size:10.5px}
+  .lifebar .cap{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--faint);margin-right:4px}
+  .lst{font-family:ui-monospace,monospace;font-size:10.5px;font-weight:800;color:#b6b1a6;border:1.5px solid var(--line);
+    background:#fff;border-radius:999px;padding:4px 10px;transition:.35s}
+  .lst.on{color:var(--navy);border-color:#9fc0e6;background:#eaf2fb}
+  .lst.cur{color:#fff;background:var(--amber);border-color:var(--amber);box-shadow:0 0 0 3px #faeeda}
+  .lst.done{color:#fff;background:var(--purple);border-color:var(--purple)}
+  .lst.off{color:#c2beb4;border-style:dashed;background:transparent}
+  .lst.cancel{color:#fff;background:#c0392b;border-color:#c0392b}
+  .sep{color:#c2beb4;margin:0 3px;font-weight:800}
+  .larrow{color:var(--faint);font-weight:800;font-size:12px}
+  .sfeed{display:flex;flex-direction:column;gap:8px}
+  .sitem{display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:11px;padding:10px 13px;
+    opacity:0;transform:translateY(4px);transition:.3s}
+  .sitem.in{opacity:1;transform:none}
+  .sitem .sp{font-family:ui-monospace,monospace;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;
+    padding:3px 9px;border-radius:999px;background:#e7eff9;color:var(--navy);min-width:92px;text-align:center}
+  .sitem.final .sp{background:#f1e9f8;color:var(--purple)}
+  .sitem .sd{font-size:13px;color:var(--ink)}
+  .sitem .stime{margin-left:auto;font-family:ui-monospace,monospace;font-size:10px;color:var(--faint)}
+  /* ---- booking (multi-turn · input-required) ---- */
+  .bk .pdot{background:#7b3fa0}
+  .thread{display:flex;flex-wrap:wrap;gap:8px 16px;background:#f7f8fb;border:1px solid var(--line);border-radius:10px;
+    padding:9px 12px;margin-bottom:14px;font-family:ui-monospace,monospace;font-size:11px}
+  .thread b{color:var(--faint);font-weight:800;text-transform:uppercase;font-size:9px;letter-spacing:.5px;margin-right:5px}
+  .thread .tv{color:#3a2b63;font-weight:800}
+  .turn{border-top:1px dashed var(--line);padding-top:13px;margin-top:13px}
+  .turn:first-child{border-top:0;padding-top:0;margin-top:0}
+  .tlabel{font-family:ui-monospace,monospace;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;
+    color:var(--faint);margin-bottom:8px;display:flex;gap:8px;align-items:center}
+  .tlabel .tid{color:var(--purple);background:#f1e9f8;border-radius:999px;padding:2px 8px;text-transform:none;letter-spacing:0}
+  .sentmsg{font-family:ui-monospace,monospace;font-size:12.5px;color:#12351f;background:linear-gradient(135deg,#e1f5ee,#d5efe4);
+    border:1.5px solid #a9dcc8;border-radius:10px;padding:9px 12px;margin-bottom:10px}
+  .statechip{display:inline-block;font-family:ui-monospace,monospace;font-size:10.5px;font-weight:800;text-transform:uppercase;
+    letter-spacing:.4px;padding:4px 10px;border-radius:999px;margin:2px 0}
+  .statechip.s-input-required{background:#faeeda;color:var(--amber)}
+  .statechip.s-completed{background:#f1e9f8;color:var(--purple)}
+  .statechip.s-working{background:#e7eff9;color:var(--navy)}
+  .agentq{font-size:13.5px;color:var(--ink);background:#fff8ec;border:1px solid #f0e0c0;border-radius:10px;padding:10px 13px;margin-top:8px}
+  .reply{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px}
+  .reply label{display:block;font-size:10.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--amber);margin-bottom:7px}
+  .replyrow{display:flex;gap:10px}
+  .replyrow input{flex:1;font-family:inherit;font-size:14px;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px}
+  .pnr{margin-top:10px;border:1px solid #e0d3f4;border-radius:14px;overflow:hidden}
+  .pnr .ph2{background:linear-gradient(135deg,#7b3fa0,#a24bd8);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+  .pnr .ph2 .code{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;letter-spacing:2px}
+  .pnr .pg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line)}
+  .pnr .pcell{background:#fff;padding:11px 14px}
+  .pnr .pcell .k{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--faint)}
+  .pnr .pcell .v{font-size:14px;font-weight:800;color:var(--ink);margin-top:2px}
+  .pnr .pnote{background:#faf7fd;padding:8px 14px;font-size:11px;color:var(--faint);font-style:italic}
+  /* ---- flight selection + capability tags ---- */
+  .frow.selectable{cursor:pointer;transition:.15s}
+  .frow.selectable:hover{border-color:#9fc0e6;box-shadow:0 4px 12px rgba(20,30,60,.07)}
+  .frow.sel{border-color:var(--navy);box-shadow:0 0 0 2px rgba(31,95,176,.18);background:#f4f9ff}
+  .fradio{width:16px;height:16px;border-radius:50%;border:2px solid #c7ccd8;flex:none;position:relative}
+  .frow.sel .fradio{border-color:var(--navy)}
+  .frow.sel .fradio::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--navy)}
+  .selhint{font-size:12px;font-weight:700;color:var(--amber);margin-bottom:9px}
+  .selflight{font-family:ui-monospace,monospace;font-size:13.5px;font-weight:800;color:var(--gray);
+    padding:10px 12px;border:1.5px dashed var(--line);border-radius:10px;min-width:170px;background:#f7f8fb}
+  .selflight.set{border-style:solid;border-color:#9fc0e6;color:#12351f;background:#eaf2fb}
+  .captag{font-family:ui-monospace,monospace;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;
+    padding:2px 7px;border-radius:999px;margin-left:6px}
+  .captag.stream{background:#faeeda;color:var(--amber)} .captag.multi{background:#f1e9f8;color:var(--purple)}
+  .st .adot{background:var(--amber)} .bk .adot{background:#7b3fa0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kick">Agent-to-agent · A2A</div>
+  <h1>Trip Planner</h1>
+  <p class="sub">Watch the whole handshake: the planner <b>discovers</b> four agents, turns each card's
+  <b>example</b> into a real A2A <b>message</b>, then the agents run their own SENSE · REASON · ACT loops.
+  An A2A message has no skillId — the card's examples are the only bridge from "what I want" to "what to say".</p>
+
+  <div class="toolbar">
+    <div class="field"><label for="from">From</label><input id="from" value="Boston" /></div>
+    <div class="field"><label for="to">To</label><input id="to" value="London" /></div>
+    <div class="field"><label for="when">Weather for</label>
+      <select id="when"><option value="tomorrow">tomorrow</option><option value="today">today</option></select></div>
+    <div class="go-wrap"><button class="btn" id="go" onclick="discover()">Discover agents →</button></div>
+  </div>
+
+  <!-- STAGE 1 -->
+  <div class="stage" id="stage-discovery" hidden>
+    <div class="shead"><div class="snum">1</div>
+      <div><div class="stitle">Discovery — GET each Agent Card</div>
+      <div class="ssub">REST <code>GET /.well-known/agent-card.json</code>. The card advertises the agent's skill and example phrasings.</div></div></div>
+    <div class="cards" id="cards"></div>
+  </div>
+
+  <!-- STAGE 2 -->
+  <div class="stage" id="stage-compose" hidden>
+    <div class="shead"><div class="snum">2</div>
+      <div><div class="stitle">Compose the A2A message — the example is the bridge</div>
+      <div class="ssub">The client can only send text (no skillId). How should it phrase that text from the card's example?</div></div></div>
+    <div class="modes">
+      <button class="mode" id="mode-template" onclick="compose('template')">
+        <div class="mt"><span class="mtag tpl">template</span> Use the example as-is</div>
+        <div class="ms">The planner already knows these agents — it fills the example's shape with your trip. No LLM.</div>
+      </button>
+      <button class="mode" id="mode-adaptive" onclick="compose('adaptive')">
+        <div class="mt"><span class="mtag ada">adaptive</span> Let your LLM phrase it</div>
+        <div class="ms">Your LLM reads each card's examples at run time and writes the message in that style.</div>
+      </button>
+    </div>
+    <div class="bridge" id="bridge"></div>
+    <div id="send-wrap" style="margin-top:16px" hidden>
+      <button class="btn" id="send-btn" onclick="send()">Send both messages →</button>
+    </div>
+  </div>
+
+  <!-- STAGE 3 -->
+  <div class="stage" id="stage-agents" hidden>
+    <div class="shead"><div class="snum">3</div>
+      <div><div class="stitle">The agents work — SENSE · REASON · ACT</div>
+      <div class="ssub">Each agent receives the message over JSON-RPC and runs its own loop. It never sees A2A again.</div></div></div>
+    <div class="agents">
+      <div class="panel wx" id="panel-weather">
+        <div class="phead"><span class="pdot"></span><span class="pname">Weather Agent</span>
+          <span class="pbadges"><span class="badge" id="tr-weather">JSON-RPC</span><span class="badge llm" id="llm-weather" style="display:none"></span></span></div>
+        <div class="pbody" id="body-weather"></div>
+      </div>
+      <div class="panel fl" id="panel-flights">
+        <div class="phead"><span class="pdot"></span><span class="pname">Flights Agent</span>
+          <span class="pbadges"><span class="badge" id="tr-flights">JSON-RPC</span><span class="badge llm" id="llm-flights" style="display:none"></span></span></div>
+        <div class="pbody" id="body-flights"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage" id="stage-book" hidden>
+    <div class="shead"><div class="snum">4</div>
+      <div><div class="stitle">Book the selected flight — multi-turn (input-required)</div>
+      <div class="ssub">A task that pauses. The agent asks for what's missing, you answer on the <b>same taskId</b>, and it resumes to <code>completed</code> with a PNR.</div></div></div>
+    <div class="toolbar">
+      <div class="field"><label>Passenger</label><input id="bk-passenger" value="John Smith" /></div>
+      <div class="field"><label>Flight (selected above)</label><div class="selflight" id="bk-selflight">— pick a flight in step 3 —</div></div>
+      <div class="go-wrap"><button class="btn" id="book-btn" onclick="bookStart()" disabled>Book flight →</button></div>
+    </div>
+    <div class="agents" style="grid-template-columns:1fr;margin-top:16px">
+      <div class="panel bk" id="panel-book" hidden>
+        <div class="phead"><span class="pdot"></span><span class="pname">Booking Agent</span>
+          <span class="pbadges"><span class="badge">JSON-RPC</span><span class="badge llm" id="bk-llm" style="display:none"></span></span></div>
+        <div class="pbody">
+          <div class="thread" id="bk-thread" hidden></div>
+          <div id="bk-turns"></div>
+          <div class="reply" id="bk-reply" hidden>
+            <label>Your reply — sent on the same task</label>
+            <div class="replyrow"><input id="bk-answer" value="Window seat, born 1990-05-14" />
+              <button class="btn" id="bk-reply-btn" onclick="bookReply()">Send reply →</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage" id="stage-status" hidden>
+    <div class="shead"><div class="snum">5</div>
+      <div><div class="stitle">Track the booked flight — message/stream (SSE)</div>
+      <div class="ssub">One request, an open connection. The agent streams the status of the flight <b>you chose</b>; the task stays <code>working</code> until it lands.</div></div></div>
+    <div class="toolbar">
+      <div class="field"><label>Flight (selected above)</label><div class="selflight" id="st-selflight">— pick a flight in step 3 —</div></div>
+      <div class="go-wrap"><button class="btn" id="track-btn" onclick="track()" disabled>Track flight →</button></div>
+    </div>
+    <div class="agents" style="grid-template-columns:1fr;margin-top:16px">
+      <div class="panel st" id="panel-status" hidden>
+        <div class="phead"><span class="pdot"></span><span class="pname">Flight Status Agent</span>
+          <span class="pbadges"><span class="badge" id="st-tr">JSON-RPC</span>
+            <span class="badge" id="st-stream">streaming · SSE</span>
+            <span class="badge llm" id="st-llm" style="display:none"></span></span></div>
+        <div class="pbody">
+          <div class="reason" id="st-reason"></div>
+          <div class="lifebar" id="st-life"></div>
+          <div class="sfeed" id="st-feed"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot">Discovery is <code>GET /.well-known/agent-card.json</code> (REST). Each message is a
+  <code>POST</code> with a JSON-RPC 2.0 envelope (<code>method: "message/send"</code>). Template vs adaptive only
+  changes how the <i>client</i> phrases the text — the agent maps it to a skill either way. See <code>BINDINGS.md</code>.</p>
+</div>
+
+<script>
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const esc = (s) => (s == null ? "" : ("" + s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"));
+const SPARK = '<svg class="spark" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg>';
+const state = { trip:{}, compose:null, flights:null, selected:null };
+function trLabel(t){ return t==="HTTP+JSON" ? "HTTP+REST" : t==="GRPC" ? "gRPC" : "JSON-RPC"; }
+
+async function post(path, body){
+  const r = await fetch(path, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+  return r.json();
+}
+function readTrip(){
+  state.trip = { origin:document.getElementById("from").value.trim(),
+                 destination:document.getElementById("to").value.trim(),
+                 when:document.getElementById("when").value };
+  return state.trip;
+}
+function show(id){ document.getElementById(id).hidden = false; }
+function hide(id){ document.getElementById(id).hidden = true; }
+
+// ---------- STAGE 1: discovery ----------
+async function discover(){
+  readTrip();
+  const go = document.getElementById("go"); go.disabled = true;
+  hide("stage-compose"); hide("stage-agents"); hide("stage-book"); hide("stage-status");
+  state.compose = null; state.selected = null; state.flights = null;
+  document.getElementById("cards").innerHTML = '<div class="ph">Fetching Agent Cards…</div>';
+  show("stage-discovery");
+  try{
+    const d = await post("/api/discover", state.trip);
+    if (d.error){ document.getElementById("cards").innerHTML = '<div class="err">'+esc(d.error)+'</div>'; return; }
+    document.getElementById("cards").innerHTML =
+      cardHTML("wx", d.weather) + cardHTML("fl", d.flights) +
+      cardHTML("st", d.status) + cardHTML("bk", d.book);
+    // reset compose stage
+    document.getElementById("bridge").innerHTML = "";
+    hide("send-wrap");
+    document.getElementById("mode-template").classList.remove("on");
+    document.getElementById("mode-adaptive").classList.remove("on");
+    show("stage-compose");
+  } finally { go.disabled = false; }
+}
+function cardHTML(side, block){
+  const c = block.card, disc = block.discovery;
+  const ex = (c.skill.examples && c.skill.examples[0]) || "(no example)";
+  return '<div class="acard '+side+'">'+
+    '<div class="ah"><span class="adot"></span><span class="aname">'+esc(c.name)+'</span>'+
+      '<span class="abadge">'+esc(trLabel(c.transport))+'</span>'+
+      (c.streaming ? '<span class="captag stream">streaming</span>' :
+        ((c.skill.id||'').includes('book') ? '<span class="captag multi">multi-turn</span>' : ''))+'</div>'+
+    '<div class="adesc">'+esc(c.description)+'</div>'+
+    '<div class="arow">skill · <b>'+esc(c.skill.id)+'</b> — '+esc(c.skill.name)+'</div>'+
+    (c.interfaces && c.interfaces.length>1 ? '<div class="arow">transports · <b>'+esc(c.interfaces.map(trLabel).join(" · "))+'</b></div>' : '')+
+    '<div class="aex"><span class="lbl">skill example (the bridge)</span>'+esc(ex)+'</div>'+
+    '<div class="aget">'+esc(disc.detail)+'</div></div>';
+}
+
+// ---------- STAGE 2: compose ----------
+async function compose(mode){
+  document.getElementById("mode-template").classList.toggle("on", mode==="template");
+  document.getElementById("mode-adaptive").classList.toggle("on", mode==="adaptive");
+  hide("send-wrap");
+  const bridge = document.getElementById("bridge");
+  bridge.innerHTML = '<div class="ph">'+(mode==="adaptive" ? "Asking your LLM to phrase each message…" : "Filling the example's shape…")+'</div>';
+  const r = await post("/api/compose", Object.assign({mode}, state.trip));
+  if (r.error){ bridge.innerHTML = '<div class="err">'+esc(r.error)+'</div>'; return; }
+  state.compose = r;
+  bridge.innerHTML = bridgeHTML("Weather Agent", r.weather, r.mode, r.provider) +
+                     bridgeHTML("Flights Agent", r.flights, r.mode, r.provider);
+  show("send-wrap");
+}
+function bridgeHTML(name, block, mode, provider){
+  let mid = '<div class="down">↓</div>';
+  if (mode === "adaptive" && block.trace){
+    const steps = block.trace.map(s =>
+      '<div class="cstep '+(s.kind==="final"?"compose":"")+'">'+
+      '<div class="rhead"><span class="phase p-'+(s.phase||"").toLowerCase()+'">'+esc(s.phase)+'</span>'+
+      '<span class="rlabel">'+esc(s.label)+'</span></div>'+
+      '<div class="rdetail">'+esc(s.detail)+'</div></div>').join("");
+    mid = '<div class="down">↓</div><div class="ctrace">'+steps+'</div><div class="down">↓</div>';
+  }
+  const prov = (mode==="adaptive" && provider) ? '<span class="prov">'+SPARK+' '+esc(provider)+'</span>' : '';
+  return '<div class="bcol"><div class="bh">'+esc(name)+prov+'</div>'+
+    '<div class="fromex"><span class="lbl">card example</span>'+esc(block.example)+'</div>'+
+    mid+
+    '<div class="tomsg"><span class="lbl">A2A message to send</span>'+esc(block.message)+'</div>'+
+    '<div class="bnote">'+esc(block.note||"")+'</div></div>';
+}
+
+// ---------- STAGE 3: send + agents work ----------
+async function send(){
+  const c = state.compose; if (!c) return;
+  state.selected = null; state.flights = null;
+  hide("stage-book"); hide("stage-status");
+  document.getElementById("panel-book").hidden = true;
+  document.getElementById("panel-status").hidden = true;
+  document.getElementById("send-btn").disabled = true;
+  document.getElementById("llm-weather").style.display = "none";
+  document.getElementById("llm-flights").style.display = "none";
+  document.getElementById("body-weather").innerHTML = '<div class="ph">message/send → Weather Agent…</div>';
+  document.getElementById("body-flights").innerHTML = '<div class="ph">message/send → Flights Agent…</div>';
+  show("stage-agents");
+  document.getElementById("stage-agents").scrollIntoView({behavior:"smooth", block:"start"});
+  try{
+    const d = await post("/api/send", Object.assign({
+      weather_message: c.weather.message, flights_message: c.flights.message }, state.trip));
+    if (d.error){ document.getElementById("body-weather").innerHTML = '<div class="err">'+esc(d.error)+'</div>'; return; }
+    await Promise.all([
+      renderPanel("weather", d.weather, weatherHTML(d.weather)),
+      renderPanel("flights", d.flights, flightsHTML(d.flights)),
+    ]);
+  } finally { document.getElementById("send-btn").disabled = false; }
+}
+
+// ---------- shared rendering (reused) ----------
+function skyGradient(code){
+  if ([0,1].includes(code))                return "linear-gradient(135deg,#f4a93c,#e0763a 55%,#5487c9)";
+  if ([2].includes(code))                  return "linear-gradient(135deg,#79addf,#5f8fc9 60%,#8595ab)";
+  if ([3,45,48].includes(code))            return "linear-gradient(135deg,#8a9cb0,#6c7e92)";
+  if ([71,73,75,77,85,86].includes(code))  return "linear-gradient(135deg,#a9c6e6,#7c9fc7)";
+  if ([95,96,99].includes(code))           return "linear-gradient(135deg,#565b76,#383d54)";
+  return "linear-gradient(135deg,#5d8dc7,#3d6ba3)";
+}
+function stepView(s){
+  const cls = s.kind === "discover" ? "disc" : s.kind === "decision" ? "decide"
+            : s.kind === "tool" ? "tool" : s.kind === "final" ? "answer" : "";
+  return {phase:s.phase||"", cls:cls, label:s.label||s.kind, detail:s.detail, boxed:s.kind==="decision"};
+}
+async function renderPanel(which, block, resultHTML){
+  const body = document.getElementById("body-"+which);
+  const llmBadge = document.getElementById("llm-"+which);
+  if (block && block.provider){ llmBadge.style.display="inline-flex"; llmBadge.innerHTML = SPARK+"LLM · "+esc(block.provider); }
+  const trBadge = document.getElementById("tr-"+which);
+  if (trBadge && block && block.transport) trBadge.textContent = trLabel(block.transport);
+  body.innerHTML = '<div class="reason" id="reason-'+which+'"></div><div id="result-'+which+'"></div>';
+  const reason = document.getElementById("reason-"+which);
+  for (const s of (block && block.steps ? block.steps : [])){
+    const v = stepView(s);
+    const el = document.createElement("div"); el.className = "rstep "+v.cls;
+    el.innerHTML = '<div class="rhead">'+(v.phase?'<span class="phase p-'+v.phase.toLowerCase()+'">'+esc(v.phase)+'</span>':'')+
+      '<span class="rlabel">'+esc(v.label)+'</span></div>'+
+      (v.boxed ? '<div class="box">'+esc(v.detail)+'</div>' : '<div class="rdetail">'+esc(v.detail)+'</div>');
+    reason.appendChild(el); await sleep(70); el.classList.add("in"); await sleep(340);
+  }
+  document.getElementById("result-"+which).innerHTML = resultHTML;
+}
+function weatherHTML(block){
+  const d = block && block.data;
+  if (!d) return '<div class="err">'+esc((block&&block.text)||"No forecast returned.")+'</div>';
+  return '<div class="wcard" style="background:'+skyGradient(d.code)+'">'+
+    '<div class="wtop"><div><div class="wcity">'+esc(d.city)+(d.country?', '+esc(d.country):'')+'</div>'+
+    '<div class="wsub">'+esc(d.when)+' · '+esc(d.date)+'</div></div><div class="wemoji">'+esc(d.emoji||'')+'</div></div>'+
+    '<div><div class="wtemp">'+esc(d.tmax)+'°</div><div class="wcond">'+esc(d.condition)+'</div></div>'+
+    '<div class="wmeta"><div><span>Low</span><b>'+esc(d.tmin)+'°C</b></div>'+
+    '<div><span>Rain</span><b>'+esc(d.precip_prob)+'%</b></div>'+
+    '<div><span>Wind</span><b>'+esc(d.wind)+' km/h</b></div></div></div>'+
+    (block.text?'<div class="quote">“'+esc(block.text)+'”</div>':'');
+}
+function statusClass(s){ s=(s||"").toLowerCase();
+  if (s==="nonstop") return "s-active";
+  if (s.includes("stop")) return "s-scheduled";
+  return ["scheduled","active","landed","cancelled"].includes(s) ? "s-"+s : "s-default"; }
+function flightsHTML(block){
+  const d = block && block.data;
+  if (!d || !d.flights) return '<div class="err">'+esc((block&&block.text)||"No flights returned.")+'</div>';
+  state.flights = d;                                  // remember for selection
+  const srcTag = d.source==="sample" ? '<span class="srcchip sample">sample data</span>'
+               : d.source==="duffel" ? '<span class="srcchip test">duffel test</span>' : '';
+  const head = '<div class="froutehead">'+esc(d.dep)+' → '+esc(d.arr)+(d.date?' · '+esc(d.date):'')+srcTag+'</div>';
+  const rows = d.flights.map((fl,i) =>
+    '<div class="frow selectable" data-i="'+i+'" onclick="selectFlight('+i+')">'+
+    '<span class="fradio"></span>'+
+    '<div class="fair"><div class="fairline">'+esc(fl.airline)+'</div><div class="fnum">'+esc(fl.number)+'</div></div>'+
+    '<div class="froute"><div><div class="fcode">'+esc(d.dep)+'</div><div class="ftime">'+esc(fl.dep_time)+'</div></div>'+
+    '<div class="farrow"></div><div><div class="fcode">'+esc(d.arr)+'</div><div class="ftime">'+esc(fl.arr_time)+'</div></div></div>'+
+    '<div class="fend">'+(fl.price?'<div class="fprice">$'+esc(fl.price)+'</div>':'')+
+    '<span class="fstatus '+statusClass(fl.status)+'">'+esc(fl.status)+'</span></div></div>').join('');
+  return head+'<div class="selhint" id="fl-selhint">↓ pick a flight to book &amp; track</div>'+
+    '<div class="flist" id="flist">'+rows+'</div>'+(block.text?'<div class="quote">“'+esc(block.text)+'”</div>':'');
+}
+
+// ---------- flight selection: this flight drives BOTH book and track ----------
+function selectFlight(i){
+  const d = state.flights; if (!d || !d.flights[i]) return;
+  const fl = d.flights[i];
+  state.selected = {number: fl.number, airline: fl.airline, dep: d.dep, arr: d.arr, date: d.date};
+  document.querySelectorAll("#flist .frow").forEach(r => r.classList.toggle("sel", +r.dataset.i === i));
+  const hint = document.getElementById("fl-selhint");
+  if (hint) hint.innerHTML = "✓ selected <b>"+esc(fl.airline)+" "+esc(fl.number)+"</b> — book &amp; track it below";
+  const label = esc(fl.airline)+" "+esc(fl.number)+" · "+esc(d.dep)+"→"+esc(d.arr);
+  ["bk-selflight","st-selflight"].forEach(id=>{ const e=document.getElementById(id);
+    e.innerHTML = label; e.classList.add("set"); });
+  const bkBtn=document.getElementById("book-btn"); bkBtn.disabled=false; bkBtn.textContent="Book "+fl.number+" →";
+  const trBtn=document.getElementById("track-btn"); trBtn.disabled=false; trBtn.textContent="Track "+fl.number+" →";
+  show("stage-book"); show("stage-status");
+  // flight changed -> reset any earlier book/track output
+  document.getElementById("panel-book").hidden = true;
+  document.getElementById("panel-status").hidden = true;
+  _bkTask = null;
+}
+
+// ---------- STAGE 4: live status (message/stream over SSE) ----------
+let _es = null;
+function lifebarHTML(stateNow){
+  // the canonical A2A TaskState vocabulary (maps to the A2A spec slide)
+  const path = ["submitted","working","completed"];   // the states THIS streaming task walks
+  const cur = path.indexOf(stateNow);
+  const chip = (s)=>{
+    const onPath = path.indexOf(s);
+    let c = "lst";
+    if (s === stateNow)                         c += (s==="completed") ? " done"
+                                                   : (s==="canceled"||s==="failed") ? " cancel" : " cur";
+    else if (onPath>=0 && cur>=0 && onPath<cur) c += " on";     // already passed
+    else if (onPath>=0)                         c += "";        // on-path, still ahead
+    else                                        c += " off";    // valid A2A state, not on this task's path
+    return '<span class="'+c+'">'+s+'</span>';
+  };
+  const seq = ["submitted","working","input-required","completed"];
+  const main = seq.map((s,i)=> chip(s) + (i<seq.length-1 ? '<span class="larrow">\u2192</span>' : '')).join("");
+  const term = '<span class="sep">\u00b7</span>' + chip("canceled");
+  return '<div class="liferow"><span class="cap">A2A task state</span>'+main+term+'</div>'+
+    '<div class="lifenote">Canonical A2A <code>TaskState</code>. This streaming task walks '+
+    '<b>submitted \u2192 working \u2192 completed</b>; <b>input-required</b> is where the Booking task pauses (step 4), '+
+    '<b>canceled</b> is a terminal state. (A2A also defines <i>failed, rejected, auth-required</i>.)</div>';
+}
+function renderReasonSteps(containerId, steps){
+  const reason = document.getElementById(containerId); reason.innerHTML = "";
+  for (const s of (steps||[])){
+    const v = stepView(s);
+    const el = document.createElement("div"); el.className = "rstep in "+v.cls;
+    el.innerHTML = '<div class="rhead">'+(v.phase?'<span class="phase p-'+v.phase.toLowerCase()+'">'+esc(v.phase)+'</span>':'')+
+      '<span class="rlabel">'+esc(v.label)+'</span></div>'+
+      (v.boxed ? '<div class="box">'+esc(v.detail)+'</div>' : '<div class="rdetail">'+esc(v.detail)+'</div>');
+    reason.appendChild(el);
+  }
+}
+function appendFeed(phase, text, final){
+  const feed = document.getElementById("st-feed");
+  const el = document.createElement("div"); el.className = "sitem"+(final?" final":"");
+  const t = new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  el.innerHTML = '<span class="sp">'+esc(phase)+'</span><span class="sd">'+esc(text)+'</span><span class="stime">'+esc(t)+'</span>';
+  feed.appendChild(el); requestAnimationFrame(()=>el.classList.add("in"));
+}
+function track(){
+  const flight = (state.selected && state.selected.number) || "";
+  if (!flight) return;
+  document.getElementById("panel-status").hidden = false;
+  document.getElementById("st-reason").innerHTML = '<div class="ph">message/stream \u2192 Flight Status Agent\u2026</div>';
+  document.getElementById("st-feed").innerHTML = "";
+  document.getElementById("st-life").innerHTML = lifebarHTML("submitted");
+  document.getElementById("st-llm").style.display = "none";
+  const btn = document.getElementById("track-btn"); btn.disabled = true;
+  if (_es) _es.close();
+  _es = new EventSource("/api/status-stream?flight="+encodeURIComponent(flight));
+  _es.onmessage = (e)=>{
+    let m; try { m = JSON.parse(e.data); } catch (_) { return; }
+    if (m.kind === "card"){
+      document.getElementById("st-tr").textContent = trLabel(m.card.transport);
+      document.getElementById("st-stream").textContent = m.streaming ? "streaming \u00b7 SSE" : "no stream";
+      return;
+    }
+    const meta = m.metadata || {}, stt = m.status || {}, stateNow = stt.state;
+    if (meta.provider){ const b = document.getElementById("st-llm");
+      b.style.display = "inline-flex"; b.innerHTML = SPARK+"LLM \u00b7 "+esc(meta.provider); }
+    if (meta.trace) renderReasonSteps("st-reason", meta.trace);
+    document.getElementById("st-life").innerHTML = lifebarHTML(stateNow);
+    const parts = (stt.message && stt.message.parts) || [];
+    const txt = (parts[0] && parts[0].text) || "";
+    if (stateNow !== "submitted") appendFeed(meta.phase || stateNow, txt, !!m.final);
+    if (m.final){ _es.close(); btn.disabled = false; }
+  };
+  _es.onerror = ()=>{ if (_es) _es.close(); document.getElementById("track-btn").disabled = false; };
+}
+
+// ---------- STAGE 5: booking (multi-turn: input-required -> completed) ----------
+let _bkTask = null, _bkTurn = 0;
+function pnrHTML(d){
+  return '<div class="pnr"><div class="ph2"><div>'+
+    '<div style="font-size:10px;font-weight:800;letter-spacing:.5px;opacity:.85">CONFIRMATION</div>'+
+    '<div style="font-size:13px;font-weight:700">'+esc(d.passenger)+' \u00b7 '+esc(d.flight)+'</div></div>'+
+    '<div class="code">'+esc(d.pnr)+'</div></div>'+
+    '<div class="pg">'+
+      '<div class="pcell"><div class="k">Seat</div><div class="v">'+esc(d.seat)+'</div></div>'+
+      '<div class="pcell"><div class="k">Boarding</div><div class="v">Group '+esc(d.boarding_group)+'</div></div>'+
+      '<div class="pcell"><div class="k">Date of birth</div><div class="v">'+esc(d.dateOfBirth||'\u2014')+'</div></div>'+
+    '</div>'+(d.note?'<div class="pnote">'+esc(d.note)+'</div>':'')+'</div>';
+}
+function renderTurn(v){
+  _bkTurn++;
+  const stateCls = "s-"+(v.state||"").replace(/[^a-z-]/gi,"");
+  const turn = document.createElement("div"); turn.className = "turn";
+  let inner = '<div class="tlabel">Turn '+_bkTurn+' \u00b7 message/send'+
+    (v.taskId ? '<span class="tid">'+esc(v.taskId)+'</span>' : '')+'</div>'+
+    '<div class="sentmsg">\u21a6 \u201c'+esc(v.sent)+'\u201d</div>'+
+    '<div class="reason" id="bk-reason-'+_bkTurn+'"></div>'+
+    '<div><span class="statechip '+stateCls+'">state \u00b7 '+esc(v.state)+'</span></div>';
+  if (v.state === "input-required" && v.question) inner += '<div class="agentq">\u201c'+esc(v.question)+'\u201d</div>';
+  if (v.state === "completed" && v.data) inner += pnrHTML(v.data);
+  turn.innerHTML = inner;
+  document.getElementById("bk-turns").appendChild(turn);
+  renderReasonSteps("bk-reason-"+_bkTurn, v.steps);
+}
+function setThread(v){
+  const t = document.getElementById("bk-thread"); t.hidden = false;
+  t.innerHTML = '<span><b>taskId</b><span class="tv">'+esc(v.taskId||'\u2014')+'</span></span>'+
+    '<span><b>contextId</b><span class="tv">'+esc(v.contextId||'\u2014')+'</span></span>'+
+    '<span><b>state</b><span class="tv">'+esc(v.state||'\u2014')+'</span></span>';
+}
+function setBkLLM(provider){ if(!provider) return; const b=document.getElementById("bk-llm");
+  b.style.display="inline-flex"; b.innerHTML=SPARK+"LLM \u00b7 "+esc(provider); }
+async function bookStart(){
+  const passenger = (document.getElementById("bk-passenger").value||"John Smith").trim();
+  const flight = (state.selected && state.selected.number) || "";
+  if (!flight) return;
+  document.getElementById("panel-book").hidden = false;
+  document.getElementById("bk-turns").innerHTML = "";
+  document.getElementById("bk-reply").hidden = true;
+  document.getElementById("bk-llm").style.display = "none";
+  _bkTask = null; _bkTurn = 0;
+  const btn = document.getElementById("book-btn"); btn.disabled = true;
+  try{
+    const v = await post("/api/book/start", {passenger, flight});
+    if (v.error){ document.getElementById("bk-turns").innerHTML = '<div class="err">'+esc(v.error)+'</div>'; return; }
+    _bkTask = {taskId:v.taskId, contextId:v.contextId};
+    setBkLLM(v.provider); setThread(v); renderTurn(v);
+    if (v.state === "input-required") document.getElementById("bk-reply").hidden = false;
+  } finally { btn.disabled = false; }
+}
+async function bookReply(){
+  if (!_bkTask) return;
+  const answer = (document.getElementById("bk-answer").value||"").trim();
+  const btn = document.getElementById("bk-reply-btn"); btn.disabled = true;
+  try{
+    const v = await post("/api/book/reply", {taskId:_bkTask.taskId, contextId:_bkTask.contextId, answer});
+    if (v.error){ return; }
+    setThread(v); renderTurn(v);
+    const stillOpen = (v.state === "input-required");
+    document.getElementById("bk-reply").hidden = !stillOpen;
+    if (!stillOpen) _bkTask = null;   // task reached a terminal state
+  } finally { btn.disabled = false; }
+}
+</script>
+</body>
+</html>

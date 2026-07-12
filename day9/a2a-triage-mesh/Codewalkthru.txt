@@ -1,0 +1,67 @@
+A2A TRIAGE MESH — CODE WALKTHROUGH (read in this order)
+=======================================================
+
+The question this project answers: a request arrives, and the agent that gets it
+doesn't know who can handle it — so how does it FIND OUT and hand off the work?
+Here the answer is multi-container: four specialists each run as their own A2A
+service, and a router DISCOVERS them — reads their cards — to build its routing
+table at runtime. Nothing about who-handles-what is hardcoded.
+
+Same image for every agent; AGENT_ROLE picks which one. Read it like this:
+
+1) a2a.py ............ the protocol as plain functions. Agent Card, Message, the
+   Task state machine (submitted→working→completed), Artifact, JSON-RPC 2.0
+   envelopes, SSE framing. Everything else builds these exact shapes, so it's all
+   curl-able. Read this first.
+
+2) specialists.py ... the four ward agents (cardiology, pulmonology, dermatology,
+   neurology). Each is the same handful of facts: a system prompt, a SCOPED tool
+   set, and the (system, acuity) tuples it claims. build_card() publishes those
+   claims in the Agent Card (x-triage-claims) — that field is what the router
+   discovers. _run_loop() runs the agent's scoped ReAct loop and streams it as
+   A2A task updates + a disposition artifact. NOTE the deliberate gaps: neuro·LOW
+   and derm·HIGH are claimed by nobody, so discovery shows a missing edge.
+
+3) router.py ........ the orchestrator. It owns no wards. _discover() GETs every
+   peer's card and turns each card's claims into graph edges — the graph IS the
+   discovery result; it also reads each card's capabilities.streaming. run() does
+   the triage (SENSE→REASON→ACT), then a TRANSPORT decision: obey the card
+   (auto) or a forced override, picking message/stream vs message/send. It DISPATCHes
+   and relays the result, timing first-byte vs total. Extra knobs: `down` (treat a
+   peer as a stopped container — the UI kill switch) and `fail` (inject a tool
+   failure → a streamed `failed` task).
+
+4) engine.py ........ the REASON step, three providers behind one contract
+   (extract_intent for the router, reason for each specialist). MockProvider needs
+   no key — deterministic, so the whole mesh runs offline. Swap in anthropic/openai
+   and the wire is identical.
+
+5) tools.py ......... the clinical tool registry with PER-AGENT scope. specs(only=)
+   hands an agent only its tools; call(allowed=) refuses anything out of scope at
+   call time. Cardiology never even sees Dermatology's book_clinic. Stubs are
+   canned and deterministic.
+
+6) server.py ........ make_app(role): one factory, two shapes. A specialist role
+   serves its card + /a2a (message/send, message/stream) + /healthz. The router
+   role serves /run (the streamed discover→triage→dispatch pass), /agents (the
+   live discovered graph), /healthz, and mounts the UI. `app = make_app()` reads
+   AGENT_ROLE from the env for uvicorn.
+
+7) frontend/index.html  the visual. The router sits at the hub; the four
+   specialist CONTAINERS sit around it. Watch discovery fan out (a GET to each
+   card, edges lighting up, the capability graph assembling on the right), then a
+   case triaged at the hub (sense/reason/act, the matched edge highlighted), then
+   dispatched over A2A to the chosen container (its lifecycle pills + scoped tool
+   calls), then the disposition returning. Refused cases light up the missing edge.
+
+config.py ........... every env knob: AGENT_ROLE, SELF_URL (this agent's address
+   in its card), PEERS (the router's discovery list), engine keys, pacing.
+
+WHY MULTI-CONTAINER: in one process you can SAY discovery happens; across
+containers it actually does. Stop a service (`docker compose stop dermatology`)
+and its edges vanish from the graph — proof the router only knows what it found.
+
+NOTE: schematic teaching software. Canned clinical stubs, a labelled mock engine.
+Not medical software, not medical advice.
+EOF
+echo "Codewalkthru written"
