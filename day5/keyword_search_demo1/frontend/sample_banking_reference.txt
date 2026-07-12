@@ -1,0 +1,31 @@
+BANK SECRECY ACT AND AML PROGRAM REFERENCE
+
+Anti-Money Laundering Monitoring
+Financial institutions must monitor transactions for suspicious activity. Any cash transaction over $10,000 in a single business day triggers a Currency Transaction Report (CTR) filed with FinCEN. When activity appears designed to evade reporting, the institution files a Suspicious Activity Report (SAR). A SAR must be filed within 30 calendar days of detecting the suspicious activity. The AML program must be approved by the board of directors and tested by an independent party.
+
+Know Your Customer (KYC) Onboarding
+KYC verification establishes the identity of every new customer at account opening. The Customer Identification Program (CIP) requires a name, date of birth, physical address, and a government-issued identification number. For higher-risk customers, Enhanced Due Diligence (EDD) gathers the source of funds and the expected account activity. Beneficial ownership rules require identifying any individual who owns 25 percent or more of a legal entity.
+
+Wire Transfer Controls
+Wire transfers above $10,000 are screened for AML risk before release. The Travel Rule requires that originator and beneficiary information accompany wire transfers of $3,000 or more. Outgoing international wires are screened against the OFAC sanctions list. A wire that matches a sanctioned party is blocked and reported to OFAC, not merely delayed.
+
+Annual Percentage Rate (APR) Disclosure
+The Annual Percentage Rate (APR) must be disclosed to the borrower before any consumer credit agreement is signed. Truth in Lending Act (TILA) rules govern how the APR is calculated and presented. Several states cap the APR on small-dollar consumer loans at 36 percent. The disclosure must separate the interest rate from fees included in the APR.
+
+Sanctions Screening and OFAC
+The Office of Foreign Assets Control (OFAC) publishes the Specially Designated Nationals (SDN) list. Institutions screen customers and counterparties against the SDN list at onboarding and on an ongoing basis. A confirmed OFAC match must be reported within 10 business days. Sanctions screening is distinct from AML monitoring, though the two programs share data.
+
+Currency Transaction Reporting (CTR)
+A CTR is required for cash transactions exceeding $10,000, whether a single transaction or aggregated transactions during one business day. Structuring — breaking a large amount into smaller deposits to stay under the $10,000 threshold — is itself a federal crime. Tellers are trained to recognize structuring patterns and escalate them.
+
+Record Retention
+Bank Secrecy Act records, including CTR and SAR filings, must be retained for five years. KYC identification records are retained for five years after the account is closed. Wire transfer records of $3,000 or more must include originator and beneficiary detail and are retained for five years.
+
+Fraud and Disputes
+A cardholder must report unauthorized card transactions promptly. Under Regulation E, liability for unauthorized electronic transfers is limited to $50 if reported within two business days, rising to $500 if reported later. Chargeback rights let a cardholder dispute a transaction processed in error or not as described.
+
+Credit Risk and Underwriting
+Underwriting evaluates a borrower's capacity to repay using debt-to-income ratio and credit score. A debt-to-income ratio above 43 percent is generally considered high risk for a qualified mortgage. The loan-to-value ratio compares the loan amount to the appraised value of the collateral.
+
+Privacy and Data Protection
+The Gramm-Leach-Bliley Act (GLBA) requires institutions to provide a privacy notice describing how customer information is shared. Customers may opt out of certain information sharing with non-affiliated third parties. A data breach affecting customer financial information triggers notification obligations under state and federal law.

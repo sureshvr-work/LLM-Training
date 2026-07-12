@@ -1,0 +1,30 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16          # Postgres 16 with pgvector preinstalled
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5433:5432"                         # connect with: psql postgresql://postgres:postgres@localhost:5433/postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres
+    ports:
+      - "8095:8000"                         # open http://localhost:8095
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

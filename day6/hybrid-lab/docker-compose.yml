@@ -1,0 +1,15 @@
+services:
+  backend:
+    build: ./backend
+    env_file: .env
+    restart: unless-stopped
+    ports:
+      - "8000:8000"     # API docs at http://localhost:8000/docs
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    restart: unless-stopped
+    ports:
+      - "8080:80"       # open http://localhost:8080

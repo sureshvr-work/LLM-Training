@@ -1,0 +1,24 @@
+# Two containers:
+#   frontend — nginx; serves the wizard + sample text, proxies /api/* to the backend
+#   backend  — FastAPI; the stateful KEYWORD pipeline (engine.py + the shared llm/ pkg)
+#
+# Setup:
+#   1. cp .env.example .env   then paste your OPENAI_API_KEY (only the answer step needs it)
+#   2. docker compose up --build
+#   3. open http://localhost:8090
+services:
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8090:80"          # different port from the dense lab so both can run side by side
+
+  backend:
+    # Context is the repo root so the image can copy backend/ AND llm/.
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: .env          # OPENAI_API_KEY (used only by /api/answer and the LLM chunker)
+    ports:
+      - "8010:8000"         # exposed so you can curl the API directly in class

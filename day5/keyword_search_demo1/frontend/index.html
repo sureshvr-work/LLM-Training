@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Keyword Lab — inverted index, end to end</title>
+  <style>
+    :root{
+      --navy:#1d3a5f; --navy2:#185FA5;
+      --teal:#0F6E56; --teal2:#1D9E75; --teal-bg:#E1F5EE;
+      --amber:#854F0B; --amber2:#EF9F27; --amber-bg:#FAEEDA;
+      --purple:#7B3FA0; --purple-bg:#F0E8F8;
+      --red:#C0392B; --red-bg:#FBEAE7;
+      --gray:#5F5E5A; --line:#e3e0d9; --paper:#ffffff; --bg:#f5f6f8;
+    }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:var(--bg);color:#222;}
+    .wrap{max-width:880px;margin:0 auto;padding:26px 20px 80px;}
+    header h1{color:var(--navy);font-size:23px;margin:0 0 3px;}
+    header p{color:var(--gray);font-size:13px;margin:0 0 6px;}
+    .tagline{background:#fff;border:1px solid var(--line);border-left:4px solid var(--amber2);
+             border-radius:9px;padding:10px 13px;font-size:12.5px;color:#4a4a46;margin-top:10px;line-height:1.5;}
+    .tagline b{color:var(--amber);}
+    .crumbs{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 8px;font-size:11px;}
+    .crumb{padding:3px 9px;border-radius:12px;background:#fff;border:1px solid var(--line);color:var(--gray);}
+    .crumb.done{background:var(--teal-bg);border-color:var(--teal2);color:var(--teal);}
+    .crumb.active{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600;}
+
+    .card{background:var(--paper);border:1px solid var(--line);border-radius:13px;padding:18px 20px;margin-top:16px;
+          transition:opacity .25s, box-shadow .25s;}
+    .card.locked{opacity:.5;pointer-events:none;}
+    .card-head{display:flex;align-items:center;gap:11px;margin-bottom:4px;}
+    .num{flex:none;width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;font-size:13px;font-weight:700;
+         display:flex;align-items:center;justify-content:center;}
+    .card.done .num{background:var(--teal);}
+    .card h2{font-size:15px;color:var(--navy);margin:0;}
+    .card .desc{color:var(--gray);font-size:12.5px;margin:2px 0 0;}
+    .body{margin-top:13px;}
+
+    label{font-size:12.5px;font-weight:600;color:#333;display:block;margin-bottom:5px;}
+    select,input[type=text],textarea{padding:9px 11px;border:1.5px solid var(--line);border-radius:8px;font-size:13.5px;background:#fff;font-family:inherit;}
+    select:focus,input[type=text]:focus,textarea:focus{outline:none;border-color:var(--navy);}
+    .row{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end;}
+    .seg{display:inline-flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;}
+    .seg button{border:0;background:#fff;padding:9px 14px;font-size:13px;cursor:pointer;color:var(--gray);}
+    .seg button.on{background:var(--navy);color:#fff;font-weight:600;}
+
+    button.go{background:var(--navy);color:#fff;border:0;border-radius:9px;padding:10px 18px;font-size:13.5px;font-weight:600;cursor:pointer;}
+    button.go.amber{background:var(--amber2);color:#3a2606;}
+    button.go.purple{background:var(--purple);}
+    button.go:disabled{opacity:.45;cursor:default;}
+    button.ghost{background:#fff;border:1.5px solid var(--line);color:var(--navy);border-radius:9px;padding:9px 14px;font-size:13px;cursor:pointer;}
+
+    input[type=range]{width:200px;vertical-align:middle;accent-color:var(--amber);}
+    .pill{display:inline-block;background:var(--amber-bg);color:var(--amber);border-radius:9px;padding:1px 8px;font-size:11px;font-weight:700;}
+    .pill.teal{background:var(--teal-bg);color:var(--teal);}
+    .pill.navy{background:#e6eef7;color:var(--navy);}
+    .pill.purple{background:var(--purple-bg);color:var(--purple);}
+    .pill.red{background:var(--red-bg);color:var(--red);}
+    .muted{color:var(--gray);font-size:12px;}
+    .err{color:var(--red);font-size:12.5px;margin-top:8px;}
+    .spin{font-size:12.5px;color:var(--navy);}
+    .mono{font-family:ui-monospace,Menlo,Consolas,monospace;}
+
+    /* upload */
+    .drop{border:1.6px dashed #c7c3b8;border-radius:10px;padding:18px;text-align:center;background:#fafaf7;}
+    .ppbars{display:flex;align-items:flex-end;gap:5px;height:60px;margin-top:12px;}
+    .ppbar{flex:1;background:var(--amber2);border-radius:3px 3px 0 0;min-height:4px;}
+    .ppbar span{display:block;text-align:center;font-size:9px;color:var(--gray);margin-top:3px;}
+
+    /* strategy picker */
+    .strat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .strat{border:1.5px solid var(--line);border-radius:10px;padding:11px 13px;cursor:pointer;background:#fff;}
+    .strat:hover{border-color:var(--navy);}
+    .strat.on{border-color:var(--amber);background:#fffdf8;box-shadow:0 0 0 1px var(--amber) inset;}
+    .strat .fam{font-size:10px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.03em;}
+    .strat .nm{font-size:13.5px;font-weight:700;color:var(--navy);margin:2px 0;}
+    .strat .bl{font-size:11.5px;color:var(--gray);line-height:1.4;}
+    .excluded{margin-top:10px;border:1px dashed #e0a99c;background:var(--red-bg);border-radius:9px;padding:9px 12px;font-size:12px;color:#8c2a1c;}
+    .excluded b{color:#b3382b;}
+    .params{margin-top:12px;display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end;}
+
+    /* chunk preview */
+    .chunk-summary{margin-bottom:10px;}
+    .chunk-pane{display:flex;gap:14px;align-items:flex-start;}
+    .chunk-list{flex:none;width:210px;}
+    .cbtns{display:flex;flex-wrap:wrap;gap:6px;max-height:330px;overflow:auto;padding:2px;}
+    .cbtn{display:flex;flex-direction:column;align-items:center;gap:1px;border:1.5px solid var(--line);
+          background:#fff;border-radius:8px;padding:6px 8px;font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;min-width:46px;}
+    .cbtn:hover{border-color:var(--navy);}
+    .cbtn .cp{font-size:9px;font-weight:600;color:var(--gray);}
+    .cbtn.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+    .cbtn.on .cp{color:#cdd9e8;}
+    .chunk-view{flex:1;border:1px solid var(--line);border-radius:9px;padding:10px 12px;min-height:130px;}
+    .cv-head{display:flex;gap:7px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+    .cv-body{font-size:12px;line-height:1.55;white-space:pre-wrap;
+             font-family:ui-monospace,Menlo,Consolas,monospace;max-height:300px;overflow:auto;}
+    .ov{background:#FFF3B0;border-radius:2px;box-shadow:0 0 0 1px #E4C200 inset;}
+    .ctx{background:var(--purple-bg);color:var(--purple);border-radius:3px;padding:1px 4px;font-weight:700;}
+    .cite{background:#e6eef7;color:#1d3a5f;border-radius:4px;padding:0 4px;font-weight:700;
+          font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;white-space:nowrap;}
+
+    /* analyzer pipeline */
+    .pipe{display:flex;flex-direction:column;gap:7px;margin-top:8px;}
+    .pstep{display:flex;gap:10px;align-items:flex-start;}
+    .plab{flex:none;width:158px;font-size:11px;font-weight:700;color:var(--navy);padding-top:3px;}
+    .ptok{display:flex;flex-wrap:wrap;gap:4px;}
+    .tok{font-size:11px;background:#fff7e8;border:1px solid #ecd6a8;border-radius:5px;padding:1px 6px;color:#7a5a14;}
+    .tok.drop{background:#f3f1ec;border-color:#e3e0d9;color:#aaa69c;text-decoration:line-through;}
+    .tok.stem{background:var(--teal-bg);border-color:var(--teal2);color:var(--teal);}
+    .toggles{display:flex;gap:16px;margin:2px 0 6px;font-size:12px;}
+    .toggles label{display:inline-flex;align-items:center;gap:6px;font-weight:600;margin:0;cursor:pointer;}
+
+    /* inverted index */
+    .idx{max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:9px;padding:6px;margin-top:8px;}
+    .idxrow{display:flex;gap:10px;align-items:baseline;padding:3px 6px;border-bottom:1px solid #f0eee8;font-size:12px;}
+    .idxrow:last-child{border-bottom:0;}
+    .idxterm{flex:none;width:140px;font-weight:700;color:var(--amber);font-family:ui-monospace,Menlo,Consolas,monospace;}
+    .idxdf{flex:none;width:50px;color:var(--gray);font-size:11px;}
+    .idxpost{flex:1;color:#444;}
+    .post{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:5px;padding:0 6px;margin:0 4px 3px 0;font-size:11px;font-family:ui-monospace,Menlo,Consolas,monospace;}
+    .stat{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:9px;padding:6px 12px;margin:0 8px 8px 0;}
+    .stat b{font-size:17px;color:var(--navy);font-variant-numeric:tabular-nums;}
+    .stat span{display:block;font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.03em;}
+
+    /* query + results */
+    .qprev{margin-top:10px;font-size:12.5px;line-height:2;}
+    .qtok{font-family:ui-monospace,Menlo,Consolas,monospace;border-radius:5px;padding:1px 7px;font-size:12px;margin-right:5px;}
+    .qtok.has{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal2);}
+    .qtok.no{background:var(--red-bg);color:var(--red);border:1px solid #e0a99c;}
+    .kdesc{font-size:12.5px;color:var(--gray);margin-top:6px;}
+    .res{border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin-top:8px;}
+    .res.zero{opacity:.6;}
+    .res.top{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber) inset;}
+    .res-h{display:flex;align-items:center;gap:9px;font-size:11.5px;color:var(--gray);margin-bottom:5px;flex-wrap:wrap;}
+    .bar{flex:1;height:6px;background:#eee;border-radius:4px;overflow:hidden;max-width:240px;}
+    .bar>i{display:block;height:100%;background:var(--amber2);}
+    .score{font-weight:700;color:var(--amber);font-variant-numeric:tabular-nums;}
+    .res-t{font-size:11.5px;line-height:1.5;color:#333;}
+    .res-t mark{background:#FFF3B0;box-shadow:0 0 0 1px #E4C200 inset;border-radius:2px;padding:0 1px;}
+    .mathtbl{border-collapse:collapse;width:100%;margin-top:7px;font-size:11px;}
+    .mathtbl th,.mathtbl td{border:1px solid var(--line);padding:3px 6px;text-align:center;font-variant-numeric:tabular-nums;}
+    .mathtbl th{background:#f3f5f8;color:var(--navy);}
+    .mathtbl td.term{font-weight:700;color:var(--amber);text-align:left;font-family:ui-monospace,Menlo,Consolas,monospace;}
+    .mathtbl td.zero{color:var(--red);background:var(--red-bg);}
+    .mathtbl tr.tot td{font-weight:800;background:#fffaf0;color:var(--amber);}
+
+    .answer{border-left:4px solid var(--teal);background:#fbfdfc;}
+    .answer .a-text{font-size:14px;line-height:1.55;white-space:pre-wrap;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Keyword Lab — watch every stage of the inverted index</h1>
+    <p>One document, end to end: upload → chunk → <b>build the inverted index</b> → search (BM25) → answer. The sparse counterpart to the dense RAG Lab.</p>
+    <div class="tagline">
+      <b>No embedding model. No vectors.</b> Keyword search analyzes text into terms, files each term under the chunks that contain it, and ranks by exact-term overlap (BM25).
+      The same chunk you would embed, you also index — so step&nbsp;2 lets you pick any chunking strategy that applies to an inverted index.
+    </div>
+  </header>
+
+  <div class="crumbs" id="crumbs"></div>
+
+  <!-- STEP 1 — model & SDK -->
+  <section class="card" id="s1">
+    <div class="card-head"><div class="num">1</div><h2>Choose the model &amp; the SDK</h2></div>
+    <p class="desc">Keyword retrieval needs no model at all — this is only for the final answer (and the optional LLM-driven chunker).</p>
+    <div class="body row">
+      <div>
+        <label>Chat model (for the answer)</label>
+        <select id="llmModel">
+          <option value="gpt-4o-mini">OpenAI · gpt-4o-mini</option>
+          <option value="gpt-4o">OpenAI · gpt-4o</option>
+        </select>
+      </div>
+      <div>
+        <label>SDK / path</label>
+        <div class="seg" id="sdkSeg">
+          <button data-sdk="openai" class="on">OpenAI SDK (direct)</button>
+          <button data-sdk="langchain">LangChain (OpenAI)</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 2 — upload -->
+  <section class="card" id="s2">
+    <div class="card-head"><div class="num">2</div><h2>Load a document</h2></div>
+    <p class="desc">A PDF or plain text. Text is split into pages so each chunk can carry a real page number.</p>
+    <div class="body">
+      <div class="drop">
+        <input type="file" id="file" accept="application/pdf,text/plain,.txt,.md"/>
+        <div class="muted" style="margin-top:8px">or
+          <button class="ghost" id="loadSample" style="padding:5px 10px">Load the banking compliance sample</button>
+        </div>
+      </div>
+      <details style="margin-top:10px"><summary class="muted" style="cursor:pointer">…or paste text</summary>
+        <textarea id="paste" style="width:100%;height:90px;margin-top:8px" placeholder="Paste any text…"></textarea>
+        <button class="ghost" id="pasteBtn" style="margin-top:6px">Use this text</button>
+      </details>
+      <div id="uploadOut"></div>
+    </div>
+  </section>
+
+  <!-- STEP 3 — chunking strategy -->
+  <section class="card locked" id="s3">
+    <div class="card-head"><div class="num">3</div><h2>Pick a chunking strategy</h2></div>
+    <p class="desc">Six of the seven taxonomy families produce chunks an inverted index can hold. (Embedding-time is vector-only — see the note.)</p>
+    <div class="body">
+      <div class="strat-grid" id="stratGrid"></div>
+      <div class="excluded" id="excluded"></div>
+      <div class="params" id="params"></div>
+      <div style="margin-top:12px"><button class="go amber" id="chunkBtn">Chunk it</button>
+        <span class="muted" id="chunkHint"></span></div>
+      <div id="chunkOut" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <!-- STEP 4 — build inverted index -->
+  <section class="card locked" id="s4">
+    <div class="card-head"><div class="num">4</div><h2>Build the inverted index</h2></div>
+    <p class="desc">The analyzer turns each chunk into terms; every term points to the chunks that contain it. This is the whole data structure BM25 reads.</p>
+    <div class="body">
+      <div class="toggles">
+        <label><input type="checkbox" id="tStop" checked/> remove stopwords</label>
+        <label><input type="checkbox" id="tStem" checked/> stem (collapse word forms)</label>
+        <button class="go amber" id="indexBtn" style="margin-left:6px">Build index</button>
+      </div>
+      <div id="indexOut" style="margin-top:8px"></div>
+    </div>
+  </section>
+
+  <!-- STEP 5 — query + retrieve -->
+  <section class="card locked" id="s5">
+    <div class="card-head"><div class="num">5</div><h2>Ask &amp; retrieve (BM25)</h2></div>
+    <p class="desc">Your query runs through the <b>same analyzer</b> as the index — then BM25 scores every chunk by term overlap.</p>
+    <div class="body">
+      <label>Your query</label>
+      <input type="text" id="query" style="width:100%" placeholder="e.g. AML threshold for cash transactions"/>
+      <div class="qprev" id="qprev"></div>
+      <div style="margin-top:12px">
+        <label>top_k: <span id="kV" class="pill">4</span></label>
+        <input type="range" id="topk" min="1" max="8" step="1" value="4"/>
+        <div class="kdesc" id="kdesc"></div>
+      </div>
+      <button class="go amber" id="retrieveBtn" style="margin-top:12px">Retrieve (BM25)</button>
+      <div id="searchOut" style="margin-top:8px"></div>
+    </div>
+  </section>
+
+  <!-- STEP 6 — answer -->
+  <section class="card locked" id="s6">
+    <div class="card-head"><div class="num">6</div><h2>Send to the LLM</h2></div>
+    <p class="desc">The retrieved chunks become the context. (Hierarchical returns the parent chunk for fuller context.)</p>
+    <div class="body">
+      <button class="go purple" id="answerBtn">Send to LLM</button>
+      <span class="muted" id="answerVia"></span>
+      <div id="answerOut" style="margin-top:10px"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+  const S = { sdk:'openai', llmModel:'gpt-4o-mini', strategy:null, stratMeta:{},
+              uploaded:false, chunked:false, indexed:false, answered:false, topk:4,
+              params:{}, chunkData:null };
+  const $ = id => document.getElementById(id);
+  const esc = s => (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  async function post(url, body){
+    const res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    if(!res.ok) throw new Error('HTTP '+res.status); return res.json();
+  }
+
+  /* breadcrumbs + gating */
+  const STEPS=['Model & SDK','Load','Chunk','Index','Search','Answer'];
+  function lock(id,on){ $(id).classList.toggle('locked',on); }
+  function done(id,on){ $(id).classList.toggle('done',on); }
+  function refresh(){
+    lock('s3',!S.uploaded); lock('s4',!S.chunked); lock('s5',!S.indexed); lock('s6',!S.indexed);
+    done('s2',S.uploaded); done('s3',S.chunked); done('s4',S.indexed);
+    const st=[true,S.uploaded,S.chunked,S.indexed,S.indexed,S.answered];
+    $('crumbs').innerHTML = STEPS.map((s,i)=>{
+      const cls = st[i]?'done':(i>0&&st[i-1]?'active':'');
+      return `<span class="crumb ${cls}">${i+1}. ${s}</span>`;
+    }).join('');
+  }
+
+  /* step 1 */
+  $('sdkSeg').addEventListener('click', e=>{ if(e.target.dataset.sdk){ S.sdk=e.target.dataset.sdk;
+    [...$('sdkSeg').children].forEach(b=>b.classList.toggle('on',b.dataset.sdk===S.sdk)); }});
+  $('llmModel').addEventListener('change', e=> S.llmModel=e.target.value);
+
+  /* step 2: upload */
+  function renderUpload(d){
+    const max=Math.max(...d.per_page.map(p=>p.chars),1);
+    const bars=d.per_page.map(p=>`<div style="flex:1"><div class="ppbar" style="height:${Math.round(p.chars/max*52)+4}px"></div><span>${p.page}</span></div>`).join('');
+    $('uploadOut').innerHTML =
+      `<div style="margin-top:12px"><span class="pill navy">${esc(d.filename)}</span>
+        <span class="muted">· ${d.pages} page(s) · ${d.total_chars.toLocaleString()} chars</span></div>
+       <div class="muted" style="margin-top:8px">characters per page</div><div class="ppbars">${bars}</div>`;
+    S.uploaded=true; S.chunked=false; S.indexed=false; S.answered=false; refresh();
+  }
+  $('file').addEventListener('change', async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    $('uploadOut').innerHTML='<div class="spin">Parsing…</div>';
+    try{ const fd=new FormData(); fd.append('file',f,f.name);
+      const r=await fetch('/api/upload',{method:'POST',body:fd}); if(!r.ok) throw new Error('HTTP '+r.status);
+      renderUpload(await r.json());
+    }catch(err){ $('uploadOut').innerHTML=`<div class="err">Upload failed: ${err.message}. Is the backend up?</div>`; }
+  });
+  $('loadSample').addEventListener('click', async ()=>{
+    $('uploadOut').innerHTML='<div class="spin">Loading sample…</div>';
+    try{ const t=await (await fetch('/sample_banking_reference.txt')).text();
+      renderUpload(await post('/api/upload_text',{text:t, filename:'banking_reference.txt'}));
+    }catch(err){ $('uploadOut').innerHTML=`<div class="err">Sample load failed: ${err.message}</div>`; }
+  });
+  $('pasteBtn').addEventListener('click', async ()=>{
+    const t=$('paste').value.trim(); if(!t){ return; }
+    try{ renderUpload(await post('/api/upload_text',{text:t, filename:'pasted.txt'})); }
+    catch(err){ $('uploadOut').innerHTML=`<div class="err">Failed: ${err.message}</div>`; }
+  });
+
+  /* step 3: strategies */
+  let STRATS=[];
+  async function loadStrategies(){
+    try{
+      const d=await (await fetch('/api/strategies')).json();
+      STRATS=d.strategies;
+      $('stratGrid').innerHTML = STRATS.map(s=>
+        `<div class="strat" data-id="${s.id}"><div class="fam">${esc(s.family)}</div>
+          <div class="nm">${esc(s.name)}</div><div class="bl">${esc(s.blurb)}</div></div>`).join('');
+      $('excluded').innerHTML = `<b>✗ Not here — ${esc(d.excluded.family)}</b> (${esc(d.excluded.examples)}): ${esc(d.excluded.why)}.`;
+      $('stratGrid').querySelectorAll('.strat').forEach(el=>
+        el.addEventListener('click', ()=> selectStrategy(el.dataset.id)));
+      selectStrategy('fixed');
+    }catch(err){ $('stratGrid').innerHTML=`<div class="err">Could not load strategies: ${err.message}</div>`; }
+  }
+  function selectStrategy(id){
+    S.strategy=id;
+    $('stratGrid').querySelectorAll('.strat').forEach(el=>el.classList.toggle('on',el.dataset.id===id));
+    const s=STRATS.find(x=>x.id===id); S.params={};
+    $('params').innerHTML = (s.params||[]).map(p=>{
+      S.params[p.key]=p.default;
+      return `<div><label>${esc(p.label)}: <span class="pill" id="pv_${p.key}">${p.default}</span></label>
+        <input type="range" id="pr_${p.key}" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.default}"/></div>`;
+    }).join('');
+    (s.params||[]).forEach(p=> $('pr_'+p.key).addEventListener('input', e=>{
+      S.params[p.key]=+e.target.value; $('pv_'+p.key).textContent=e.target.value; }));
+    $('chunkHint').textContent = id==='llm' ? 'Calls the chat model once to segment the document.' : '';
+  }
+  $('chunkBtn').addEventListener('click', async ()=>{
+    $('chunkOut').innerHTML='<div class="spin">Chunking'+(S.strategy==='llm'?' via the model…':'…')+'</div>';
+    try{
+      const d=await post('/api/chunk',{strategy:S.strategy, params:S.params, sdk:S.sdk, model:S.llmModel});
+      if(d.error) throw new Error(d.error);
+      S.chunkData=d; renderChunks(d);
+      S.chunked=true; S.indexed=false; S.answered=false; refresh();
+    }catch(err){ $('chunkOut').innerHTML=`<div class="err">Chunk failed: ${err.message}</div>`; }
+  });
+  function pspan(c){ return c.page_start===c.page_end?`p${c.page_start}`:`p${c.page_start}–${c.page_end}`; }
+  function renderChunks(d){
+    const btns=d.chunks.map((c,i)=>`<button class="cbtn" data-i="${i}">${c.id}<span class="cp">${pspan(c)}</span></button>`).join('');
+    const metaTxt=Object.entries(d.meta||{}).map(([k,v])=>`${k} ${v}`).join(' · ');
+    $('chunkOut').innerHTML=`
+      <div class="chunk-summary"><b>${d.count} chunks</b>
+        <span class="muted">· ${esc(d.name)} (${esc(d.family)})${metaTxt?' · '+esc(metaTxt):''} · click a chunk to inspect →</span></div>
+      <div class="chunk-pane">
+        <div class="chunk-list"><div class="cbtns">${btns}</div></div>
+        <div class="chunk-view"><div class="cv-head" id="cvHead"></div><div class="cv-body" id="cvBody"></div>
+          <div class="muted" id="cvNote" style="margin-top:8px"></div></div>
+      </div>`;
+    $('chunkOut').querySelectorAll('.cbtn').forEach(b=> b.addEventListener('click',()=>selectChunk(+b.dataset.i)));
+    selectChunk(0);
+  }
+  function selectChunk(i){
+    const c=S.chunkData.chunks[i];
+    $('chunkOut').querySelectorAll('.cbtn').forEach(b=>b.classList.toggle('on',+b.dataset.i===i));
+    const nextId = i<S.chunkData.chunks.length-1 ? S.chunkData.chunks[i+1].id : null;
+    const tail = Math.min(c.overlap_tail||0, c.body.length);
+    const plain = c.body.slice(0, c.body.length-tail);
+    const tailTxt = c.body.slice(c.body.length-tail);
+    $('cvHead').innerHTML =
+      `<span class="pill">${c.id}</span><span class="pill teal">${pspan(c)}</span>`
+      + (c.parent_id?`<span class="pill purple" title="indexed as a child; parent returned to the LLM">child of ${c.parent_id}</span>`:'')
+      + `<span class="muted">${c.chars} chars</span>`;
+    let body='';
+    if(c.context) body += `<span class="ctx" title="prepended context — indexed with the chunk">${esc(c.context)}</span>\n`;
+    body += esc(plain) + (tail?`<span class="ov" title="reappears as the start of ${nextId}">${esc(tailTxt)}</span>`:'');
+    $('cvBody').innerHTML = body;
+    let note='';
+    if(c.context) note='The purple context is prepended <b>before indexing</b> — so this chunk also matches queries about its section, even if the body never says those words.';
+    else if(c.parent_id) note='This small child is what gets <b>indexed</b> (precise matching); its larger <b>parent</b> is what the LLM receives.';
+    else if(tail) note=`Highlighted tail = the ${tail} chars that reappear as the start of ${nextId} (overlap).`;
+    $('cvNote').innerHTML=note;
+  }
+
+  /* step 4: build index */
+  $('indexBtn').addEventListener('click', async ()=>{
+    $('indexOut').innerHTML='<div class="spin">Analyzing chunks & building postings…</div>';
+    try{
+      const sample = (S.chunkData && S.chunkData.chunks[0]) ? S.chunkData.chunks[0].id : null;
+      const d=await post('/api/index',{stop:$('tStop').checked, stem:$('tStem').checked, sample_id:sample});
+      renderIndex(d);
+      S.indexed=true; S.answered=false; refresh(); updateKdesc();
+    }catch(err){ $('indexOut').innerHTML=`<div class="err">Index failed: ${err.message}</div>`; }
+  });
+  function renderIndex(d){
+    // analyzer pipeline
+    let pipe='';
+    if(d.pipeline){
+      const p=d.pipeline, stopSet=new Set(p.stopped);
+      const lowered=p.lowered.map(t=>`<span class="tok${stopSet.has(t)?' drop':''}">${esc(t)}</span>`).join('');
+      const finalRow=p.after_stop.map((t,i)=>{ const f=p.final[i]; const ch=f!==t;
+        return `<span class="tok${ch?' stem':''}">${esc(f)}${ch?` <span style="opacity:.55">«${esc(t)}»</span>`:''}</span>`;}).join('');
+      pipe=`<div style="margin-top:4px"><b>Analyzer pipeline</b> <span class="muted">· on ${p.id}'s indexed text</span></div>
+        <div class="pipe">
+          <div class="pstep"><div class="plab">1 · normalize + tokenize</div><div class="ptok">${lowered}</div></div>
+          <div class="pstep"><div class="plab">2 · ${d.stop?'remove stopwords':'stopwords kept'}</div><div class="ptok">${lowered}</div></div>
+          <div class="pstep"><div class="plab">3 · ${d.stem?'stem → index terms':'index terms (no stemming)'}</div><div class="ptok">${finalRow}</div></div>
+        </div>
+        <div class="muted" style="margin-top:6px">Stemming folds word <b>forms</b> (reports→report) — never <b>meanings</b> (wire never becomes transfer). The query gets this exact same treatment.</div>`;
+    }
+    // stats
+    const stats=`<div style="margin-top:14px">
+      <div class="stat"><b>${d.n_chunks}</b><span>chunks</span></div>
+      <div class="stat"><b>${d.n_terms}</b><span>unique terms</span></div>
+      <div class="stat"><b>${d.avgdl}</b><span>avg chunk length</span></div></div>`;
+    // inverted index
+    const rows=d.index.map(r=>{
+      const posts=r.postings.map(pp=>`<span class="post">${pp.id}<span class="muted">·tf ${pp.tf}</span></span>`).join('');
+      return `<div class="idxrow" data-term="${esc(r.term)}"><div class="idxterm">${esc(r.term)}</div><div class="idxdf">df ${r.df}</div><div class="idxpost">${posts}</div></div>`;
+    }).join('');
+    $('indexOut').innerHTML = pipe + stats
+      + `<div style="margin-top:12px"><b>The inverted index</b> <span class="muted">· term → the chunks that contain it (with term-frequency)</span></div>`
+      + `<input type="text" id="idxFilter" placeholder="filter terms…" style="max-width:240px;margin-top:6px"/>`
+      + `<div class="idx" id="idxBox">${rows}</div>`
+      + `<div class="muted" style="margin-top:6px">df = document frequency (how many chunks have the term). A query word with <b>no row here</b> matches nothing — that is a vocabulary miss.</div>`;
+    $('idxFilter').addEventListener('input', e=>{
+      const q=e.target.value.trim().toLowerCase();
+      $('idxBox').querySelectorAll('.idxrow').forEach(r=>{
+        r.style.display = (!q || r.dataset.term.includes(q))?'':'none'; });
+    });
+  }
+
+  /* step 5: search */
+  $('query').addEventListener('input', e=>{ const v=e.target.value.trim();
+    $('qprev').innerHTML = v?`Query: <span class="mono">“${esc(v)}”</span>`:''; });
+  function updateKdesc(){ const k=S.topk;
+    $('kdesc').textContent=`Keep the ${k} best-scoring chunk${k>1?'s':''}. BM25 weights rare words higher and stops long chunks winning just by length.`; }
+  $('topk').addEventListener('input', e=>{ S.topk=+e.target.value; $('kV').textContent=e.target.value; updateKdesc(); });
+  updateKdesc();
+  // client-side highlighter: mark surface words whose start matches a query term
+  function hl(text, qterms){
+    const ts=qterms.filter(t=>t.length>=3);
+    return esc(text).replace(/[A-Za-z0-9]+(?:[-/.][A-Za-z0-9]+)*/g, w=>{
+      const lw=w.toLowerCase().replace(/(?<=\d),(?=\d)/g,'');
+      return (qterms.includes(lw) || ts.some(t=>lw.startsWith(t))) ? `<mark>${w}</mark>` : w;
+    });
+  }
+  $('retrieveBtn').addEventListener('click', async ()=>{
+    const q=$('query').value.trim(); if(!q){ $('searchOut').innerHTML='<div class="err">Type a query first.</div>'; return; }
+    $('searchOut').innerHTML='<div class="spin">Analyzing query & scoring with BM25…</div>';
+    try{
+      const d=await post('/api/search',{query:q, top_k:S.topk});
+      const echo=d.q_status.map(s=>`<span class="qtok ${s.in_vocab?'has':'no'}">${esc(s.term)}${s.in_vocab?` · df ${s.df}`:' · df 0'}</span>`).join('');
+      const qterms=d.q_terms;
+      const max=Math.max(...d.results.map(r=>r.score),1e-9);
+      const items=d.results.map((r,i)=>{
+        const rows=r.terms.map(t=>{const z=t.contrib===0;
+          return `<tr><td class="term">${esc(t.term)}</td><td>${t.in_vocab?'yes':'<span style="color:#C0392B">no</span>'}</td><td>${t.df}</td><td>${t.in_vocab?t.idf:'—'}</td><td class="${z?'zero':''}">${t.tf}</td><td class="${z?'zero':''}">${t.contrib}</td></tr>`;}).join('');
+        return `<div class="res ${r.score===0?'zero':''} ${i===0&&r.score>0?'top':''}">
+          <div class="res-h"><span class="pill navy">#${i+1}</span><span class="pill">${r.id}</span><span class="pill teal">p${r.page}</span>
+            ${r.parent_id?`<span class="pill purple">child of ${r.parent_id}</span>`:''}
+            <span class="bar"><i style="width:${(r.score/max*100).toFixed(0)}%"></i></span><span class="score">${r.score}</span></div>
+          ${r.context?`<div class="muted" style="margin-bottom:3px">indexed with context: <span class="ctx">${esc(r.context)}</span></div>`:''}
+          <div class="res-t">${hl(r.text, qterms)}</div>
+          <table class="mathtbl"><tr><th>query term</th><th>in&nbsp;vocab</th><th>df</th><th>idf</th><th>tf</th><th>contribution</th></tr>
+            ${rows}<tr class="tot"><td colspan="5" style="text-align:right">BM25 score</td><td>${r.score}</td></tr></table>
+        </div>`;
+      }).join('');
+      $('searchOut').innerHTML =
+        `<div class="qprev"><b>Query terms (same analyzer as the index):</b><br>${echo}</div>`
+        + `<div class="muted" style="margin:4px 0 8px"><span style="color:var(--teal)">green</span> = the term exists in the corpus · <span style="color:var(--red)">red</span> = in no chunk, so it can never score.</div>`
+        + `<div><b>Top-${d.top_k} by BM25</b></div>` + items;
+      S.answered=false; refresh();
+    }catch(err){ $('searchOut').innerHTML=`<div class="err">Search failed: ${err.message}</div>`; }
+  });
+
+  /* step 6: answer */
+  function highlightCites(s){ return esc(s).replace(/\[c\d+,\s*p\d+\]/g, m=>`<span class="cite">${m}</span>`); }
+  function renderMatches(matches,title){
+    const items=matches.map(r=>`<div class="res"><div class="res-h"><span class="pill">${r.id}</span><span class="pill teal">p${r.page}</span>
+      ${r.parent_id?`<span class="pill purple">child of ${r.parent_id}</span>`:''}
+      <span class="score">${r.score}</span></div><div class="res-t">${esc(r.text)}</div></div>`).join('');
+    return `<div style="margin-top:6px"><b>${title}</b></div>${items}`;
+  }
+  $('answerBtn').addEventListener('click', async ()=>{
+    const q=$('query').value.trim(); if(!q){ $('answerOut').innerHTML='<div class="err">Type a query in step 5 first.</div>'; return; }
+    $('answerVia').textContent=` via ${S.sdk==='langchain'?'LangChain + OpenAI':'OpenAI SDK'} · ${S.llmModel}`;
+    $('answerOut').innerHTML='<div class="spin">Asking the LLM with the retrieved chunks…</div>';
+    try{
+      const d=await post('/api/answer',{question:q, top_k:S.topk, sdk:S.sdk, model:S.llmModel});
+      $('answerOut').innerHTML =
+        `<div class="card answer" style="margin-top:0"><div class="card-head"><div class="num" style="background:var(--teal)">A</div><h2>Answer</h2></div>
+          <div class="a-text" style="margin-top:8px">${highlightCites(d.answer)}</div></div>`
+        + renderMatches(d.matches,'Chunks the LLM was given (its sources)');
+      S.answered=true; refresh();
+    }catch(err){ $('answerOut').innerHTML=`<div class="err">Answer failed: ${err.message}</div>`; }
+  });
+
+  loadStrategies(); refresh();
+</script>
+</body>
+</html>
